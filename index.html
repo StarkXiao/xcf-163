@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>赛博渔港 - 机械残骸打捞</title>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+    
+    <div id="loading-screen">
+      <div class="loading-content">
+        <h1 class="neon-text">赛博渔港</h1>
+        <p class="loading-text">资源加载中...</p>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <p class="loading-percent" id="loading-percent">0%</p>
+      </div>
+    </div>
+
+    <div id="game-ui" class="hidden">
+      <div class="top-bar">
+        <div class="stat-item">
+          <span class="stat-label">能量</span>
+          <span class="stat-value" id="energy-value">100</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">金币</span>
+          <span class="stat-value" id="coin-value">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">打捞次数</span>
+          <span class="stat-value" id="catch-count">0</span>
+        </div>
+      </div>
+
+      <div id="task-hint" class="task-hint hidden">
+        <p id="task-text"></p>
+        <button class="close-task" id="close-task">×</button>
+      </div>
+
+      <div class="bottom-bar">
+        <button class="action-btn" id="btn-catch">
+          <span class="btn-icon">🎣</span>
+          <span class="btn-text">拖网</span>
+        </button>
+        <button class="action-btn" id="btn-backpack">
+          <span class="btn-icon">🎒</span>
+          <span class="btn-text">背包</span>
+        </button>
+        <button class="action-btn" id="btn-collection">
+          <span class="btn-icon">📖</span>
+          <span class="btn-text">图鉴</span>
+        </button>
+        <button class="action-btn" id="btn-task">
+          <span class="btn-icon">📋</span>
+          <span class="btn-text">任务</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="battle-modal" class="modal hidden">
+      <div class="modal-content battle-content">
+        <h2 class="modal-title" id="battle-title">发现机械残骸！</h2>
+        <div class="creature-display" id="creature-display"></div>
+        <p class="creature-quote" id="creature-quote"></p>
+        <div class="battle-stats">
+          <div class="stat-row">
+            <span class="stat-name">名称</span>
+            <span class="stat-data" id="creature-name"></span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">稀有度</span>
+            <span class="stat-data" id="creature-rarity"></span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">价值</span>
+            <span class="stat-data" id="creature-value"></span>
+          </div>
+        </div>
+        <div class="battle-actions">
+          <button class="modal-btn primary" id="btn-collect">收集</button>
+          <button class="modal-btn secondary" id="btn-release">放生</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="backpack-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2 class="modal-title">背包</h2>
+        <div class="inventory-grid" id="backpack-grid"></div>
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-backpack">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="collection-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2 class="modal-title">图鉴</h2>
+        <p class="collection-progress">收集进度: <span id="collection-progress">0/0</span></p>
+        <div class="inventory-grid" id="collection-grid"></div>
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-collection">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="task-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2 class="modal-title">任务列表</h2>
+        <div class="task-list" id="task-list"></div>
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-task">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="item-detail-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2 class="modal-title" id="detail-title">物品详情</h2>
+        <div class="creature-display" id="detail-display"></div>
+        <p class="creature-quote" id="detail-quote"></p>
+        <div class="battle-stats">
+          <div class="stat-row">
+            <span class="stat-name">名称</span>
+            <span class="stat-data" id="detail-name"></span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">稀有度</span>
+            <span class="stat-data" id="detail-rarity"></span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">描述</span>
+            <span class="stat-data" id="detail-desc"></span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">数量</span>
+            <span class="stat-data" id="detail-count"></span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn primary" id="btn-sell-item">出售</button>
+          <button class="modal-btn secondary" id="btn-close-detail">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
