@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:expedition": "node --experimental-vm-modules test/run-expedition-test.js",
+    "test:blackmarket": "node --experimental-vm-modules test/run-blackmarket-refresh-test.js",
+    "test:combo": "node --experimental-vm-modules test/run-combo-persistence-test.js"
   },
   "dependencies": {
     "pixi.js": "^7.4.0"

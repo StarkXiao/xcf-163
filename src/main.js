@@ -348,8 +348,12 @@ class Game {
   }
 
   saveProgress() {
+    const statsToSave = {
+      ...this.stats,
+      comboCount: 0
+    };
     const saveData = {
-      stats: this.stats,
+      stats: statsToSave,
       inventory: this.inventory.toJSON(),
       tasks: this.taskSystem.toJSON(),
       tide: this.tideSystem ? this.tideSystem.toJSON() : null,
@@ -367,6 +371,12 @@ class Game {
       if (data.stats) {
         this.stats = { ...this.stats, ...data.stats };
       }
+      this.stats.comboCount = 0;
+      this.lastCatchTime = 0;
+      if (this.comboTimer) {
+        clearTimeout(this.comboTimer);
+        this.comboTimer = null;
+      }
       this.inventory.loadData(data.inventory || {});
       this.taskSystem.loadData(data.tasks || {});
       if (this.reinforceSystem && data.reinforce) {
@@ -383,7 +393,7 @@ class Game {
       } else if (this.tideSystem) {
         this.tideSystem.init();
       }
-      console.log('存档加载成功');
+      console.log('存档加载成功（连击状态已重置）');
     } else if (this.tideSystem) {
       this.tideSystem.init();
     }
