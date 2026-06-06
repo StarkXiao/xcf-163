@@ -17,20 +17,28 @@ export class MapScene {
     this.baseRainSpeed = 8;
     this.baseWaveAmplitude = 3;
     this.baseFloatSpeed = 0.02;
-    
+
+    this.currentNightEvent = null;
+    this.nightEventOverlay = null;
+    this.auroraParticles = [];
+    this.emergencyLights = [];
+    this.screenShake = { x: 0, y: 0, intensity: 0 };
+    this.eventParticles = [];
+
     this.init();
   }
 
   init() {
     this.app.stage.addChild(this.container);
-    
+
     this.createBackground();
     this.createRain();
     this.createFloatingObjects();
     this.createBoat();
     this.createNet();
     this.createTideOverlay();
-    
+    this.createNightEventOverlay();
+
     this.app.ticker.add(this.update.bind(this));
   }
 
@@ -38,6 +46,187 @@ export class MapScene {
     this.tideOverlay = new PIXI.Graphics();
     this.tideOverlay.alpha = 0;
     this.container.addChild(this.tideOverlay);
+  }
+
+  createNightEventOverlay() {
+    this.nightEventOverlay = new PIXI.Graphics();
+    this.nightEventOverlay.alpha = 0;
+    this.container.addChild(this.nightEventOverlay);
+
+    for (let i = 0; i < 20; i++) {
+      const particle = new PIXI.Graphics();
+      particle.visible = false;
+      this.container.addChild(particle);
+      this.eventParticles.push({
+        sprite: particle,
+        vx: 0,
+        vy: 0,
+        life: 0,
+        maxLife: 0,
+        color: 0xffffff
+      });
+    }
+  }
+
+  applyNightVoyageEvent(event, branch = null) {
+    if (!event) return;
+    this.currentNightEvent = { event, branch };
+    const ambience = event.ambience || {};
+
+    if (this.nightEventOverlay) {
+      this.nightEventOverlay.clear();
+      this.nightEventOverlay.beginFill(event.bgTint || 0x220022, 0.35);
+      this.nightEventOverlay.drawRect(0, 0, this.app.screen.width, this.app.screen.height);
+      this.nightEventOverlay.endFill();
+      this.nightEventOverlay.alpha = 0.6;
+    }
+
+    const rainIntensity = ambience.rainIntensity || 1.0;
+    const waveIntensity = ambience.waveIntensity || 1.0;
+    const floatIntensity = ambience.floatIntensity || 1.0;
+
+    this.rainParticles.forEach(rain => {
+      rain.sprite.alpha = 0.2 * rainIntensity;
+      rain.speed = (this.baseRainSpeed + Math.random() * 5) * rainIntensity;
+    });
+
+    this.floatingObjects.forEach(obj => {
+      if (obj.type === 'wave') {
+        obj.amplitude = (this.baseWaveAmplitude + obj.offset * 0.2) * waveIntensity;
+        obj.frequency = (0.02 + obj.offset * 0.003) * waveIntensity;
+        obj.speed = (0.5 + obj.offset * 0.1) * waveIntensity;
+      } else if (obj.type === 'debris') {
+        obj.floatSpeed = (this.baseFloatSpeed + Math.random() * 0.01) * floatIntensity;
+        obj.floatAmplitude = (10 + Math.random() * 10) * floatIntensity;
+        obj.horizontalSpeed = (0.2 + Math.random() * 0.2) * floatIntensity;
+      }
+    });
+
+    if (ambience.auroraEffect) {
+      this.createAuroraEffect(event.color);
+    } else {
+      this.clearAuroraEffect();
+    }
+
+    if (ambience.shakeIntensity) {
+      this.screenShake.intensity = ambience.shakeIntensity;
+    }
+
+    this.createEmergencyLights(event.color);
+    this.spawnEventParticles(event.color, 15);
+  }
+
+  clearNightVoyageEvent() {
+    this.currentNightEvent = null;
+
+    if (this.nightEventOverlay) {
+      this.nightEventOverlay.clear();
+      this.nightEventOverlay.alpha = 0;
+    }
+
+    this.clearAuroraEffect();
+    this.clearEmergencyLights();
+    this.screenShake.intensity = 0;
+    this.container.x = 0;
+    this.container.y = 0;
+
+    if (this.currentTide) {
+      this.applyTideEffect(this.currentTide);
+    } else {
+      this.rainParticles.forEach(rain => {
+        rain.sprite.alpha = 0.3;
+        rain.speed = this.baseRainSpeed + Math.random() * 5;
+      });
+      this.floatingObjects.forEach(obj => {
+        if (obj.type === 'wave') {
+          obj.amplitude = this.baseWaveAmplitude + obj.offset * 0.2;
+          obj.frequency = 0.02 + obj.offset * 0.003;
+          obj.speed = 0.5 + obj.offset * 0.1;
+        } else if (obj.type === 'debris') {
+          obj.floatSpeed = this.baseFloatSpeed + Math.random() * 0.01;
+          obj.floatAmplitude = 10 + Math.random() * 10;
+          obj.horizontalSpeed = 0.2 + Math.random() * 0.2;
+        }
+      });
+    }
+  }
+
+  createAuroraEffect(color = 0xaa44ff) {
+    this.clearAuroraEffect();
+    for (let i = 0; i < 5; i++) {
+      const aurora = new PIXI.Graphics();
+      aurora.y = this.app.screen.height * 0.1 + i * 30;
+      aurora.alpha = 0.15 + Math.random() * 0.1;
+      this.container.addChild(aurora);
+      this.auroraParticles.push({
+        graphics: aurora,
+        offset: Math.random() * Math.PI * 2,
+        speed: 0.005 + Math.random() * 0.005,
+        amplitude: 30 + Math.random() * 40,
+        width: this.app.screen.width,
+        color: color
+      });
+    }
+  }
+
+  clearAuroraEffect() {
+    this.auroraParticles.forEach(a => {
+      if (a.graphics && a.graphics.parent) {
+        a.graphics.parent.removeChild(a.graphics);
+      }
+    });
+    this.auroraParticles = [];
+  }
+
+  createEmergencyLights(color = 0xff4444) {
+    this.clearEmergencyLights();
+    for (let i = 0; i < 3; i++) {
+      const light = new PIXI.Graphics();
+      light.beginFill(color, 0.08);
+      light.drawCircle(0, 0, 150 + i * 50);
+      light.endFill();
+      light.x = this.app.screen.width * (0.2 + i * 0.3);
+      light.y = this.app.screen.height * (0.3 + (i % 2) * 0.3);
+      light.alpha = 0;
+      this.container.addChild(light);
+      this.emergencyLights.push({
+        graphics: light,
+        speed: 0.03 + i * 0.01,
+        offset: i * Math.PI / 1.5,
+        baseX: light.x,
+        baseY: light.y
+      });
+    }
+  }
+
+  clearEmergencyLights() {
+    this.emergencyLights.forEach(l => {
+      if (l.graphics && l.graphics.parent) {
+        l.graphics.parent.removeChild(l.graphics);
+      }
+    });
+    this.emergencyLights = [];
+  }
+
+  spawnEventParticles(color, count = 10) {
+    for (let i = 0; i < count; i++) {
+      const p = this.eventParticles.find(p => !p.sprite.visible);
+      if (!p) continue;
+
+      p.sprite.clear();
+      p.sprite.beginFill(color, 0.8);
+      p.sprite.drawCircle(0, 0, 2 + Math.random() * 3);
+      p.sprite.endFill();
+
+      p.sprite.x = Math.random() * this.app.screen.width;
+      p.sprite.y = this.app.screen.height * (0.3 + Math.random() * 0.5);
+      p.vx = (Math.random() - 0.5) * 3;
+      p.vy = -1 - Math.random() * 2;
+      p.life = 60 + Math.random() * 60;
+      p.maxLife = p.life;
+      p.color = color;
+      p.sprite.visible = true;
+    }
   }
 
   applyTideEffect(tidePhase) {
@@ -438,7 +627,7 @@ export class MapScene {
 
   update(delta) {
     this.time += delta;
-    
+
     this.bgLayers.forEach(layer => {
       if (layer.isTiling) {
         layer.sprite.tilePosition.x -= layer.speed * delta;
@@ -449,12 +638,12 @@ export class MapScene {
         }
       }
     });
-    
+
     this.floatingObjects.forEach(obj => {
       if (obj.type === 'wave') {
         obj.graphics.clear();
         obj.graphics.lineStyle(2, 0x00ffff, obj.graphics.alpha);
-        
+
         for (let x = 0; x < this.app.screen.width; x += 5) {
           const y = Math.sin(x * obj.frequency + this.time * obj.speed + obj.offset) * obj.amplitude;
           if (x === 0) {
@@ -467,45 +656,101 @@ export class MapScene {
         obj.floatOffset += obj.floatSpeed * delta;
         obj.sprite.y = obj.baseY + Math.sin(obj.floatOffset) * obj.floatAmplitude;
         obj.sprite.x -= obj.horizontalSpeed * delta;
-        
+
         if (obj.sprite.x < -20) {
           obj.sprite.x = this.app.screen.width + 20;
           obj.baseX = obj.sprite.x;
         }
       }
     });
-    
+
     this.rainParticles.forEach(rain => {
       rain.sprite.y += rain.speed * delta;
       rain.sprite.x -= 2 * delta;
-      
+
       if (rain.sprite.y > this.app.screen.height) {
         rain.sprite.y = -20;
         rain.sprite.x = Math.random() * this.app.screen.width;
       }
     });
-    
+
     if (this.boat) {
       this.boat.y = this.app.screen.height * 0.42 + Math.sin(this.time * 0.05) * 3;
       this.boat.rotation = Math.sin(this.time * 0.03) * 0.02;
     }
+
+    this.auroraParticles.forEach(a => {
+      a.offset += a.speed * delta;
+      a.graphics.clear();
+      const r = (a.color >> 16) & 255;
+      const g = (a.color >> 8) & 255;
+      const b = a.color & 255;
+      for (let x = 0; x < a.width; x += 10) {
+        const y = Math.sin(x * 0.01 + a.offset) * a.amplitude;
+        const nextY = Math.sin((x + 10) * 0.01 + a.offset) * a.amplitude;
+        const gradient = a.graphics;
+        gradient.lineStyle(8, PIXI.utils.rgb2hex([r / 255, g / 255, b / 255]), 0.4);
+        gradient.moveTo(x, y);
+        gradient.lineTo(x + 10, nextY);
+      }
+    });
+
+    this.emergencyLights.forEach(l => {
+      const pulse = Math.sin(this.time * l.speed + l.offset);
+      l.graphics.alpha = (pulse * 0.5 + 0.5) * 0.6;
+      l.graphics.x = l.baseX + Math.sin(this.time * l.speed * 0.5) * 20;
+    });
+
+    if (this.screenShake.intensity > 0) {
+      this.container.x = (Math.random() - 0.5) * this.screenShake.intensity * 10;
+      this.container.y = (Math.random() - 0.5) * this.screenShake.intensity * 10;
+    } else {
+      this.container.x = 0;
+      this.container.y = 0;
+    }
+
+    this.eventParticles.forEach(p => {
+      if (!p.sprite.visible) return;
+      p.life -= delta;
+      if (p.life <= 0) {
+        p.sprite.visible = false;
+        return;
+      }
+      p.sprite.x += p.vx * delta;
+      p.sprite.y += p.vy * delta;
+      p.vy += 0.05 * delta;
+      p.sprite.alpha = p.life / p.maxLife;
+      p.sprite.scale.set(0.5 + (p.life / p.maxLife) * 0.5);
+    });
+
+    if (this.currentNightEvent && Math.random() < 0.05) {
+      this.spawnEventParticles(this.currentNightEvent.event.color, 2);
+    }
   }
 
   resize(width, height) {
+    const savedNightEvent = this.currentNightEvent;
     this.container.removeChildren();
     this.bgLayers = [];
     this.floatingObjects = [];
     this.rainParticles = [];
-    
+    this.auroraParticles = [];
+    this.emergencyLights = [];
+    this.eventParticles = [];
+
     this.createBackground();
     this.createRain();
     this.createFloatingObjects();
     this.createBoat();
     this.createNet();
     this.createTideOverlay();
-    
+    this.createNightEventOverlay();
+
     if (this.currentTide) {
       this.applyTideEffect(this.currentTide);
+    }
+    if (savedNightEvent) {
+      this.applyNightVoyageEvent(savedNightEvent.event, savedNightEvent.branch);
     }
   }
 

@@ -379,3 +379,84 @@ export function generateCreatureForExpedition(route) {
   const available = CREATURES.filter(c => c.rarity === targetRarity);
   return available[Math.floor(Math.random() * available.length)];
 }
+
+export const NIGHT_VOYAGE_EVENTS = {
+  DISTRESS_SIGNAL: {
+    id: 'distress_signal',
+    name: '求救信号',
+    icon: '🆘',
+    desc: '接收到微弱的SOS信号，可能有幸存者等待救援',
+    color: 0xff4444,
+    bgTint: 0x441111,
+    rarityBoost: { common: 0.8, uncommon: 1.0, rare: 1.3, epic: 1.5, legendary: 2.0 },
+    valueMultiplier: 1.5,
+    extraRewards: { coins: [100, 400], supplyChance: 0.6 },
+    durationMs: 45000,
+    triggerChance: 0.08,
+    branches: [
+      { id: 'rescue', name: '前往救援', desc: '立即前去营救，奖励丰厚但有风险', riskChance: 0.3, rewardMultiplier: 2.0 },
+      { id: 'scan', name: '扫描信号', desc: '远程扫描分析，奖励稍低但更安全', riskChance: 0.1, rewardMultiplier: 1.3 },
+      { id: 'ignore', name: '忽略信号', desc: '继续正常作业，无额外收益', riskChance: 0, rewardMultiplier: 1.0 }
+    ],
+    ambience: { rainIntensity: 1.5, waveIntensity: 1.3, floatIntensity: 1.2 }
+  },
+  WRECK_RAMPAGE: {
+    id: 'wreck_rampage',
+    name: '残骸暴走',
+    icon: '💥',
+    desc: '异常能量波动使残骸变得狂暴，危险与机遇并存',
+    color: 0xff8800,
+    bgTint: 0x442200,
+    rarityBoost: { common: 0.5, uncommon: 0.8, rare: 1.5, epic: 2.0, legendary: 2.5 },
+    valueMultiplier: 2.0,
+    extraRewards: { coins: [200, 600], creatureCountBonus: 1 },
+    durationMs: 35000,
+    triggerChance: 0.06,
+    branches: [
+      { id: 'fight', name: '强行捕捞', desc: '硬闯暴走区域，高风险高回报', riskChance: 0.5, rewardMultiplier: 2.5, hullDamage: [10, 25] },
+      { id: 'defuse', name: '拆除引信', desc: '尝试稳定残骸能量，成功率中等', riskChance: 0.25, rewardMultiplier: 1.8 },
+      { id: 'wait', name: '等待平息', desc: '等待能量消散，安全但收益减少', riskChance: 0.05, rewardMultiplier: 1.2 }
+    ],
+    ambience: { rainIntensity: 2.0, waveIntensity: 2.0, floatIntensity: 1.8, shakeIntensity: 0.5 }
+  },
+  ANCIENT_BROADCAST: {
+    id: 'ancient_broadcast',
+    name: '古老广播',
+    icon: '📻',
+    desc: '来自深海的神秘低语，似乎在指引着什么',
+    color: 0xaa44ff,
+    bgTint: 0x220044,
+    rarityBoost: { common: 0.6, uncommon: 0.9, rare: 1.4, epic: 1.8, legendary: 3.0 },
+    valueMultiplier: 1.8,
+    extraRewards: { coins: [150, 500], legendaryHint: true },
+    durationMs: 50000,
+    triggerChance: 0.05,
+    branches: [
+      { id: 'decode', name: '破译信号', desc: '全力破译古老密文，有概率获得传说线索', riskChance: 0.2, rewardMultiplier: 2.2, legendaryChanceBoost: 0.1 },
+      { id: 'follow', name: '循声探索', desc: '跟随声音的指引前进', riskChance: 0.15, rewardMultiplier: 1.6 },
+      { id: 'record', name: '记录存档', desc: '保存信号以后研究，收益稳定', riskChance: 0.05, rewardMultiplier: 1.4 }
+    ],
+    ambience: { rainIntensity: 0.8, waveIntensity: 0.9, floatIntensity: 1.5, auroraEffect: true }
+  }
+};
+
+export function getRandomNightVoyageEvent() {
+  const events = Object.values(NIGHT_VOYAGE_EVENTS);
+  const totalChance = events.reduce((sum, e) => sum + e.triggerChance, 0);
+  let random = Math.random() * totalChance;
+  for (const event of events) {
+    random -= event.triggerChance;
+    if (random <= 0) return event;
+  }
+  return events[0];
+}
+
+export function rollNightVoyageEvent(bonusChance = 0) {
+  const events = Object.values(NIGHT_VOYAGE_EVENTS);
+  const maxChance = Math.max(...events.map(e => e.triggerChance));
+  const triggerRoll = Math.random();
+  if (triggerRoll < maxChance + bonusChance) {
+    return getRandomNightVoyageEvent();
+  }
+  return null;
+}

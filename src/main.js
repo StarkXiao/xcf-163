@@ -13,6 +13,7 @@ import { DeepSeaExpedition } from './modules/DeepSeaExpedition.js';
 import { TavernSystem } from './modules/TavernSystem.js';
 import { PortCommission } from './modules/PortCommission.js';
 import { COMBO_CONFIG, getComboEnergyDiscount, getComboEnergyRegenBonus } from './data/creatures.js';
+import { rollNightVoyageEvent } from './data/deepSeaExpedition.js';
 
 class Game {
   constructor() {
@@ -29,7 +30,7 @@ class Game {
     this.expedition = null;
     this.tavernSystem = null;
     this.portCommission = null;
-    
+
     this.stats = {
       energy: 100,
       coins: 0,
@@ -38,13 +39,20 @@ class Game {
       maxComboReached: 0,
       totalComboHits: 0
     };
-    
+
     this.baseEnergyCost = 10;
     this.energyRegenRate = 1;
     this.energyRegenInterval = 3000;
     this.comboTimer = null;
     this.lastCatchTime = 0;
-    
+
+    this.nightVoyageEvent = null;
+    this.nightVoyageBranch = null;
+    this.nightVoyageTimer = null;
+    this.nightVoyageEndAt = 0;
+    this.nightVoyageTriggerCooldown = 0;
+    this.catchesSinceLastEvent = 0;
+
     this.init();
   }
 
@@ -235,26 +243,181 @@ class Game {
 
   tryCatch() {
     const cost = this.getCurrentEnergyCost();
-    
+
     if (this.stats.energy < cost) {
       const phase = this.tideSystem ? this.tideSystem.getCurrentPhase() : null;
       const phaseName = phase ? `${phase.name} ` : '';
       this.taskSystem.showHint(`能量不足！${phaseName}拖网需要 ${cost} 能量，请等待恢复。`);
       return;
     }
-    
+
     if (this.battleSystem.isBattling) {
       return;
     }
-    
+
     if (this.mapScene.isNetActive) {
       return;
     }
-    
+
+    if (this.nightVoyageEvent && Date.now() > this.nightVoyageEndAt) {
+      this.clearNightVoyageEvent();
+    }
+
+    if (!this.nightVoyageEvent && this.nightVoyageTriggerCooldown <= 0) {
+      const bonusChance = Math.min(0.15, this.catchesSinceLastEvent * 0.015);
+      const rolledEvent = rollNightVoyageEvent(bonusChance);
+      if (rolledEvent) {
+        this.triggerNightVoyageEvent(rolledEvent);
+        return;
+      }
+    } else if (this.nightVoyageTriggerCooldown > 0) {
+      this.nightVoyageTriggerCooldown--;
+    }
+
     this.updateStats('energy', -cost);
     this.mapScene.startNetAnimation(() => {
+      this.catchesSinceLastEvent++;
       this.battleSystem.startBattle();
     });
+  }
+
+  triggerNightVoyageEvent(event) {
+    this.nightVoyageEvent = event;
+    this.showNightVoyageChoiceModal(event);
+  }
+
+  showNightVoyageChoiceModal(event) {
+    const modal = document.getElementById('night-voyage-modal');
+    const content = document.getElementById('night-voyage-content');
+    if (!modal || !content) return;
+
+    const hexColor = '#' + event.color.toString(16).padStart(6, '0');
+    content.innerHTML = `
+      <div class="nv-header" style="border-color: ${hexColor};">
+        <div class="nv-icon">${event.icon}</div>
+        <div class="nv-info">
+          <h3 class="nv-title" style="color: ${hexColor};">${event.name}</h3>
+          <p class="nv-desc">${event.desc}</p>
+        </div>
+      </div>
+      <div class="nv-branches">
+        ${event.branches.map((branch, idx) => `
+          <div class="nv-branch-card" data-branch-idx="${idx}">
+            <div class="nv-branch-name">${branch.name}</div>
+            <div class="nv-branch-desc">${branch.desc}</div>
+            <div class="nv-branch-stats">
+              <span class="nv-reward">奖励 ×${branch.rewardMultiplier.toFixed(1)}</span>
+              <span class="nv-risk">风险 ${Math.round(branch.riskChance * 100)}%</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn secondary" id="nv-cancel">暂不选择</button>
+      </div>
+    `;
+
+    modal.classList.remove('hidden');
+
+    content.querySelectorAll('[data-branch-idx]').forEach(el => {
+      el.addEventListener('click', () => {
+        const idx = parseInt(el.dataset.branchIdx);
+        this.selectNightVoyageBranch(event, event.branches[idx]);
+        modal.classList.add('hidden');
+      });
+    });
+
+    const cancelBtn = document.getElementById('nv-cancel');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        modal.classList.add('hidden');
+        this.clearNightVoyageEvent();
+        this.nightVoyageTriggerCooldown = 5;
+      });
+    }
+  }
+
+  selectNightVoyageBranch(event, branch) {
+    this.nightVoyageEvent = event;
+    this.nightVoyageBranch = branch;
+    this.nightVoyageEndAt = Date.now() + event.durationMs;
+
+    if (this.mapScene) {
+      this.mapScene.applyNightVoyageEvent(event, branch);
+    }
+    if (this.battleSystem) {
+      this.battleSystem.setNightVoyageEvent(event, branch);
+    }
+
+    const riskRolled = Math.random() < branch.riskChance;
+    if (riskRolled) {
+      if (branch.hullDamage) {
+        const [minD, maxD] = branch.hullDamage;
+        const dmg = Math.floor(minD + Math.random() * (maxD - minD));
+        this.updateStats('energy', -Math.min(dmg, this.stats.energy - 1));
+        this.taskSystem.showHint(`⚠ ${event.name} · ${branch.name} 风险触发！能量 -${dmg}`);
+      } else {
+        this.taskSystem.showHint(`⚠ ${event.name} · ${branch.name} 风险触发，奖励减半！`);
+      }
+    }
+
+    this.taskSystem.showHint(`${event.icon} ${event.name} · ${branch.name} 已激活！持续 ${Math.floor(event.durationMs / 1000)} 秒`);
+    this.updateNightVoyageUI();
+    this.startNightVoyageTimer(event.durationMs);
+    this.saveProgress();
+    this.checkTasks('night_voyage_trigger', event);
+  }
+
+  startNightVoyageTimer(durationMs) {
+    if (this.nightVoyageTimer) {
+      clearInterval(this.nightVoyageTimer);
+    }
+    this.nightVoyageTimer = setInterval(() => {
+      this.updateNightVoyageUI();
+      if (Date.now() > this.nightVoyageEndAt) {
+        this.clearNightVoyageEvent();
+      }
+    }, 1000);
+  }
+
+  clearNightVoyageEvent() {
+    if (this.nightVoyageTimer) {
+      clearInterval(this.nightVoyageTimer);
+      this.nightVoyageTimer = null;
+    }
+    this.nightVoyageEvent = null;
+    this.nightVoyageBranch = null;
+    this.nightVoyageEndAt = 0;
+    this.catchesSinceLastEvent = 0;
+
+    if (this.mapScene) {
+      this.mapScene.clearNightVoyageEvent();
+    }
+    if (this.battleSystem) {
+      this.battleSystem.clearNightVoyageEvent();
+    }
+    this.updateNightVoyageUI();
+    this.saveProgress();
+  }
+
+  updateNightVoyageUI() {
+    const indicator = document.getElementById('night-voyage-indicator');
+    if (!indicator) return;
+
+    if (this.nightVoyageEvent) {
+      const remaining = Math.max(0, this.nightVoyageEndAt - Date.now());
+      const seconds = Math.ceil(remaining / 1000);
+      const hexColor = '#' + this.nightVoyageEvent.color.toString(16).padStart(6, '0');
+      indicator.classList.remove('hidden');
+      indicator.style.borderColor = hexColor;
+      indicator.innerHTML = `
+        <span class="nv-ind-icon">${this.nightVoyageEvent.icon}</span>
+        <span class="nv-ind-text">${this.nightVoyageEvent.name} · ${this.nightVoyageBranch?.name || ''}</span>
+        <span class="nv-ind-timer" style="color: ${hexColor};">${seconds}s</span>
+      `;
+    } else {
+      indicator.classList.add('hidden');
+    }
   }
 
   addToBackpack(creature) {
