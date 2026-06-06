@@ -379,7 +379,8 @@ export class PortCommission {
       const phase = commission.phases[commission.currentPhase];
       if (!phase || phase.status !== 'active') continue;
 
-      if (phase.requireNew && !isNewToCollection) continue;
+      if (!phase.requireNew) continue;
+      if (!isNewToCollection) continue;
 
       if (phase.targetCreatureId && creature.id !== phase.targetCreatureId) continue;
       if (phase.targetRarity) {
@@ -409,7 +410,6 @@ export class PortCommission {
 
       phase.currentQuantity += useCount;
 
-      const newTag = phase.requireNew ? '🆕 ' : '';
       if (phase.currentQuantity >= phase.requiredQuantity) {
         this.completePhase(commission.id);
       } else {
@@ -417,7 +417,7 @@ export class PortCommission {
         this.game.inventory.renderBackpack();
         this.renderAll();
         this.game.taskSystem.showHint(
-          `${newTag}委托进度：${phase.currentQuantity}/${phase.requiredQuantity}`
+          `🆕 图鉴新委托进度：${phase.currentQuantity}/${phase.requiredQuantity}`
         );
       }
       break;
