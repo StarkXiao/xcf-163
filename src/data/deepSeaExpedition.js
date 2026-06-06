@@ -390,13 +390,39 @@ export const NIGHT_VOYAGE_EVENTS = {
     bgTint: 0x441111,
     rarityBoost: { common: 0.8, uncommon: 1.0, rare: 1.3, epic: 1.5, legendary: 2.0 },
     valueMultiplier: 1.5,
-    extraRewards: { coins: [100, 400], supplyChance: 0.6 },
+    extraRewards: { coins: [100, 400], supplyDrop: { chance: 0.6, supply: 'repair', min: 1, max: 3 }, rareAndAboveBoost: 0.2 },
     durationMs: 45000,
     triggerChance: 0.08,
     branches: [
-      { id: 'rescue', name: '前往救援', desc: '立即前去营救，奖励丰厚但有风险', riskChance: 0.3, rewardMultiplier: 2.0 },
-      { id: 'scan', name: '扫描信号', desc: '远程扫描分析，奖励稍低但更安全', riskChance: 0.1, rewardMultiplier: 1.3 },
-      { id: 'ignore', name: '忽略信号', desc: '继续正常作业，无额外收益', riskChance: 0, rewardMultiplier: 1.0 }
+      {
+        id: 'rescue',
+        name: '前往救援',
+        desc: '立即前去营救，奖励丰厚但有风险。成功获得幸存者酬金，失败船体受损奖励减半',
+        riskChance: 0.3,
+        rewardMultiplier: 2.0,
+        onRisk: { valuePenalty: 0.5, hullDamage: [15, 30], penaltyTag: '救援失败' },
+        onSuccess: { bonusCoins: [200, 500], successTag: '救援成功' },
+        extraRarityBoost: { epic: 1.5, legendary: 2.0 }
+      },
+      {
+        id: 'scan',
+        name: '扫描信号',
+        desc: '远程扫描分析，奖励稍低但更安全。小概率精确定位信号源',
+        riskChance: 0.1,
+        rewardMultiplier: 1.3,
+        onRisk: { valuePenalty: 0.8, penaltyTag: '信号杂波干扰' },
+        onSuccess: { supplyDrop: { chance: 0.5, supply: 'repair', min: 1, max: 2 }, successTag: '信号解析完成' },
+        extraRarityBoost: { rare: 1.2 }
+      },
+      {
+        id: 'ignore',
+        name: '忽略信号',
+        desc: '继续正常作业，无额外收益但不受风险影响',
+        riskChance: 0,
+        rewardMultiplier: 1.0,
+        onRisk: { valuePenalty: 1.0 },
+        onSuccess: {}
+      }
     ],
     ambience: { rainIntensity: 1.5, waveIntensity: 1.3, floatIntensity: 1.2 }
   },
@@ -409,13 +435,40 @@ export const NIGHT_VOYAGE_EVENTS = {
     bgTint: 0x442200,
     rarityBoost: { common: 0.5, uncommon: 0.8, rare: 1.5, epic: 2.0, legendary: 2.5 },
     valueMultiplier: 2.0,
-    extraRewards: { coins: [200, 600], creatureCountBonus: 1 },
+    extraRewards: { coins: [200, 600], creatureCountBonus: 1, epicAndAboveBoost: 0.3 },
     durationMs: 35000,
     triggerChance: 0.06,
     branches: [
-      { id: 'fight', name: '强行捕捞', desc: '硬闯暴走区域，高风险高回报', riskChance: 0.5, rewardMultiplier: 2.5, hullDamage: [10, 25] },
-      { id: 'defuse', name: '拆除引信', desc: '尝试稳定残骸能量，成功率中等', riskChance: 0.25, rewardMultiplier: 1.8 },
-      { id: 'wait', name: '等待平息', desc: '等待能量消散，安全但收益减少', riskChance: 0.05, rewardMultiplier: 1.2 }
+      {
+        id: 'fight',
+        name: '强行捕捞',
+        desc: '硬闯暴走区域，高风险高回报。成功大量奖金，失败船体重伤且残骸价值暴跌',
+        riskChance: 0.5,
+        rewardMultiplier: 2.5,
+        onRisk: { valuePenalty: 0.3, hullDamage: [20, 40], penaltyTag: '残骸爆炸反噬' },
+        onSuccess: { bonusCoins: [300, 800], legendaryChanceBoost: 0.15, successTag: '暴走残骸捕获' },
+        extraRarityBoost: { rare: 1.3, epic: 1.6, legendary: 2.2 },
+        hullDamage: [10, 25]
+      },
+      {
+        id: 'defuse',
+        name: '拆除引信',
+        desc: '尝试稳定残骸能量，成功率中等。成功稳定残骸，失败损失部分奖励',
+        riskChance: 0.25,
+        rewardMultiplier: 1.8,
+        onRisk: { valuePenalty: 0.6, penaltyTag: '能量溢出' },
+        onSuccess: { bonusCoins: [100, 300], successTag: '能量稳定完成' },
+        extraRarityBoost: { rare: 1.2, epic: 1.4 }
+      },
+      {
+        id: 'wait',
+        name: '等待平息',
+        desc: '等待能量消散，安全但收益减少',
+        riskChance: 0.05,
+        rewardMultiplier: 1.2,
+        onRisk: { valuePenalty: 0.9, penaltyTag: '余波干扰' },
+        onSuccess: { successTag: '安全过境' }
+      }
     ],
     ambience: { rainIntensity: 2.0, waveIntensity: 2.0, floatIntensity: 1.8, shakeIntensity: 0.5 }
   },
@@ -428,13 +481,40 @@ export const NIGHT_VOYAGE_EVENTS = {
     bgTint: 0x220044,
     rarityBoost: { common: 0.6, uncommon: 0.9, rare: 1.4, epic: 1.8, legendary: 3.0 },
     valueMultiplier: 1.8,
-    extraRewards: { coins: [150, 500], legendaryHint: true },
+    extraRewards: { coins: [150, 500], legendaryHint: true, rareAndAboveBoost: 0.25 },
     durationMs: 50000,
     triggerChance: 0.05,
     branches: [
-      { id: 'decode', name: '破译信号', desc: '全力破译古老密文，有概率获得传说线索', riskChance: 0.2, rewardMultiplier: 2.2, legendaryChanceBoost: 0.1 },
-      { id: 'follow', name: '循声探索', desc: '跟随声音的指引前进', riskChance: 0.15, rewardMultiplier: 1.6 },
-      { id: 'record', name: '记录存档', desc: '保存信号以后研究，收益稳定', riskChance: 0.05, rewardMultiplier: 1.4 }
+      {
+        id: 'decode',
+        name: '破译信号',
+        desc: '全力破译古老密文，有概率获得传说线索。失败则精神受扰',
+        riskChance: 0.2,
+        rewardMultiplier: 2.2,
+        onRisk: { valuePenalty: 0.6, comboReset: true, penaltyTag: '古老低语侵蚀心智' },
+        onSuccess: { bonusCoins: [200, 600], legendaryChanceBoost: 0.2, successTag: '远古密文破译' },
+        extraRarityBoost: { epic: 1.5, legendary: 2.5 },
+        legendaryChanceBoost: 0.1
+      },
+      {
+        id: 'follow',
+        name: '循声探索',
+        desc: '跟随声音的指引前进，收获与风险并存',
+        riskChance: 0.15,
+        rewardMultiplier: 1.6,
+        onRisk: { valuePenalty: 0.7, penaltyTag: '迷失方向' },
+        onSuccess: { bonusCoins: [100, 300], rareAndAboveBoost: 0.2, successTag: '发现遗迹残骸' },
+        extraRarityBoost: { rare: 1.3, epic: 1.5 }
+      },
+      {
+        id: 'record',
+        name: '记录存档',
+        desc: '保存信号以后研究，收益稳定风险极低',
+        riskChance: 0.05,
+        rewardMultiplier: 1.4,
+        onRisk: { valuePenalty: 0.95, penaltyTag: '记录失败' },
+        onSuccess: { supplyDrop: { chance: 0.4, supply: 'fuel', min: 2, max: 5 }, successTag: '记录归档完成' }
+      }
     ],
     ambience: { rainIntensity: 0.8, waveIntensity: 0.9, floatIntensity: 1.5, auroraEffect: true }
   }

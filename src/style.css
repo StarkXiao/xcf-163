@@ -3403,6 +3403,37 @@ html, body {
   display: flex;
   gap: 15px;
   font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.nv-branch-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.nv-risk-detail, .nv-reward-detail {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nv-risk-detail {
+  color: #ff8888;
+  border: 1px solid rgba(255, 80, 80, 0.3);
+}
+
+.nv-reward-detail {
+  color: #88ffaa;
+  border: 1px solid rgba(80, 255, 120, 0.3);
+}
+
+.nv-event-bonus {
+  color: #aaa;
+  font-size: 11px;
+  margin-top: 4px;
 }
 
 .nv-reward {

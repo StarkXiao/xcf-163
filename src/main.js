@@ -298,10 +298,17 @@ class Game {
         <div class="nv-info">
           <h3 class="nv-title" style="color: ${hexColor};">${event.name}</h3>
           <p class="nv-desc">${event.desc}</p>
+          <p class="nv-event-bonus" style="color: #aaa; font-size: 11px; margin-top: 4px;">
+            全局加成：价值 ×${event.valueMultiplier.toFixed(1)}${event.extraRewards && event.extraRewards.coins ? ` · 金币 +${event.extraRewards.coins[0]}~${event.extraRewards.coins[1]}` : ''}
+          </p>
         </div>
       </div>
       <div class="nv-branches">
-        ${event.branches.map((branch, idx) => `
+        ${event.branches.map((branch, idx) => {
+          const risk = branch.onRisk || {};
+          const success = branch.onSuccess || {};
+          const extraBoost = branch.extraRarityBoost ? Object.entries(branch.extraRarityBoost).map(([k, v]) => `${k}×${v.toFixed(1)}`).join(' ') : '';
+          return `
           <div class="nv-branch-card" data-branch-idx="${idx}">
             <div class="nv-branch-name">${branch.name}</div>
             <div class="nv-branch-desc">${branch.desc}</div>
@@ -309,8 +316,21 @@ class Game {
               <span class="nv-reward">奖励 ×${branch.rewardMultiplier.toFixed(1)}</span>
               <span class="nv-risk">风险 ${Math.round(branch.riskChance * 100)}%</span>
             </div>
+            <div class="nv-branch-detail">
+              ${risk.valuePenalty && risk.valuePenalty < 1 ? `<span class="nv-risk-detail">折损 ×${risk.valuePenalty.toFixed(2)}</span>` : ''}
+              ${risk.hullDamage ? `<span class="nv-risk-detail">船体 -${risk.hullDamage[0]}~${risk.hullDamage[1]}⚡</span>` : ''}
+              ${risk.comboReset ? `<span class="nv-risk-detail">连击中断</span>` : ''}
+              ${success.bonusCoins ? `<span class="nv-reward-detail">成功金币 +${success.bonusCoins[0]}~${success.bonusCoins[1]}</span>` : ''}
+              ${success.supplyDrop ? `<span class="nv-reward-detail">补给概率 ${Math.round(success.supplyDrop.chance * 100)}%</span>` : ''}
+              ${success.legendaryChanceBoost ? `<span class="nv-reward-detail">传说率 +${Math.round(success.legendaryChanceBoost * 100)}%</span>` : ''}
+              ${extraBoost ? `<span class="nv-reward-detail">稀有度 ${extraBoost}</span>` : ''}
+              ${branch.legendaryChanceBoost ? `<span class="nv-reward-detail">传说率 +${Math.round(branch.legendaryChanceBoost * 100)}%</span>` : ''}
+            </div>
           </div>
-        `).join('')}
+        `;}).join('')}
+      </div>
+      <div class="nv-note" style="font-size: 11px; color: #888; margin-bottom: 12px; line-height: 1.5;">
+        提示：每次打捞会独立判定分支风险，风险触发时收益按比例折损并可能扣能量/中断连击；成功时获得额外奖励。
       </div>
       <div class="modal-footer">
         <button class="modal-btn secondary" id="nv-cancel">暂不选择</button>
@@ -349,19 +369,16 @@ class Game {
       this.battleSystem.setNightVoyageEvent(event, branch);
     }
 
-    const riskRolled = Math.random() < branch.riskChance;
-    if (riskRolled) {
-      if (branch.hullDamage) {
-        const [minD, maxD] = branch.hullDamage;
-        const dmg = Math.floor(minD + Math.random() * (maxD - minD));
-        this.updateStats('energy', -Math.min(dmg, this.stats.energy - 1));
-        this.taskSystem.showHint(`⚠ ${event.name} · ${branch.name} 风险触发！能量 -${dmg}`);
-      } else {
-        this.taskSystem.showHint(`⚠ ${event.name} · ${branch.name} 风险触发，奖励减半！`);
-      }
+    const risk = branch.onRisk || {};
+    const success = branch.onSuccess || {};
+    const taglines = [];
+    taglines.push(`${event.icon} ${event.name} · ${branch.name}`);
+    taglines.push(`持续 ${Math.floor(event.durationMs / 1000)}s · 奖励 ×${(event.valueMultiplier * branch.rewardMultiplier).toFixed(1)}`);
+    if (branch.riskChance > 0 && risk.valuePenalty && risk.valuePenalty < 1) {
+      taglines.push(`风险${Math.round(branch.riskChance * 100)}%·折损×${risk.valuePenalty.toFixed(2)}`);
     }
+    this.taskSystem.showHint(taglines.join(' · '));
 
-    this.taskSystem.showHint(`${event.icon} ${event.name} · ${branch.name} 已激活！持续 ${Math.floor(event.durationMs / 1000)} 秒`);
     this.updateNightVoyageUI();
     this.startNightVoyageTimer(event.durationMs);
     this.saveProgress();

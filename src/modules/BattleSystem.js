@@ -9,6 +9,7 @@ export class BattleSystem {
     this.currentNightEvent = null;
     this.currentEventBranch = null;
     this.eventBonusCoins = 0;
+    this.currentBattleResult = null;
 
     this.modal = document.getElementById('battle-modal');
     this.titleEl = document.getElementById('battle-title');
@@ -34,6 +35,7 @@ export class BattleSystem {
     this.currentNightEvent = null;
     this.currentEventBranch = null;
     this.eventBonusCoins = 0;
+    this.currentBattleResult = null;
   }
 
   hasActiveNightEvent() {
@@ -41,10 +43,29 @@ export class BattleSystem {
   }
 
   getEventRarityBoost() {
-    if (this.currentNightEvent && this.currentNightEvent.rarityBoost) {
-      return this.currentNightEvent.rarityBoost;
+    if (!this.currentNightEvent || !this.currentNightEvent.rarityBoost) return null;
+    const boost = { ...this.currentNightEvent.rarityBoost };
+    if (this.currentEventBranch && this.currentEventBranch.extraRarityBoost) {
+      for (const [k, v] of Object.entries(this.currentEventBranch.extraRarityBoost)) {
+        boost[k] = (boost[k] || 1.0) * v;
+      }
     }
-    return null;
+    return boost;
+  }
+
+  getExtraRarityBoosts() {
+    const boosts = [];
+    if (this.currentNightEvent && this.currentNightEvent.extraRewards) {
+      const r = this.currentNightEvent.extraRewards;
+      if (r.rareAndAboveBoost) boosts.push({ type: 'rareAndAbove', value: r.rareAndAboveBoost });
+      if (r.epicAndAboveBoost) boosts.push({ type: 'epicAndAbove', value: r.epicAndAboveBoost });
+    }
+    if (this.currentEventBranch && this.currentEventBranch.onSuccess && this.currentBattleResult && this.currentBattleResult.success) {
+      const s = this.currentEventBranch.onSuccess;
+      if (s.rareAndAboveBoost) boosts.push({ type: 'rareAndAbove', value: s.rareAndAboveBoost });
+      if (s.legendaryChanceBoost) boosts.push({ type: 'legendary', value: s.legendaryChanceBoost });
+    }
+    return boosts;
   }
 
   getEventValueMultiplier() {
@@ -55,22 +76,61 @@ export class BattleSystem {
     if (this.currentEventBranch && this.currentEventBranch.rewardMultiplier) {
       mult *= this.currentEventBranch.rewardMultiplier;
     }
+    if (this.currentBattleResult && this.currentBattleResult.valuePenalty !== undefined) {
+      mult *= this.currentBattleResult.valuePenalty;
+    }
     return mult;
   }
 
-  rollEventRisk() {
-    if (!this.currentEventBranch && this.currentEventBranch.riskChance) {
-      return Math.random() < this.currentEventBranch.riskChance;
+  rollEventRiskPerBattle() {
+    if (!this.currentEventBranch) return { riskRolled: false, success: true };
+    const riskChance = this.currentEventBranch.riskChance || 0;
+    const riskRolled = Math.random() < riskChance;
+    const result = {
+      riskRolled,
+      success: !riskRolled,
+      valuePenalty: 1.0,
+      penaltyTag: null,
+      successTag: null,
+      bonusCoins: 0,
+      legendaryChanceBoost: 0,
+      hullDamage: 0,
+      comboReset: false,
+      supplyDrop: null
+    };
+    if (riskRolled && this.currentEventBranch.onRisk) {
+      const r = this.currentEventBranch.onRisk;
+      result.valuePenalty = r.valuePenalty !== undefined ? r.valuePenalty : 1.0;
+      result.penaltyTag = r.penaltyTag || null;
+      result.comboReset = !!r.comboReset;
+      if (r.hullDamage) {
+        const [mn, mx] = r.hullDamage;
+        result.hullDamage = Math.floor(mn + Math.random() * (mx - mn));
+      }
+    } else if (!riskRolled && this.currentEventBranch.onSuccess) {
+      const s = this.currentEventBranch.onSuccess;
+      result.successTag = s.successTag || null;
+      result.legendaryChanceBoost = s.legendaryChanceBoost || 0;
+      if (s.bonusCoins) {
+        const [mn, mx] = s.bonusCoins;
+        result.bonusCoins = Math.floor(mn + Math.random() * (mx - mn));
+      }
+      if (s.supplyDrop && Math.random() < s.supplyDrop.chance) {
+        const d = s.supplyDrop;
+        result.supplyDrop = { supply: d.supply, amount: Math.floor(d.min + Math.random() * (d.max - d.min + 1)) };
+      }
     }
-    return false;
+    return result;
   }
 
   getRandomCreatureWithEventBoost(tideSystem, comboCount, intelEffects) {
     const eventBoost = this.getEventRarityBoost();
-    if (eventBoost) {
+    const extraBoosts = this.getExtraRarityBoosts();
+    if (eventBoost || extraBoosts.length > 0) {
       const rarityEntries = Object.entries(RARITY);
       let totalWeight = 0;
       const adjustedWeights = {};
+      const baseBoost = eventBoost || {};
 
       for (const [name, rarity] of rarityEntries) {
         const key = getRarityKey(rarity);
@@ -85,12 +145,26 @@ export class BattleSystem {
           weight = weight * boost;
         }
 
-        if (eventBoost[key]) {
-          weight = weight * eventBoost[key];
+        if (baseBoost[key]) {
+          weight = weight * baseBoost[key];
         }
 
         if (this.currentEventBranch && this.currentEventBranch.legendaryChanceBoost && rarity === RARITY.LEGENDARY) {
           weight = weight * (1 + this.currentEventBranch.legendaryChanceBoost);
+        }
+
+        for (const eb of extraBoosts) {
+          if (eb.type === 'rareAndAbove' && (rarity === RARITY.RARE || rarity === RARITY.EPIC || rarity === RARITY.LEGENDARY)) {
+            weight = weight * (1 + eb.value);
+          } else if (eb.type === 'epicAndAbove' && (rarity === RARITY.EPIC || rarity === RARITY.LEGENDARY)) {
+            weight = weight * (1 + eb.value);
+          } else if (eb.type === 'legendary' && rarity === RARITY.LEGENDARY) {
+            weight = weight * (1 + eb.value);
+          }
+        }
+
+        if (this.currentBattleResult && this.currentBattleResult.legendaryChanceBoost && rarity === RARITY.LEGENDARY) {
+          weight = weight * (1 + this.currentBattleResult.legendaryChanceBoost);
         }
 
         if (intelEffects) {
@@ -134,17 +208,31 @@ export class BattleSystem {
     if (this.isBattling) return;
 
     this.isBattling = true;
+    this.currentBattleResult = this.rollEventRiskPerBattle();
 
     const tideSystem = this.game.tideSystem;
     const currentCombo = this.game.stats.comboCount || 0;
     const tavernSystem = this.game.tavernSystem;
     const intelEffects = tavernSystem ? tavernSystem.getIntelEffects() : null;
 
+    if (this.currentBattleResult.hullDamage && this.currentBattleResult.hullDamage > 0) {
+      const dmg = Math.min(this.currentBattleResult.hullDamage, this.game.stats.energy - 1);
+      if (dmg > 0) this.game.updateStats('energy', -dmg);
+      this.currentBattleResult.hullDamage = dmg;
+    }
+
+    if (this.currentBattleResult.comboReset) {
+      this.game.resetCombo();
+    }
+
     if (tideSystem) {
       const encounterRate = tideSystem.getAdjustedEncounterRate();
       let finalEncounterRate = (intelEffects && intelEffects.noEmptyCatch) ? 1.0 : encounterRate;
       if (this.hasActiveNightEvent()) {
         finalEncounterRate = Math.min(1.0, finalEncounterRate + 0.2);
+      }
+      if (this.currentNightEvent && this.currentNightEvent.extraRewards && this.currentNightEvent.extraRewards.epicAndAboveBoost) {
+        finalEncounterRate = Math.min(1.0, finalEncounterRate + 0.1);
       }
       if (Math.random() > finalEncounterRate) {
         this.game.resetCombo();
@@ -154,7 +242,8 @@ export class BattleSystem {
       }
     }
 
-    const newCombo = this.game.incrementCombo();
+    const effectiveCombo = this.currentBattleResult.comboReset ? 0 : currentCombo;
+    const newCombo = effectiveCombo > 0 ? this.game.incrementCombo() : this.game.incrementCombo();
     this.currentCreature = this.getRandomCreatureWithEventBoost(tideSystem, newCombo, intelEffects);
     this.currentCreature.tier = 1;
     this.currentCreature.affixes = generateRandomAffixes(this.currentCreature);
@@ -174,6 +263,12 @@ export class BattleSystem {
     }
     const branchMult = this.currentEventBranch ? (this.currentEventBranch.rewardMultiplier || 1.0) : 1.0;
     this.eventBonusCoins = Math.floor(this.eventBonusCoins * branchMult);
+    if (this.currentBattleResult.bonusCoins) {
+      this.eventBonusCoins += this.currentBattleResult.bonusCoins;
+    }
+    if (this.currentBattleResult.valuePenalty !== undefined) {
+      this.eventBonusCoins = Math.floor(this.eventBonusCoins * this.currentBattleResult.valuePenalty);
+    }
 
     this.showModal(newCombo);
     this.game.updateStats('catchCount', 1);
@@ -221,6 +316,7 @@ export class BattleSystem {
     const baseValue = calculateCreatureValue(c, c.tier || 1, c.affixes);
     const valueMult = this.getEventValueMultiplier();
     const actualValue = Math.floor(baseValue * valueMult);
+    const res = this.currentBattleResult;
 
     let titleText = c.rarity.name === '传说' ? '传说降临！' :
                     c.rarity.name === '史诗' ? '史诗发现！' :
@@ -228,6 +324,12 @@ export class BattleSystem {
 
     if (this.hasActiveNightEvent() && this.currentNightEvent) {
       titleText = `${this.currentNightEvent.icon} ${this.currentNightEvent.name} · ${titleText}`;
+    }
+
+    if (res && res.riskRolled) {
+      titleText = `⚠️ ${res.penaltyTag || '风险触发'} · ${titleText}`;
+    } else if (res && res.success && res.successTag) {
+      titleText = `✨ ${res.successTag} · ${titleText}`;
     }
 
     if (comboCount >= 2) {
@@ -242,9 +344,19 @@ export class BattleSystem {
     if (this.hasActiveNightEvent() && this.currentNightEvent) {
       displayColor = this.currentNightEvent.color;
     }
+    if (res && res.riskRolled) {
+      displayColor = 0xff2222;
+    }
     this.displayEl.style.background = `radial-gradient(circle, rgba(${this.hexToRgb(displayColor)}, 0.4) 0%, transparent 70%)`;
     if (this.hasActiveNightEvent()) {
       this.displayEl.classList.add('night-event-glow');
+    }
+    if (res && res.riskRolled) {
+      this.displayEl.style.filter = 'drop-shadow(0 0 20px rgba(255, 50, 50, 0.9)) saturate(1.2)';
+    } else if (res && res.success && res.successTag) {
+      this.displayEl.style.filter = 'drop-shadow(0 0 20px rgba(100, 255, 150, 0.7)) saturate(1.1)';
+    } else {
+      this.displayEl.style.filter = '';
     }
 
     if (comboCount >= 3) {
@@ -269,11 +381,29 @@ export class BattleSystem {
     this.rarityEl.className = `stat-data ${c.rarity.class}`;
 
     let valueText = `${actualValue} 金币`;
-    if (valueMult > 1.0) {
-      valueText += ` (×${valueMult.toFixed(1)} 夜航加成)`;
+    if (valueMult > 1.0 || (res && res.valuePenalty && res.valuePenalty < 1.0)) {
+      valueText += ` (×${valueMult.toFixed(2)}`;
+      if (res && res.valuePenalty && res.valuePenalty < 1.0) {
+        valueText += ` 含风险折损${Math.round((1 - res.valuePenalty) * 100)}%)`;
+      } else {
+        valueText += ` 夜航加成)`;
+      }
     }
     if (this.eventBonusCoins > 0) {
       valueText += ` +${this.eventBonusCoins}💰 事件奖励`;
+    }
+    if (res && res.supplyDrop) {
+      const supplyIcons = { food: '🍖', fuel: '⛽', repair: '🔧' };
+      const supplyNames = { food: '食物', fuel: '燃料', repair: '维修零件' };
+      const si = supplyIcons[res.supplyDrop.supply] || '📦';
+      const sn = supplyNames[res.supplyDrop.supply] || res.supplyDrop.supply;
+      valueText += ` ${si}+${res.supplyDrop.amount} ${sn}`;
+    }
+    if (res && res.hullDamage > 0) {
+      valueText += ` ⚠️能量-${res.hullDamage}`;
+    }
+    if (res && res.comboReset) {
+      valueText += ` 💔连击中断`;
     }
 
     if (c.affixes && c.affixes.length > 0) {
@@ -301,6 +431,13 @@ export class BattleSystem {
     } else {
       this.modal.classList.remove('night-event-modal');
     }
+    if (res && res.riskRolled) {
+      this.modal.style.borderColor = '#ff3333';
+    } else if (res && res.success && res.successTag) {
+      this.modal.style.borderColor = '#55ff88';
+    } else {
+      this.modal.style.borderColor = '';
+    }
 
     if (comboCount >= 3 && isComboMilestone(comboCount)) {
       this.showComboEffect(comboCount);
@@ -326,19 +463,51 @@ export class BattleSystem {
 
   collectCreature() {
     if (!this.currentCreature) return;
+    const res = this.currentBattleResult;
 
     const valueMult = this.getEventValueMultiplier();
     const creature = { ...this.currentCreature };
-    if (valueMult > 1.0) {
-      creature.value = Math.floor((creature.value || 0) * valueMult);
-      creature.nightEventBonus = true;
+    creature.value = Math.floor((creature.value || calculateCreatureValue(creature, creature.tier || 1, creature.affixes)) * valueMult);
+    if (this.hasActiveNightEvent()) creature.nightEventBonus = true;
+    if (res && res.riskRolled) creature.riskAffected = res.penaltyTag;
+    if (res && res.success && res.successTag) creature.successBonus = res.successTag;
+
+    const parts = [];
+    const backpackOk = this.game.addToBackpack(creature);
+    if (!backpackOk) {
+      parts.push(`背包已满，${this.currentCreature.name}直接出售得${creature.value}💰`);
+    } else {
+      parts.push(`已收集${this.currentCreature.name}`);
     }
 
-    this.game.addToBackpack(creature);
+    let totalCoins = 0;
     if (this.eventBonusCoins > 0) {
       this.game.updateStats('coins', this.eventBonusCoins);
-      this.game.taskSystem.showHint(`夜航事件奖励 +${this.eventBonusCoins}💰`);
+      totalCoins += this.eventBonusCoins;
+      parts.push(`事件奖励 +${this.eventBonusCoins}💰`);
     }
+
+    if (res && res.supplyDrop) {
+      const supplyNames = { food: '食物', fuel: '燃料', repair: '维修零件' };
+      const sn = supplyNames[res.supplyDrop.supply] || res.supplyDrop.supply;
+      if (this.game.expedition) {
+        this.game.expedition.addSupply(res.supplyDrop.supply, res.supplyDrop.amount);
+      }
+      parts.push(`补给掉落 +${res.supplyDrop.amount} ${sn}`);
+    }
+
+    if (res && res.riskRolled) {
+      if (res.hullDamage > 0) parts.push(`船体损伤 -${res.hullDamage}⚡`);
+      if (res.comboReset) parts.push('连击已中断');
+      parts.unshift(`⚠️ ${res.penaltyTag || '风险触发'}`);
+    } else if (res && res.success && res.successTag) {
+      parts.unshift(`✨ ${res.successTag}`);
+    }
+
+    if (parts.length > 0) {
+      this.game.taskSystem.showHint(parts.join(' · '));
+    }
+
     this.game.checkTasks('collect_rarity', this.currentCreature.rarity);
     this.game.checkTasks('unique_collected');
     this.game.checkTasks('night_voyage_catch');
@@ -348,13 +517,36 @@ export class BattleSystem {
 
   releaseCreature() {
     if (this.currentCreature) {
+      const res = this.currentBattleResult;
       const baseValue = calculateCreatureValue(this.currentCreature, this.currentCreature.tier || 1, this.currentCreature.affixes);
       const valueMult = this.getEventValueMultiplier();
       const actualValue = Math.floor(baseValue * valueMult);
-      const bonus = Math.floor(actualValue * 0.3) + this.eventBonusCoins;
-      this.game.updateStats('coins', bonus);
-      if (this.eventBonusCoins > 0) {
-        this.game.taskSystem.showHint(`夜航事件奖励 +${this.eventBonusCoins}💰`);
+      const sellBonus = Math.floor(actualValue * 0.3);
+      const totalCoins = sellBonus + this.eventBonusCoins;
+      this.game.updateStats('coins', totalCoins);
+
+      const parts = [`放生得${sellBonus}💰`];
+      if (this.eventBonusCoins > 0) parts.push(`事件奖励 +${this.eventBonusCoins}💰`);
+
+      if (res && res.supplyDrop) {
+        const supplyNames = { food: '食物', fuel: '燃料', repair: '维修零件' };
+        const sn = supplyNames[res.supplyDrop.supply] || res.supplyDrop.supply;
+        if (this.game.expedition) {
+          this.game.expedition.addSupply(res.supplyDrop.supply, res.supplyDrop.amount);
+        }
+        parts.push(`补给掉落 +${res.supplyDrop.amount} ${sn}`);
+      }
+
+      if (res && res.riskRolled) {
+        if (res.hullDamage > 0) parts.push(`船体损伤 -${res.hullDamage}⚡`);
+        if (res.comboReset) parts.push('连击已中断');
+        parts.unshift(`⚠️ ${res.penaltyTag || '风险触发'}`);
+      } else if (res && res.success && res.successTag) {
+        parts.unshift(`✨ ${res.successTag}`);
+      }
+
+      if (parts.length > 0) {
+        this.game.taskSystem.showHint(parts.join(' · '));
       }
     }
 
