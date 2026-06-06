@@ -3,6 +3,8 @@ const CHAMBER_CYCLE_KEY_PREFIX = 'cyber_harbor_cycle_';
 const CHAMBER_META_KEY = 'cyber_harbor_chamber_meta';
 const EXPEDITION_KEY_PREFIX = 'cyber_harbor_expedition_';
 const EXPEDITION_META_KEY = 'cyber_harbor_expedition_meta';
+const RUINS_KEY_PREFIX = 'cyber_harbor_ruins_';
+const RUINS_META_KEY = 'cyber_harbor_ruins_meta';
 
 export class Storage {
   static save(data) {
@@ -243,5 +245,111 @@ export class Storage {
 
   static generateExpeditionId() {
     return `exp_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+  }
+
+  static saveRuinsDive(diveId, data) {
+    try {
+      const json = JSON.stringify(data);
+      localStorage.setItem(RUINS_KEY_PREFIX + diveId, json);
+      const meta = this.getRuinsMeta();
+      if (!meta.history.includes(diveId)) {
+        meta.history.unshift(diveId);
+        meta.history = meta.history.slice(0, 20);
+      }
+      meta.lastDiveId = diveId;
+      meta.updatedAt = Date.now();
+      localStorage.setItem(RUINS_META_KEY, JSON.stringify(meta));
+      return true;
+    } catch (e) {
+      console.error('废墟潜航保存失败:', e);
+      return false;
+    }
+  }
+
+  static loadRuinsDive(diveId) {
+    try {
+      const json = localStorage.getItem(RUINS_KEY_PREFIX + diveId);
+      if (!json) return null;
+      return JSON.parse(json);
+    } catch (e) {
+      console.error('废墟潜航读取失败:', e);
+      return null;
+    }
+  }
+
+  static deleteRuinsDive(diveId) {
+    try {
+      localStorage.removeItem(RUINS_KEY_PREFIX + diveId);
+      const meta = this.getRuinsMeta();
+      meta.history = meta.history.filter(id => id !== diveId);
+      if (meta.lastDiveId === diveId) {
+        meta.lastDiveId = meta.history[0] || null;
+      }
+      localStorage.setItem(RUINS_META_KEY, JSON.stringify(meta));
+      return true;
+    } catch (e) {
+      console.error('废墟潜航删除失败:', e);
+      return false;
+    }
+  }
+
+  static listRuinsDives() {
+    const meta = this.getRuinsMeta();
+    const dives = [];
+    meta.history.forEach(id => {
+      try {
+        const json = localStorage.getItem(RUINS_KEY_PREFIX + id);
+        if (json) {
+          const data = JSON.parse(json);
+          dives.push({
+            id,
+            tierId: data.tierId,
+            tierName: data.tierName,
+            tierIcon: data.tierIcon,
+            startedAt: data.startedAt,
+            endedAt: data.endedAt || null,
+            completed: !!data.completed,
+            emergencyEvac: data.emergencyEvac,
+            depth: data.depth,
+            earnings: data.earnings || 0,
+            enemiesDefeated: data.enemiesDefeated || 0,
+            puzzlesSolved: data.puzzlesSolved || 0,
+            treasuresFound: data.treasuresFound || 0
+          });
+        }
+      } catch (e) {
+      }
+    });
+    return dives;
+  }
+
+  static getRuinsMeta() {
+    try {
+      const json = localStorage.getItem(RUINS_META_KEY);
+      if (!json) {
+        return { history: [], lastDiveId: null, updatedAt: null };
+      }
+      return JSON.parse(json);
+    } catch (e) {
+      return { history: [], lastDiveId: null, updatedAt: null };
+    }
+  }
+
+  static clearAllRuinsDives() {
+    try {
+      const meta = this.getRuinsMeta();
+      meta.history.forEach(id => {
+        localStorage.removeItem(RUINS_KEY_PREFIX + id);
+      });
+      localStorage.removeItem(RUINS_META_KEY);
+      return true;
+    } catch (e) {
+      console.error('清除废墟潜航记录失败:', e);
+      return false;
+    }
+  }
+
+  static generateRuinsDiveId() {
+    return `ruins_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
   }
 }

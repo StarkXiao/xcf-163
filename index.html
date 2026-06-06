@@ -109,6 +109,10 @@
           <span class="new-indicator hidden" id="new-broadcast-indicator">📡</span>
           <span class="new-indicator hidden" id="new-story-indicator">✨</span>
         </button>
+        <button class="action-btn" id="btn-ruins">
+          <span class="btn-icon">🏚️</span>
+          <span class="btn-text">废墟</span>
+        </button>
       </div>
     </div>
 
@@ -470,6 +474,42 @@
         <div class="modal-footer">
           <button class="modal-btn secondary" id="btn-close-story">关闭</button>
         </div>
+      </div>
+    </div>
+
+    <div id="ruins-modal" class="modal hidden">
+      <div class="modal-content ruins-content">
+        <h2 class="modal-title">🏚️ 废墟潜航</h2>
+        <div class="chamber-tabs ruins-tabs">
+          <button class="ruins-tab active" data-tab="overview">📊 总览</button>
+          <button class="ruins-tab" data-tab="tiers">🗺️ 遗迹</button>
+          <button class="ruins-tab" data-tab="supplies">📦 补给</button>
+          <button class="ruins-tab" data-tab="upgrades">⚙️ 升级</button>
+          <button class="ruins-tab" data-tab="dive">🌊 潜航</button>
+          <button class="ruins-tab" data-tab="history">📜 历史</button>
+        </div>
+
+        <div class="chamber-tab-content ruins-tab-content" data-tab="overview" id="ruins-overview"></div>
+        <div class="chamber-tab-content ruins-tab-content hidden" data-tab="tiers" id="ruins-tiers"></div>
+        <div class="chamber-tab-content ruins-tab-content hidden" data-tab="supplies" id="ruins-supplies"></div>
+        <div class="chamber-tab-content ruins-tab-content hidden" data-tab="upgrades" id="ruins-upgrades"></div>
+        <div class="chamber-tab-content ruins-tab-content hidden" data-tab="dive" id="ruins-dive-map"></div>
+        <div class="chamber-tab-content ruins-tab-content hidden" data-tab="history" id="ruins-history"></div>
+
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-ruins">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="ruins-settlement-modal" class="modal hidden">
+      <div class="modal-content settlement-content" id="ruins-settlement-content"></div>
+    </div>
+
+    <div id="ruins-battle-modal" class="modal hidden">
+      <div class="modal-content ruins-battle-content">
+        <h2 class="modal-title">⚔️ 遗迹战斗</h2>
+        <div id="ruins-battle-content"></div>
       </div>
     </div>
   </div>

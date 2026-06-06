@@ -13,6 +13,7 @@ import { DeepSeaExpedition } from './modules/DeepSeaExpedition.js';
 import { TavernSystem } from './modules/TavernSystem.js';
 import { PortCommission } from './modules/PortCommission.js';
 import { StorySystem } from './modules/StorySystem.js';
+import { RuinsDive } from './modules/RuinsDive.js';
 import { COMBO_CONFIG, getComboEnergyDiscount, getComboEnergyRegenBonus } from './data/creatures.js';
 import { rollNightVoyageEvent } from './data/deepSeaExpedition.js';
 
@@ -32,6 +33,7 @@ class Game {
     this.tavernSystem = null;
     this.portCommission = null;
     this.storySystem = null;
+    this.ruinsDive = null;
 
     this.stats = {
       energy: 100,
@@ -111,6 +113,9 @@ class Game {
     document.getElementById('btn-tavern').addEventListener('click', () => {
       if (this.tavernSystem) this.tavernSystem.openTavern();
     });
+    document.getElementById('btn-ruins').addEventListener('click', () => {
+      if (this.ruinsDive) this.ruinsDive.openRuins();
+    });
   }
 
   async loadResources() {
@@ -156,6 +161,7 @@ class Game {
     this.tavernSystem = new TavernSystem(this);
     this.portCommission = new PortCommission(this);
     this.storySystem = new StorySystem(this);
+    this.ruinsDive = new RuinsDive(this);
     this.stallSystem = this.chamber.stallSystem;
     this.pricingSystem = this.chamber.pricingSystem;
     this.customerSystem = this.chamber.customerSystem;
@@ -599,6 +605,7 @@ class Game {
       tavern: this.tavernSystem ? this.tavernSystem.toJSON() : null,
       portCommission: this.portCommission ? this.portCommission.toJSON() : null,
       story: this.storySystem ? this.storySystem.toJSON() : null,
+      ruinsDive: this.ruinsDive ? this.ruinsDive.toJSON() : null,
       timestamp: Date.now()
     };
     Storage.save(saveData);
@@ -638,6 +645,9 @@ class Game {
       }
       if (this.storySystem && data.story) {
         this.storySystem.loadData(data.story);
+      }
+      if (this.ruinsDive && data.ruinsDive) {
+        this.ruinsDive.loadData(data.ruinsDive);
       }
       if (this.tideSystem && data.tide) {
         this.tideSystem.init(data.tide);
