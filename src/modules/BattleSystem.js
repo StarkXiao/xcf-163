@@ -1,4 +1,4 @@
-import { getRandomCreature } from '../data/creatures.js';
+import { getRandomCreature, generateRandomAffixes, calculateCreatureValue } from '../data/creatures.js';
 
 export class BattleSystem {
   constructor(game) {
@@ -42,6 +42,8 @@ export class BattleSystem {
     }
     
     this.currentCreature = getRandomCreature(tideSystem);
+    this.currentCreature.tier = 1;
+    this.currentCreature.affixes = generateRandomAffixes(this.currentCreature);
     
     if (tideSystem) {
       tideSystem.recordCatch();
@@ -84,6 +86,7 @@ export class BattleSystem {
   showModal() {
     const c = this.currentCreature;
     const quote = c.quotes[Math.floor(Math.random() * c.quotes.length)];
+    const actualValue = calculateCreatureValue(c, c.tier || 1, c.affixes);
     
     this.titleEl.textContent = c.rarity.name === '传说' ? '传说降临！' : 
                               c.rarity.name === '史诗' ? '史诗发现！' :
@@ -95,7 +98,14 @@ export class BattleSystem {
     this.nameEl.textContent = c.name;
     this.rarityEl.textContent = c.rarity.name;
     this.rarityEl.className = `stat-data ${c.rarity.class}`;
-    this.valueEl.textContent = `${c.value} 金币`;
+    this.valueEl.textContent = `${actualValue} 金币`;
+    
+    if (c.affixes && c.affixes.length > 0) {
+      const affixNames = c.affixes.map(a => a.name).join('、');
+      this.valueEl.textContent += ` | ${affixNames}`;
+      this.valueEl.style.fontSize = '12px';
+      this.valueEl.style.lineHeight = '1.4';
+    }
     
     this.collectBtn.style.display = '';
     this.releaseBtn.textContent = '放生';
@@ -119,7 +129,8 @@ export class BattleSystem {
 
   releaseCreature() {
     if (this.currentCreature) {
-      const bonus = Math.floor(this.currentCreature.value * 0.3);
+      const actualValue = calculateCreatureValue(this.currentCreature, this.currentCreature.tier || 1, this.currentCreature.affixes);
+      const bonus = Math.floor(actualValue * 0.3);
       this.game.updateStats('coins', bonus);
     }
     

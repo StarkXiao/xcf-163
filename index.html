@@ -66,6 +66,10 @@
           <span class="btn-icon">🎒</span>
           <span class="btn-text">背包</span>
         </button>
+        <button class="action-btn" id="btn-workshop">
+          <span class="btn-icon">⚙️</span>
+          <span class="btn-text">工坊</span>
+        </button>
         <button class="action-btn" id="btn-collection">
           <span class="btn-icon">📖</span>
           <span class="btn-text">图鉴</span>
@@ -149,8 +153,16 @@
             <span class="stat-data" id="detail-rarity"></span>
           </div>
           <div class="stat-row">
+            <span class="stat-name">品阶</span>
+            <span class="stat-data" id="detail-tier"></span>
+          </div>
+          <div class="stat-row">
             <span class="stat-name">描述</span>
             <span class="stat-data" id="detail-desc"></span>
+          </div>
+          <div class="stat-row" id="detail-affixes-row">
+            <span class="stat-name">词条</span>
+            <span class="stat-data" id="detail-affixes"></span>
           </div>
           <div class="stat-row">
             <span class="stat-name">数量</span>
@@ -158,8 +170,59 @@
           </div>
         </div>
         <div class="modal-footer">
+          <button class="modal-btn accent" id="btn-reinforce-item">⚙️ 强化</button>
           <button class="modal-btn primary" id="btn-sell-item">出售</button>
           <button class="modal-btn secondary" id="btn-close-detail">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="workshop-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2 class="modal-title">强化工坊</h2>
+        <div class="materials-bar" id="workshop-materials"></div>
+        <p class="workshop-hint">选择要强化的机械残骸</p>
+        <div class="inventory-grid" id="reinforce-grid"></div>
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-workshop">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="reinforce-modal" class="modal hidden">
+      <div class="modal-content reinforce-content">
+        <h2 class="modal-title" id="reinforce-title">强化工坊</h2>
+        <div class="creature-display" id="reinforce-display"></div>
+        <div class="battle-stats">
+          <div class="stat-row">
+            <span class="stat-name">名称</span>
+            <span class="stat-data" id="reinforce-name"></span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">稀有度</span>
+            <span class="stat-data" id="reinforce-rarity"></span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">品阶</span>
+            <span class="stat-data" id="reinforce-tier"></span>
+          </div>
+        </div>
+        <div class="affix-list" id="reinforce-affixes"></div>
+        <div class="reinforce-panels">
+          <div class="reinforce-panel">
+            <div id="reinforce-cost"></div>
+            <button class="modal-btn primary full-width" id="btn-upgrade">升阶</button>
+          </div>
+          <div class="reinforce-panel">
+            <div id="scrap-reward"></div>
+            <button class="modal-btn danger full-width" id="btn-scrap">拆解</button>
+          </div>
+        </div>
+        <div class="reinforce-reroll">
+          <button class="modal-btn accent full-width" id="btn-reroll-affix">🔄 重铸词条</button>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-reinforce">返回</button>
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { Inventory } from './modules/Inventory.js';
 import { TaskSystem } from './modules/TaskSystem.js';
 import { Storage } from './modules/Storage.js';
 import { TideSystem } from './modules/TideSystem.js';
+import { ReinforceSystem } from './modules/ReinforceSystem.js';
 
 class Game {
   constructor() {
@@ -16,6 +17,7 @@ class Game {
     this.inventory = null;
     this.taskSystem = null;
     this.tideSystem = null;
+    this.reinforceSystem = null;
     
     this.stats = {
       energy: 100,
@@ -59,6 +61,9 @@ class Game {
   bindUIEvents() {
     document.getElementById('btn-catch').addEventListener('click', () => this.tryCatch());
     document.getElementById('btn-backpack').addEventListener('click', () => this.inventory.openBackpack());
+    document.getElementById('btn-workshop').addEventListener('click', () => {
+      if (this.reinforceSystem) this.reinforceSystem.openWorkshop();
+    });
     document.getElementById('btn-collection').addEventListener('click', () => this.inventory.openCollection());
     document.getElementById('btn-task').addEventListener('click', () => this.taskSystem.openTaskList());
   }
@@ -99,6 +104,7 @@ class Game {
     this.battleSystem = new BattleSystem(this);
     this.inventory = new Inventory(this);
     this.taskSystem = new TaskSystem(this);
+    this.reinforceSystem = new ReinforceSystem(this);
   }
 
   showGameUI() {
@@ -233,6 +239,7 @@ class Game {
       inventory: this.inventory.toJSON(),
       tasks: this.taskSystem.toJSON(),
       tide: this.tideSystem ? this.tideSystem.toJSON() : null,
+      reinforce: this.reinforceSystem ? this.reinforceSystem.toJSON() : null,
       timestamp: Date.now()
     };
     Storage.save(saveData);
@@ -246,6 +253,9 @@ class Game {
       }
       this.inventory.loadData(data.inventory || {});
       this.taskSystem.loadData(data.tasks || {});
+      if (this.reinforceSystem && data.reinforce) {
+        this.reinforceSystem.loadData(data.reinforce);
+      }
       if (this.tideSystem && data.tide) {
         this.tideSystem.init(data.tide);
       } else if (this.tideSystem) {

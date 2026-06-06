@@ -332,6 +332,87 @@ export const TASKS = [
     type: 'unique_collected',
     target: CREATURES.length,
     reward: { coins: 10000 }
+  },
+  {
+    id: 'tut_workshop',
+    name: '探索工坊',
+    desc: '点击底部「工坊」按钮，进入强化工坊。',
+    type: 'workshop_open',
+    target: 1,
+    reward: { coins: 50 },
+    isTutorial: true
+  },
+  {
+    id: 'first_scrap',
+    name: '初次拆解',
+    desc: '在工坊中拆解1个机械残骸获取材料。',
+    type: 'scrap_count',
+    target: 1,
+    reward: { coins: 100, energy: 20 }
+  },
+  {
+    id: 'scrap_5',
+    name: '回收专家',
+    desc: '累计拆解5个机械残骸。',
+    type: 'scrap_count',
+    target: 5,
+    reward: { coins: 300 }
+  },
+  {
+    id: 'first_upgrade',
+    name: '初次升阶',
+    desc: '在工坊中将1个机械残骸升阶。',
+    type: 'upgrade_success',
+    target: 1,
+    reward: { coins: 150, energy: 30 }
+  },
+  {
+    id: 'upgrade_3',
+    name: '强化学徒',
+    desc: '累计完成3次升阶。',
+    type: 'upgrade_success',
+    target: 3,
+    reward: { coins: 400 }
+  },
+  {
+    id: 'upgrade_10',
+    name: '强化大师',
+    desc: '累计完成10次升阶。',
+    type: 'upgrade_success',
+    target: 10,
+    reward: { coins: 1500, energy: 100 }
+  },
+  {
+    id: 'reach_tier_3',
+    name: '品阶突破',
+    desc: '将任意机械残骸升至品阶 Lv.3。',
+    type: 'upgrade_tier',
+    target: 3,
+    reward: { coins: 500 }
+  },
+  {
+    id: 'reach_tier_5',
+    name: '高阶杰作',
+    desc: '将任意机械残骸升至品阶 Lv.5。',
+    type: 'upgrade_tier',
+    target: 5,
+    reward: { coins: 2000, energy: 100 }
+  },
+  {
+    id: 'first_reroll',
+    name: '词条重铸',
+    desc: '使用金币重铸1次机械残骸的词条。',
+    type: 'reroll_count',
+    target: 1,
+    reward: { coins: 100 }
+  },
+  {
+    id: 'reroll_5',
+    name: '词条匠人',
+    desc: '累计重铸词条5次。',
+    type: 'reroll_count',
+    target: 5,
+    reward: { coins: 600, energy: 50 }
   }
 ];
 
@@ -366,4 +447,150 @@ export function getRandomCreature(tideSystem = null) {
   
   const availableCreatures = CREATURES.filter(c => c.rarity === selectedRarity);
   return availableCreatures[Math.floor(Math.random() * availableCreatures.length)];
+}
+
+export const AFFIX_POOL = {
+  attack: [
+    { id: 'atk_1', name: '锐利边缘', desc: '价值 +5%', valueBonus: 0.05, tier: 1 },
+    { id: 'atk_2', name: '高速切割', desc: '价值 +10%', valueBonus: 0.10, tier: 2 },
+    { id: 'atk_3', name: '等离子刃', desc: '价值 +18%', valueBonus: 0.18, tier: 3 },
+    { id: 'atk_4', name: '量子斩击', desc: '价值 +30%', valueBonus: 0.30, tier: 4 }
+  ],
+  defense: [
+    { id: 'def_1', name: '强化装甲', desc: '拆解产出 +10%', scrapBonus: 0.10, tier: 1 },
+    { id: 'def_2', name: '合金外壳', desc: '拆解产出 +20%', scrapBonus: 0.20, tier: 2 },
+    { id: 'def_3', name: '能量护盾', desc: '拆解产出 +35%', scrapBonus: 0.35, tier: 3 },
+    { id: 'def_4', name: '维度壁垒', desc: '拆解产出 +50%', scrapBonus: 0.50, tier: 4 }
+  ],
+  utility: [
+    { id: 'util_1', name: '节能模块', desc: '升阶消耗 -5%', upgradeCostDiscount: 0.05, tier: 1 },
+    { id: 'util_2', name: '优化回路', desc: '升阶消耗 -10%', upgradeCostDiscount: 0.10, tier: 2 },
+    { id: 'util_3', name: '超导芯片', desc: '升阶消耗 -18%', upgradeCostDiscount: 0.18, tier: 3 },
+    { id: 'util_4', name: '神核AI', desc: '升阶消耗 -30%', upgradeCostDiscount: 0.30, tier: 4 }
+  ],
+  luck: [
+    { id: 'luck_1', name: '幸运标记', desc: '词条强化概率 +5%', affixLuckBonus: 0.05, tier: 1 },
+    { id: 'luck_2', name: '数据祝福', desc: '词条强化概率 +10%', affixLuckBonus: 0.10, tier: 2 },
+    { id: 'luck_3', name: '命运齿轮', desc: '词条强化概率 +18%', affixLuckBonus: 0.18, tier: 3 },
+    { id: 'luck_4', name: '虚空馈赠', desc: '词条强化概率 +30%', affixLuckBonus: 0.30, tier: 4 }
+  ]
+};
+
+export const AFFIX_CATEGORIES = ['attack', 'defense', 'utility', 'luck'];
+
+export const RARITY_AFFIX_SLOTS = {
+  [RARITY.COMMON.name]: 1,
+  [RARITY.UNCOMMON.name]: 1,
+  [RARITY.RARE.name]: 2,
+  [RARITY.EPIC.name]: 2,
+  [RARITY.LEGENDARY.name]: 3
+};
+
+export const RARITY_MAX_TIER = {
+  [RARITY.COMMON.name]: 3,
+  [RARITY.UNCOMMON.name]: 4,
+  [RARITY.RARE.name]: 5,
+  [RARITY.EPIC.name]: 6,
+  [RARITY.LEGENDARY.name]: 8
+};
+
+export const MATERIALS = {
+  common_scrap: { id: 'common_scrap', name: '普通废料', icon: '🔩', rarity: RARITY.COMMON, value: 2 },
+  alloy_plate: { id: 'alloy_plate', name: '合金板', icon: '🛡️', rarity: RARITY.UNCOMMON, value: 8 },
+  energy_core: { id: 'energy_core', name: '能量核心', icon: '💠', rarity: RARITY.RARE, value: 30 },
+  nano_swarm: { id: 'nano_swarm', name: '纳米集群', icon: '✨', rarity: RARITY.EPIC, value: 100 },
+  void_crystal: { id: 'void_crystal', name: '虚空晶体', icon: '🔮', rarity: RARITY.LEGENDARY, value: 400 }
+};
+
+export const SCRAP_MATERIAL_MAP = {
+  [RARITY.COMMON.name]: [{ material: 'common_scrap', min: 1, max: 3 }],
+  [RARITY.UNCOMMON.name]: [{ material: 'common_scrap', min: 2, max: 4 }, { material: 'alloy_plate', min: 0, max: 1 }],
+  [RARITY.RARE.name]: [{ material: 'alloy_plate', min: 2, max: 4 }, { material: 'energy_core', min: 0, max: 1 }],
+  [RARITY.EPIC.name]: [{ material: 'energy_core', min: 1, max: 3 }, { material: 'nano_swarm', min: 0, max: 1 }],
+  [RARITY.LEGENDARY.name]: [{ material: 'nano_swarm', min: 1, max: 2 }, { material: 'void_crystal', min: 0, max: 1 }]
+};
+
+export function getUpgradeCost(rarity, currentTier) {
+  const rarityKey = rarity.name;
+  const baseCost = {
+    [RARITY.COMMON.name]: 30,
+    [RARITY.UNCOMMON.name]: 60,
+    [RARITY.RARE.name]: 150,
+    [RARITY.EPIC.name]: 400,
+    [RARITY.LEGENDARY.name]: 1000
+  };
+  const coins = Math.floor(baseCost[rarityKey] * Math.pow(1.8, currentTier - 1));
+
+  const materialCosts = [];
+  const tier = currentTier;
+
+  if (rarity === RARITY.COMMON || rarity === RARITY.UNCOMMON) {
+    materialCosts.push({ material: 'common_scrap', count: 2 + tier });
+    if (tier >= 2) materialCosts.push({ material: 'alloy_plate', count: tier - 1 });
+  }
+  if (rarity === RARITY.RARE) {
+    materialCosts.push({ material: 'alloy_plate', count: 2 + tier });
+    if (tier >= 2) materialCosts.push({ material: 'energy_core', count: tier - 1 });
+  }
+  if (rarity === RARITY.EPIC) {
+    materialCosts.push({ material: 'energy_core', count: 1 + tier });
+    if (tier >= 2) materialCosts.push({ material: 'nano_swarm', count: tier - 1 });
+  }
+  if (rarity === RARITY.LEGENDARY) {
+    materialCosts.push({ material: 'nano_swarm', count: tier });
+    if (tier >= 3) materialCosts.push({ material: 'void_crystal', count: tier - 2 });
+  }
+
+  return { coins, materials: materialCosts };
+}
+
+export function generateRandomAffixes(creature) {
+  const slots = RARITY_AFFIX_SLOTS[creature.rarity.name] || 1;
+  const affixes = [];
+  const usedCategories = new Set();
+  const maxTierByRarity = {
+    [RARITY.COMMON.name]: 1,
+    [RARITY.UNCOMMON.name]: 2,
+    [RARITY.RARE.name]: 2,
+    [RARITY.EPIC.name]: 3,
+    [RARITY.LEGENDARY.name]: 4
+  };
+  const maxTier = maxTierByRarity[creature.rarity.name] || 1;
+
+  for (let i = 0; i < slots; i++) {
+    const availableCategories = AFFIX_CATEGORIES.filter(c => !usedCategories.has(c));
+    if (availableCategories.length === 0) break;
+
+    const category = availableCategories[Math.floor(Math.random() * availableCategories.length)];
+    usedCategories.add(category);
+
+    const pool = AFFIX_POOL[category].filter(a => a.tier <= maxTier);
+    const weights = pool.map(a => 5 - a.tier);
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
+    let random = Math.random() * totalWeight;
+    let selectedAffix = pool[0];
+    for (let j = 0; j < pool.length; j++) {
+      random -= weights[j];
+      if (random <= 0) {
+        selectedAffix = pool[j];
+        break;
+      }
+    }
+    affixes.push({ ...selectedAffix, category });
+  }
+
+  return affixes;
+}
+
+export function calculateCreatureValue(creature, tier, affixes) {
+  let value = creature.value;
+  value = value * (1 + (tier - 1) * 0.25);
+  if (affixes) {
+    affixes.forEach(affix => {
+      if (affix.valueBonus) {
+        value = value * (1 + affix.valueBonus);
+      }
+    });
+  }
+  return Math.floor(value);
 }

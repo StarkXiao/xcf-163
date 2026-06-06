@@ -52,6 +52,13 @@ export class TaskSystem {
           }
           break;
           
+        case 'workshop_open':
+          if (task.type === 'workshop_open') {
+            shouldUpdate = true;
+            progressValue = 1;
+          }
+          break;
+          
         case 'find_rarity':
           if (task.type === 'find_rarity' && data === task.rarity) {
             shouldUpdate = true;
@@ -98,6 +105,34 @@ export class TaskSystem {
               shouldUpdate = true;
               progressValue = task.progress + 1;
             }
+          }
+          break;
+
+        case 'scrap_count':
+          if (task.type === 'scrap_count') {
+            shouldUpdate = true;
+            progressValue = task.progress + 1;
+          }
+          break;
+
+        case 'upgrade_success':
+          if (task.type === 'upgrade_success') {
+            shouldUpdate = true;
+            progressValue = task.progress + 1;
+          }
+          break;
+
+        case 'upgrade_tier':
+          if (task.type === 'upgrade_tier' && typeof data === 'number') {
+            shouldUpdate = true;
+            progressValue = Math.max(task.progress, data);
+          }
+          break;
+
+        case 'reroll_count':
+          if (task.type === 'reroll_count') {
+            shouldUpdate = true;
+            progressValue = task.progress + 1;
           }
           break;
       }
