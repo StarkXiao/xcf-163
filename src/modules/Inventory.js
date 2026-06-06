@@ -112,6 +112,10 @@ export class Inventory {
             if (handled) return;
             const orderHandled = this.game.chamber.tryFulfillOrderFromBackpack(item, i);
             if (orderHandled) return;
+            const bmSellHandled = this.game.chamber.tryBlackMarketSellFromBackpack(item, i);
+            if (bmSellHandled) return;
+            const bmOrderHandled = this.game.chamber.tryBlackMarketFulfillOrderFromBackpack(item, i);
+            if (bmOrderHandled) return;
           }
           this.showItemDetail(item, 'backpack', i);
         });

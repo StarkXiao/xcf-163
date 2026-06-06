@@ -148,6 +148,8 @@ export class TaskSystem {
         case 'chamber_sale':
         case 'cycle_start':
         case 'cycle_end':
+        case 'blackmarket_sale':
+        case 'blackmarket_order':
           if (task.type === type) {
             shouldUpdate = true;
             progressValue = task.progress + 1;

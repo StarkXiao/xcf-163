@@ -2,8 +2,10 @@ import { StallSystem } from './StallSystem.js';
 import { PricingSystem } from './PricingSystem.js';
 import { CustomerSystem } from './CustomerSystem.js';
 import { OrderSystem } from './OrderSystem.js';
+import { BlackMarket } from './BlackMarket.js';
 import { Storage } from './Storage.js';
 import { CYCLE_LENGTH_SECONDS, MARKET_CHANGE_INTERVAL, CUSTOMER_ARRIVAL_INTERVAL, DAILY_BONUSES } from '../data/chamber.js';
+import { BLACK_MARKET_DAILY_REFRESH_INTERVAL } from '../data/blackMarket.js';
 
 export class ChamberOfCommerce {
   constructor(game) {
@@ -12,6 +14,7 @@ export class ChamberOfCommerce {
     this.pricingSystem = new PricingSystem(game);
     this.customerSystem = new CustomerSystem(game);
     this.orderSystem = new OrderSystem(game);
+    this.blackMarket = new BlackMarket(game);
 
     this.currentCycleId = null;
     this.cycleStartTime = 0;
@@ -22,6 +25,7 @@ export class ChamberOfCommerce {
     this.marketTimer = 0;
     this.customerTimer = 0;
     this.cycleTimer = 0;
+    this.blackMarketTimer = 0;
     this.lastTick = 0;
 
     this.stats = {
@@ -94,6 +98,7 @@ export class ChamberOfCommerce {
     this.renderMarket();
     this.renderCustomer();
     this.renderOrders();
+    this.renderBlackMarket();
     this.renderCycles();
   }
 
@@ -576,6 +581,166 @@ export class ChamberOfCommerce {
     return true;
   }
 
+  renderBlackMarket() {
+    const el = document.getElementById('chamber-blackmarket');
+    if (!el) return;
+    this.blackMarket.init();
+
+    const bm = this.blackMarket;
+    const merchant = bm.merchant;
+    const fluctuation = bm.fluctuation;
+    const orders = bm.getActiveOrders();
+    const nextRefresh = Math.max(0, BLACK_MARKET_DAILY_REFRESH_INTERVAL - bm.refreshTimer);
+
+    el.innerHTML = `
+      <div class="blackmarket-header">
+        <div class="bm-merchant-card">
+          <div class="bm-merchant-icon">${merchant.icon}</div>
+          <div class="bm-merchant-info">
+            <div class="bm-merchant-name">${merchant.name}</div>
+            <div class="bm-merchant-desc">${merchant.desc}</div>
+            <div class="bm-preferences">
+              <span class="bm-pref-label">收购:</span>
+              <span class="bm-pref-values">${merchant.preferredRarities.join('、')}</span>
+            </div>
+            ${merchant.requireAffixes ? '<div class="bm-preferences"><span class="bm-pref-label">要求:</span><span class="bm-pref-values" style="color:#ff88ff;">必须带词条</span></div>' : ''}
+          </div>
+        </div>
+        <div class="bm-market-card">
+          <div class="bm-fluctuation-icon">${fluctuation.icon}</div>
+          <div>
+            <div class="bm-fluctuation-name">${fluctuation.name}</div>
+            <div class="bm-fluctuation-desc">${fluctuation.desc}</div>
+          </div>
+        </div>
+      </div>
+      <div class="bm-timer">
+        下次黑市刷新: <span style="color:#ffaa00;">${Math.ceil(nextRefresh)}s</span>
+      </div>
+      <div class="bm-actions">
+        <button class="modal-btn primary full-width" id="btn-bm-sell">🎒 从背包出售物品</button>
+      </div>
+      <div class="bm-orders-header">
+        <span>黑市限时订单 ${orders.length}</span>
+        <button class="modal-btn accent" id="btn-bm-refresh" ${orders.length >= 3 ? 'disabled' : ''}>🔄 刷新商人</button>
+      </div>
+      ${orders.length === 0 ? `
+        <div style="color:#666;text-align:center;padding:20px;">暂无黑市订单</div>
+      ` : `
+        <div class="order-list">
+          ${orders.map(o => this.renderBlackMarketOrderCard(o)).join('')}
+        </div>
+      `}
+      <div class="chamber-stats-row" style="margin-top:15px;">
+        <div class="mini-stat">
+          <span class="mini-stat-label">黑市销售</span>
+          <span class="mini-stat-value">${bm.stats.totalSales}</span>
+        </div>
+        <div class="mini-stat">
+          <span class="mini-stat-label">黑市收入</span>
+          <span class="mini-stat-value">${bm.stats.totalRevenue}💰</span>
+        </div>
+        <div class="mini-stat">
+          <span class="mini-stat-label">完成订单</span>
+          <span class="mini-stat-value" style="color:#44ff44;">${bm.stats.ordersCompleted}</span>
+        </div>
+      </div>
+    `;
+
+    const sellBtn = document.getElementById('btn-bm-sell');
+    if (sellBtn) sellBtn.addEventListener('click', () => this.openBackpackToBlackMarketSell());
+
+    const refreshBtn = document.getElementById('btn-bm-refresh');
+    if (refreshBtn) refreshBtn.addEventListener('click', () => {
+      const refreshed = this.blackMarket.refreshDaily(true);
+      if (refreshed) {
+        this.game.taskSystem.showHint(`黑市已刷新！新商人：${this.blackMarket.merchant.icon} ${this.blackMarket.merchant.name}`);
+      }
+      this.game.saveProgress();
+      this.renderBlackMarket();
+    });
+
+    el.querySelectorAll('[data-bm-order-action]').forEach(btn => {
+      const orderId = btn.dataset.bmOrderId;
+      const action = btn.dataset.bmOrderAction;
+      if (action === 'cancel') {
+        btn.addEventListener('click', () => {
+          const r = this.blackMarket.cancelOrder(orderId);
+          this.game.taskSystem.showHint(r.message);
+          this.renderBlackMarket();
+        });
+      } else if (action === 'fulfill') {
+        btn.addEventListener('click', () => {
+          this.blackMarket._fulfillOrderMode = orderId;
+          this.closeChamber();
+          this.game.inventory.openBackpack();
+          setTimeout(() => this.game.taskSystem.showHint('选择物品交付黑市订单'), 300);
+        });
+      }
+    });
+  }
+
+  renderBlackMarketOrderCard(o) {
+    const timePct = Math.max(0, (o.timeRemaining / o.timeLimit) * 100);
+    const progressPct = Math.max(0, (o.currentQuantity / o.requiredQuantity) * 100);
+    return `
+      <div class="order-card bm-order-card">
+        <div class="order-header">
+          <span class="order-customer">🌙 黑市委托</span>
+          <span class="order-reward">${o.reward}💰</span>
+        </div>
+        <div class="order-target">
+          ${o.targetCreatureIcon ? `<span class="order-icon">${o.targetCreatureIcon}</span>` : ''}
+          <div>
+            <div class="order-name">${o.templateName}</div>
+            <div class="order-target-info">
+              ${o.targetCreatureName ? o.targetCreatureName : o.targetRarity}
+              ${o.minTier > 1 ? ` · Lv.${o.minTier}+` : ''}
+              ${o.requireAffixes ? ' · 需词条' : ''}
+              ${o.bonusCoins ? ` · <span style="color:#ff8844;">悬赏+${o.bonusCoins}💰</span>` : ''}
+            </div>
+          </div>
+        </div>
+        <div class="order-progress-row">
+          <span>进度</span>
+          <div class="chamber-progress small">
+            <div class="chamber-progress-fill" style="width:${progressPct}%"></div>
+          </div>
+          <span>${o.currentQuantity}/${o.requiredQuantity}</span>
+        </div>
+        <div class="order-progress-row">
+          <span>时间</span>
+          <div class="chamber-progress small">
+            <div class="chamber-progress-fill ${timePct < 30 ? 'danger-fill' : ''}" style="width:${timePct}%"></div>
+          </div>
+          <span>${Math.ceil(Math.max(0, o.timeRemaining))}s</span>
+        </div>
+        <div class="order-actions">
+          <button class="modal-btn primary" data-bm-order-id="${o.id}" data-bm-order-action="fulfill">📦 交付</button>
+          <button class="modal-btn secondary" data-bm-order-id="${o.id}" data-bm-order-action="cancel">✖ 取消</button>
+        </div>
+      </div>
+    `;
+  }
+
+  openBackpackToBlackMarketSell() {
+    this.blackMarket._sellMode = true;
+    this.closeChamber();
+    this.game.inventory.openBackpack();
+    setTimeout(() => {
+      const m = this.blackMarket.merchant;
+      this.game.taskSystem.showHint(`${m.icon} ${m.name}正在收购: ${m.preferredRarities.join('、')}`);
+    }, 300);
+  }
+
+  tryBlackMarketSellFromBackpack(item, inventoryIndex) {
+    return this.blackMarket.trySellFromBackpack(item, inventoryIndex);
+  }
+
+  tryBlackMarketFulfillOrderFromBackpack(item, inventoryIndex) {
+    return this.blackMarket.tryFulfillOrderFromBackpack(item, inventoryIndex);
+  }
+
   renderCycles() {
     const el = document.getElementById('chamber-cycles');
     if (!el) return;
@@ -655,10 +820,11 @@ export class ChamberOfCommerce {
 
   getCycleSummary() {
     return {
-      totalEarnings: this.pricingSystem.stats.totalRevenue + this.orderSystem.stats.totalRewardCoins,
-      totalSales: this.pricingSystem.stats.totalSales,
+      totalEarnings: this.pricingSystem.stats.totalRevenue + this.orderSystem.stats.totalRewardCoins + this.blackMarket.stats.totalRevenue,
+      totalSales: this.pricingSystem.stats.totalSales + this.blackMarket.stats.totalSales,
       ordersCompleted: this.orderSystem.stats.totalCompleted,
       ordersFailed: this.orderSystem.stats.totalFailed,
+      blackMarketOrders: this.blackMarket.stats.ordersCompleted,
       finalReputation: this.customerSystem.getReputation(),
       stallsUnlocked: this.stallSystem.stats.totalUnlocked,
       stallsUpgraded: this.stallSystem.stats.totalUpgrades,
@@ -684,6 +850,7 @@ export class ChamberOfCommerce {
         pricing: this.pricingSystem.toJSON(),
         customer: this.customerSystem.toJSON(),
         order: this.orderSystem.toJSON(),
+        blackMarket: this.blackMarket.toJSON(),
         stats: this.stats
       }
     };
@@ -711,6 +878,7 @@ export class ChamberOfCommerce {
       if (data.chambers.pricing) this.pricingSystem.loadData(data.chambers.pricing);
       if (data.chambers.customer) this.customerSystem.loadData(data.chambers.customer);
       if (data.chambers.order) this.orderSystem.loadData(data.chambers.order);
+      if (data.chambers.blackMarket) this.blackMarket.loadData(data.chambers.blackMarket);
       if (data.chambers.stats) this.stats = { ...this.stats, ...data.chambers.stats };
     }
     this.isRunning = !data.completed;
@@ -731,6 +899,7 @@ export class ChamberOfCommerce {
     this.cycleTimer += delta;
     this.marketTimer += delta;
     this.customerTimer += delta;
+    this.blackMarketTimer += delta;
 
     if (this.cycleTimer >= CYCLE_LENGTH_SECONDS / 7) {
       this.cycleTimer = 0;
@@ -770,6 +939,11 @@ export class ChamberOfCommerce {
       this.game.saveProgress();
     }
 
+    if (this.blackMarket.tick(delta) > 0) {
+      this.game.taskSystem.showHint('部分黑市订单已超时');
+      this.game.saveProgress();
+    }
+
     if (this.cycleElapsed >= 30 && Math.floor(this.cycleElapsed) % 30 < delta) {
       this.saveCycleState();
     }
@@ -779,6 +953,9 @@ export class ChamberOfCommerce {
       this.renderMarket();
       this.renderCustomer();
       this.renderOrders();
+      if (this.currentTab === 'blackmarket') {
+        this.renderBlackMarket();
+      }
     }
   }
 
@@ -792,12 +969,14 @@ export class ChamberOfCommerce {
       marketTimer: this.marketTimer,
       customerTimer: this.customerTimer,
       cycleTimer: this.cycleTimer,
+      blackMarketTimer: this.blackMarketTimer,
       stats: this.stats,
       _claimedBonuses: this._claimedBonuses || [],
       stall: this.stallSystem.toJSON(),
       pricing: this.pricingSystem.toJSON(),
       customer: this.customerSystem.toJSON(),
-      order: this.orderSystem.toJSON()
+      order: this.orderSystem.toJSON(),
+      blackMarket: this.blackMarket.toJSON()
     };
   }
 
@@ -811,11 +990,13 @@ export class ChamberOfCommerce {
     if (typeof data.marketTimer === 'number') this.marketTimer = data.marketTimer;
     if (typeof data.customerTimer === 'number') this.customerTimer = data.customerTimer;
     if (typeof data.cycleTimer === 'number') this.cycleTimer = data.cycleTimer;
+    if (typeof data.blackMarketTimer === 'number') this.blackMarketTimer = data.blackMarketTimer;
     if (data.stats) this.stats = { ...this.stats, ...data.stats };
     if (data._claimedBonuses) this._claimedBonuses = data._claimedBonuses;
     if (data.stall) this.stallSystem.loadData(data.stall);
     if (data.pricing) this.pricingSystem.loadData(data.pricing);
     if (data.customer) this.customerSystem.loadData(data.customer);
     if (data.order) this.orderSystem.loadData(data.order);
+    if (data.blackMarket) this.blackMarket.loadData(data.blackMarket);
   }
 }

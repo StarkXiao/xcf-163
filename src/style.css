@@ -1917,3 +1917,109 @@ html, body {
     min-width: 60px;
   }
 }
+
+.blackmarket-header {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.bm-merchant-card,
+.bm-market-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(80, 20, 60, 0.2), rgba(0, 0, 0, 0.3));
+  border: 1px solid #aa44ff;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 0 15px rgba(170, 68, 255, 0.2);
+}
+
+.bm-market-card {
+  background: linear-gradient(135deg, rgba(255, 136, 68, 0.15), rgba(0, 0, 0, 0.3));
+  border-color: #ff8844;
+  box-shadow: 0 0 15px rgba(255, 136, 68, 0.2);
+}
+
+.bm-merchant-icon {
+  font-size: 42px;
+}
+
+.bm-fluctuation-icon {
+  font-size: 36px;
+}
+
+.bm-merchant-name {
+  font-weight: bold;
+  color: #fff;
+  font-size: 15px;
+}
+
+.bm-merchant-desc {
+  color: #aaa;
+  font-size: 11px;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.bm-preferences {
+  margin-top: 6px;
+  font-size: 11px;
+}
+
+.bm-pref-label {
+  color: #888;
+  margin-right: 6px;
+}
+
+.bm-pref-values {
+  color: #aa88ff;
+  font-weight: 500;
+}
+
+.bm-fluctuation-name {
+  font-weight: bold;
+  color: #ff8844;
+  font-size: 15px;
+}
+
+.bm-fluctuation-desc {
+  color: #aaa;
+  font-size: 11px;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.bm-timer {
+  text-align: center;
+  color: #888;
+  font-size: 12px;
+  margin-bottom: 12px;
+  font-style: italic;
+}
+
+.bm-actions {
+  margin-bottom: 15px;
+}
+
+.bm-orders-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #aaa;
+}
+
+.bm-orders-header .modal-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  min-width: auto;
+}
+
+.bm-order-card {
+  border-left: 3px solid #aa44ff;
+  background: linear-gradient(135deg, rgba(80, 20, 60, 0.1), rgba(0, 0, 0, 0.2));
+}

@@ -478,6 +478,63 @@ export const TASKS = [
     type: 'expedition_complete',
     target: 1,
     reward: { coins: 3000, energy: 200 }
+  },
+  {
+    id: 'tut_blackmarket',
+    name: '初识黑市',
+    desc: '点击商会中的「黑市」标签，探索渔港黑市。',
+    type: 'chamber_open',
+    target: 1,
+    reward: { coins: 100 },
+    isTutorial: true
+  },
+  {
+    id: 'first_blackmarket_sale',
+    name: '黑市首笔交易',
+    desc: '在黑市成功出售1个机械残骸。',
+    type: 'blackmarket_sale',
+    target: 1,
+    reward: { coins: 200, energy: 30 }
+  },
+  {
+    id: 'blackmarket_sale_10',
+    name: '黑市熟客',
+    desc: '在黑市累计出售10个机械残骸。',
+    type: 'blackmarket_sale',
+    target: 10,
+    reward: { coins: 800 }
+  },
+  {
+    id: 'blackmarket_sale_50',
+    name: '黑市掮客',
+    desc: '在黑市累计出售50个机械残骸。',
+    type: 'blackmarket_sale',
+    target: 50,
+    reward: { coins: 3000, energy: 100 }
+  },
+  {
+    id: 'first_blackmarket_order',
+    name: '黑市委托',
+    desc: '完成1个黑市限时订单。',
+    type: 'blackmarket_order',
+    target: 1,
+    reward: { coins: 500, energy: 50 }
+  },
+  {
+    id: 'blackmarket_order_5',
+    name: '黑市代理人',
+    desc: '累计完成5个黑市限时订单。',
+    type: 'blackmarket_order',
+    target: 5,
+    reward: { coins: 2000, energy: 100 }
+  },
+  {
+    id: 'blackmarket_order_20',
+    name: '黑市传奇',
+    desc: '累计完成20个黑市限时订单。',
+    type: 'blackmarket_order',
+    target: 20,
+    reward: { coins: 10000, energy: 200 }
   }
 ];
 
