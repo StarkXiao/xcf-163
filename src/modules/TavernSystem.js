@@ -1,4 +1,5 @@
 import { TAVERN_CHARACTERS, INTEL_POOL, MATERIAL_EXCHANGES, SIDEQUESTS, INTEL_TYPES } from '../data/tavern.js';
+import { MATERIALS } from '../data/creatures.js';
 
 export class TavernSystem {
   constructor(game) {
@@ -206,6 +207,40 @@ export class TavernSystem {
   getReputation(charId) {
     const char = this.characters.find(c => c.id === charId);
     return char ? char.reputation : 0;
+  }
+
+  getReinforce() {
+    return this.game.reinforceSystem;
+  }
+
+  addMaterial(materialId, count) {
+    const r = this.getReinforce();
+    if (r && r.addMaterial) {
+      r.addMaterial(materialId, count);
+    }
+  }
+
+  removeMaterial(materialId, count) {
+    const r = this.getReinforce();
+    if (r && r.removeMaterial) {
+      return r.removeMaterial(materialId, count);
+    }
+    return false;
+  }
+
+  getMaterialCount(materialId) {
+    const r = this.getReinforce();
+    if (r && r.getMaterialCount) {
+      return r.getMaterialCount(materialId);
+    }
+    return 0;
+  }
+
+  getCreatureCount(creatureId) {
+    if (this.game.inventory && this.game.inventory.getCreatureCount) {
+      return this.game.inventory.getCreatureCount(creatureId);
+    }
+    return 0;
   }
 
   refreshAvailableIntels() {
@@ -461,23 +496,17 @@ export class TavernSystem {
   }
 
   getMaterialInfo(matId) {
-    const materials = {
-      common_scrap: { id: 'common_scrap', name: '普通废料', icon: '🔩' },
-      alloy_plate: { id: 'alloy_plate', name: '合金板', icon: '🛡️' },
-      energy_core: { id: 'energy_core', name: '能量核心', icon: '💠' },
-      nano_swarm: { id: 'nano_swarm', name: '纳米集群', icon: '✨' },
-      void_crystal: { id: 'void_crystal', name: '虚空晶体', icon: '🔮' }
-    };
-    return materials[matId] || null;
+    return MATERIALS[matId] || null;
   }
 
   canDoExchange(ex) {
     for (const [id, count] of Object.entries(ex.input)) {
       if (id === 'coins') {
         if (this.game.stats.coins < count) return false;
+      } else if (id === 'energy') {
+        if (this.game.stats.energy < count) return false;
       } else {
-        const owned = this.game.inventory.getMaterialCount ? this.game.inventory.getMaterialCount(id) : 0;
-        if (owned < count) return false;
+        if (this.getMaterialCount(id) < count) return false;
       }
     }
     return true;
@@ -492,11 +521,25 @@ export class TavernSystem {
       return;
     }
     
+    const verifyBefore = {};
+    for (const [id, count] of Object.entries(ex.input)) {
+      if (id !== 'coins' && id !== 'energy') {
+        verifyBefore[id] = this.getMaterialCount(id);
+      }
+    }
+    for (const [id, count] of Object.entries(ex.output)) {
+      if (id !== 'coins' && id !== 'energy') {
+        verifyBefore[`out_${id}`] = this.getMaterialCount(id);
+      }
+    }
+    
     for (const [id, count] of Object.entries(ex.input)) {
       if (id === 'coins') {
         this.game.updateStats('coins', -count);
-      } else if (this.game.inventory.removeMaterial) {
-        this.game.inventory.removeMaterial(id, count);
+      } else if (id === 'energy') {
+        this.game.updateStats('energy', -count);
+      } else {
+        this.removeMaterial(id, count);
       }
     }
     
@@ -505,8 +548,30 @@ export class TavernSystem {
         this.game.updateStats('coins', count);
       } else if (id === 'energy') {
         this.game.updateStats('energy', count);
-      } else if (this.game.inventory.addMaterial) {
-        this.game.inventory.addMaterial(id, count);
+      } else {
+        this.addMaterial(id, count);
+      }
+    }
+    
+    let verifyPassed = true;
+    for (const [id, count] of Object.entries(ex.input)) {
+      if (id !== 'coins' && id !== 'energy') {
+        const expected = verifyBefore[id] - count;
+        const actual = this.getMaterialCount(id);
+        if (actual !== expected) {
+          verifyPassed = false;
+          console.error(`[Tavern Verify] Exchange input ${id} failed: expected ${expected}, got ${actual}`);
+        }
+      }
+    }
+    for (const [id, count] of Object.entries(ex.output)) {
+      if (id !== 'coins' && id !== 'energy') {
+        const expected = verifyBefore[`out_${id}`] + count;
+        const actual = this.getMaterialCount(id);
+        if (actual !== expected) {
+          verifyPassed = false;
+          console.error(`[Tavern Verify] Exchange output ${id} failed: expected ${expected}, got ${actual}`);
+        }
       }
     }
     
@@ -515,7 +580,9 @@ export class TavernSystem {
       this.addReputation(sourceChar, 2);
     }
     
-    this.game.taskSystem.showHint(`✅ 交换成功：${ex.name}`);
+    this.game.taskSystem.showHint(verifyPassed 
+      ? `✅ 交换成功：${ex.name}` 
+      : `⚠️ 交换完成但校验异常：${ex.name}`);
     this.game.checkTasks('tavern_exchange');
     this.game.saveProgress();
     this.renderExchanges();
@@ -523,12 +590,12 @@ export class TavernSystem {
 
   renderMaterialsBar(elementId) {
     const el = document.getElementById(elementId);
-    if (!el || !this.game.inventory || !this.game.inventory.materials) return;
+    if (!el) return;
     
     const materials = ['common_scrap', 'alloy_plate', 'energy_core', 'nano_swarm', 'void_crystal'];
     el.innerHTML = materials.map(matId => {
       const mat = this.getMaterialInfo(matId);
-      const count = this.game.inventory.materials[matId] || 0;
+      const count = this.getMaterialCount(matId);
       return `
         <span class="material-chip">
           <span class="material-icon">${mat.icon}</span>
@@ -662,6 +729,16 @@ export class TavernSystem {
     const quest = this.sideQuests.find(q => q.id === questId);
     if (!quest || !quest.completed || quest.claimed) return;
     
+    const verifyBefore = {};
+    if (quest.reward.materials) {
+      Object.keys(quest.reward.materials).forEach(matId => {
+        verifyBefore[matId] = this.getMaterialCount(matId);
+      });
+    }
+    const coinsBefore = this.game.stats.coins;
+    const energyBefore = this.game.stats.energy;
+    const repBefore = quest.source ? this.getReputation(quest.source) : 0;
+    
     if (quest.reward.coins) {
       this.game.updateStats('coins', quest.reward.coins);
     }
@@ -671,14 +748,53 @@ export class TavernSystem {
     if (quest.reward.reputation && quest.source) {
       this.addReputation(quest.source, quest.reward.reputation);
     }
-    if (quest.reward.materials && this.game.inventory.addMaterial) {
+    if (quest.reward.materials) {
       Object.entries(quest.reward.materials).forEach(([id, count]) => {
-        this.game.inventory.addMaterial(id, count);
+        this.addMaterial(id, count);
+      });
+    }
+    
+    let verifyPassed = true;
+    if (quest.reward.coins) {
+      const expected = coinsBefore + quest.reward.coins;
+      const actual = this.game.stats.coins;
+      if (actual !== expected) {
+        verifyPassed = false;
+        console.error(`[Tavern Verify] Quest ${questId} coins failed: expected ${expected}, got ${actual}`);
+      }
+    }
+    if (quest.reward.energy) {
+      const expected = energyBefore + quest.reward.energy;
+      const actual = this.game.stats.energy;
+      if (actual !== expected) {
+        verifyPassed = false;
+        console.error(`[Tavern Verify] Quest ${questId} energy failed: expected ${expected}, got ${actual}`);
+      }
+    }
+    if (quest.reward.reputation && quest.source) {
+      const maxRep = this.characters.find(c => c.id === quest.source)?.maxReputation || 100;
+      const expected = Math.min(maxRep, repBefore + quest.reward.reputation);
+      const actual = this.getReputation(quest.source);
+      if (actual !== expected) {
+        verifyPassed = false;
+        console.error(`[Tavern Verify] Quest ${questId} reputation failed: expected ${expected}, got ${actual}`);
+      }
+    }
+    if (quest.reward.materials) {
+      Object.entries(quest.reward.materials).forEach(([id, count]) => {
+        const expected = verifyBefore[id] + count;
+        const actual = this.getMaterialCount(id);
+        if (actual !== expected) {
+          verifyPassed = false;
+          console.error(`[Tavern Verify] Quest ${questId} material ${id} failed: expected ${expected}, got ${actual}`);
+        }
       });
     }
     
     quest.claimed = true;
-    this.game.taskSystem.showHint(`🎁 领取奖励：${quest.name}`);
+    this.game.taskSystem.showHint(verifyPassed 
+      ? `🎁 领取奖励：${quest.name}` 
+      : `⚠️ 奖励领取但校验异常：${quest.name}`);
     this.game.saveProgress();
     this.renderQuests();
   }
@@ -704,10 +820,10 @@ export class TavernSystem {
         case 'collect_creature':
           if (type === 'collect_creature' && data && data.id === quest.target.creatureId) {
             shouldUpdate = true;
-            if (this.game.inventory.getCreatureCount) {
-              progressValue = this.game.inventory.getCreatureCount(quest.target.creatureId);
-            } else {
-              progressValue = quest.progress + 1;
+            const actualCount = this.getCreatureCount(quest.target.creatureId);
+            progressValue = actualCount;
+            if (progressValue > quest.progress) {
+              console.log(`[Tavern Verify] collect_creature: ${quest.target.creatureId} progress ${quest.progress} -> ${progressValue}`);
             }
           }
           break;
@@ -715,10 +831,10 @@ export class TavernSystem {
         case 'collect_materials':
           if (type === 'material_change' && data && data.id === quest.target.materialId) {
             shouldUpdate = true;
-            if (this.game.inventory.getMaterialCount) {
-              progressValue = this.game.inventory.getMaterialCount(quest.target.materialId);
-            } else {
-              progressValue = quest.progress + (data.change || 0);
+            const actualCount = this.getMaterialCount(quest.target.materialId);
+            progressValue = actualCount;
+            if (progressValue !== quest.progress + (data.change || 0)) {
+              console.log(`[Tavern Verify] collect_materials: ${quest.target.materialId} progress updated to ${progressValue}`);
             }
           }
           break;

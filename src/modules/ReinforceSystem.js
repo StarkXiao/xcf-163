@@ -50,21 +50,25 @@ export class ReinforceSystem {
     if (!this.materials[materialId]) {
       this.materials[materialId] = 0;
     }
+    const before = this.materials[materialId];
     this.materials[materialId] += count;
     this.game.saveProgress();
     this.renderMaterials();
+    this.game.checkTasks('material_change', { id: materialId, change: count, before, after: this.materials[materialId] });
   }
 
   removeMaterial(materialId, count) {
     if (!this.materials[materialId] || this.materials[materialId] < count) {
       return false;
     }
+    const before = this.materials[materialId];
     this.materials[materialId] -= count;
     if (this.materials[materialId] === 0) {
       delete this.materials[materialId];
     }
     this.game.saveProgress();
     this.renderMaterials();
+    this.game.checkTasks('material_change', { id: materialId, change: -count, before, after: this.materials[materialId] || 0 });
     return true;
   }
 

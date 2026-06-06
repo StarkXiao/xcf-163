@@ -58,6 +58,7 @@ export class Inventory {
     }
     
     this.collection.add(creature.id);
+    this.game.checkTasks('collect_creature', creature);
     this.game.saveProgress();
     return true;
   }
@@ -254,6 +255,12 @@ export class Inventory {
   getRarityCount(rarity) {
     return this.backpack
       .filter(item => item.rarity === rarity)
+      .reduce((sum, item) => sum + item.count, 0);
+  }
+
+  getCreatureCount(creatureId) {
+    return this.backpack
+      .filter(item => item.id === creatureId)
       .reduce((sum, item) => sum + item.count, 0);
   }
 
