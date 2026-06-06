@@ -57,11 +57,14 @@ export class Inventory {
       });
     }
     
+    const isNewToCollection = !this.collection.has(creature.id);
+
+    if (this.game.portCommission) {
+      this.game.portCommission.checkCollectionUpdate(creature, isNewToCollection);
+    }
+
     this.collection.add(creature.id);
     this.game.checkTasks('collect_creature', creature);
-    if (this.game.portCommission) {
-      this.game.portCommission.checkCollectionUpdate(creature);
-    }
     this.game.saveProgress();
     return true;
   }

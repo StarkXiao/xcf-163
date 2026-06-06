@@ -151,10 +151,11 @@ function getCreaturesByRarityAndCategory(rarity, category) {
   });
 }
 
-export function generateCommissionPhases(rarity, category, collection) {
+export function generateCommissionPhases(rarity, category, collection, template = null) {
   const phaseCount = COMMISSION_PHASE_CONFIG.phaseCount[rarity.name] || 2;
   const phases = [];
   const usedCreatureIds = new Set();
+  const forceRequireNew = template && template.requireNew;
 
   for (let i = 0; i < phaseCount; i++) {
     const phaseRarity = i === phaseCount - 1 && rarity !== RARITY.LEGENDARY
@@ -164,13 +165,28 @@ export function generateCommissionPhases(rarity, category, collection) {
     let availableCreatures = getCreaturesByRarityAndCategory(phaseRarity, category);
     availableCreatures = availableCreatures.filter(c => !usedCreatureIds.has(c.id));
 
+    if (forceRequireNew) {
+      const uncollected = availableCreatures.filter(c => !collection.has(c.id));
+      if (uncollected.length > 0) {
+        availableCreatures = uncollected;
+      }
+    }
+
     if (availableCreatures.length === 0) {
       availableCreatures = getCreaturesByRarityAndCategory(phaseRarity, null);
       availableCreatures = availableCreatures.filter(c => !usedCreatureIds.has(c.id));
+      if (forceRequireNew) {
+        const uncollected = availableCreatures.filter(c => !collection.has(c.id));
+        if (uncollected.length > 0) availableCreatures = uncollected;
+      }
     }
 
     if (availableCreatures.length === 0) {
       availableCreatures = CREATURES.filter(c => c.rarity.name === phaseRarity.name);
+      if (forceRequireNew) {
+        const uncollected = availableCreatures.filter(c => !collection.has(c.id));
+        if (uncollected.length > 0) availableCreatures = uncollected;
+      }
     }
 
     const targetCreature = availableCreatures[Math.floor(Math.random() * availableCreatures.length)];
@@ -181,7 +197,9 @@ export function generateCommissionPhases(rarity, category, collection) {
     const baseQuantity = i === phaseCount - 1 ? 1 : Math.max(1, 3 - i);
     const quantity = Math.max(1, baseQuantity + Math.floor(Math.random() * 2));
 
-    const requireNew = i >= Math.floor(phaseCount / 2) && rarity !== RARITY.COMMON;
+    const requireNew = forceRequireNew
+      ? true
+      : (i >= Math.floor(phaseCount / 2) && rarity !== RARITY.COMMON);
 
     const baseReward = targetCreature
       ? targetCreature.value * quantity
@@ -226,7 +244,7 @@ export function generateCommission(playerLevel = 1, collection = new Set()) {
   const useCategory = template.categoryBias || (Math.random() < 0.4);
   const category = useCategory ? getRandomCategory() : null;
 
-  const phases = generateCommissionPhases(rarity, category, collection);
+  const phases = generateCommissionPhases(rarity, category, collection, template);
 
   const totalCoinReward = phases.reduce((sum, p) => sum + p.coinReward, 0);
   const totalEnergyReward = phases.reduce((sum, p) => sum + p.energyReward, 0);

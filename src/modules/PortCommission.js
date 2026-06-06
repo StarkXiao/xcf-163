@@ -370,20 +370,58 @@ export class PortCommission {
     return { success: true, message: '委托已放弃' };
   }
 
-  checkCollectionUpdate(creature) {
+  checkCollectionUpdate(creature, isNewToCollection = false) {
     if (!creature) return;
 
-    this.commissions.forEach(commission => {
-      if (commission.status !== 'in_progress') return;
+    for (let i = 0; i < this.commissions.length; i++) {
+      const commission = this.commissions[i];
+      if (commission.status !== 'in_progress') continue;
       const phase = commission.phases[commission.currentPhase];
-      if (!phase || phase.status !== 'active') return;
-      if (!phase.requireNew) return;
-      if (phase.targetCreatureId && creature.id !== phase.targetCreatureId) return;
+      if (!phase || phase.status !== 'active') continue;
+
+      if (phase.requireNew && !isNewToCollection) continue;
+
+      if (phase.targetCreatureId && creature.id !== phase.targetCreatureId) continue;
+      if (phase.targetRarity) {
+        const targetRarity = Object.values(RARITY).find(r => r.name === phase.targetRarity);
+        if (targetRarity && creature.rarity.weight > targetRarity.weight) continue;
+      }
       if (phase.targetCategory) {
         const category = Object.values(CREATURE_CATEGORIES).find(c => c.name === phase.targetCategory);
-        if (category && !category.creatureIds.includes(creature.id)) return;
+        if (category && !category.creatureIds.includes(creature.id)) continue;
       }
-    });
+
+      const backpackIdx = this.game.inventory.backpack.findIndex(item =>
+        item.id === creature.id &&
+        (item.tier || 1) === (creature.tier || 1)
+      );
+      if (backpackIdx < 0) continue;
+
+      const backpackItem = this.game.inventory.backpack[backpackIdx];
+      const needCount = phase.requiredQuantity - phase.currentQuantity;
+      const useCount = Math.min(backpackItem.count, needCount);
+
+      if (backpackItem.count > useCount) {
+        backpackItem.count -= useCount;
+      } else {
+        this.game.inventory.backpack.splice(backpackIdx, 1);
+      }
+
+      phase.currentQuantity += useCount;
+
+      const newTag = phase.requireNew ? '🆕 ' : '';
+      if (phase.currentQuantity >= phase.requiredQuantity) {
+        this.completePhase(commission.id);
+      } else {
+        this.game.saveProgress();
+        this.game.inventory.renderBackpack();
+        this.renderAll();
+        this.game.taskSystem.showHint(
+          `${newTag}委托进度：${phase.currentQuantity}/${phase.requiredQuantity}`
+        );
+      }
+      break;
+    }
   }
 
   renderActiveCommissions() {
