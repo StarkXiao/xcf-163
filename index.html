@@ -91,6 +91,10 @@
           <span class="btn-icon">🚢</span>
           <span class="btn-text">远征</span>
         </button>
+        <button class="action-btn" id="btn-scrap-workshop">
+          <span class="btn-icon">🔨</span>
+          <span class="btn-text">残骸工坊</span>
+        </button>
       </div>
     </div>
 
@@ -292,6 +296,84 @@
 
     <div id="expedition-settlement-modal" class="modal hidden">
       <div class="modal-content settlement-content" id="expedition-settlement-content"></div>
+    </div>
+
+    <div id="scrap-workshop-modal" class="modal hidden">
+      <div class="modal-content scrap-workshop-content">
+        <h2 class="modal-title">🔨 机械残骸工坊</h2>
+        <div class="materials-bar" id="workshop-parts-bar"></div>
+
+        <div class="chamber-tabs workshop-tabs">
+          <button class="workshop-tab active" data-tab="disassemble">🔧 拆解</button>
+          <button class="workshop-tab" data-tab="recipe">📜 配方</button>
+          <button class="workshop-tab" data-tab="experiment">⚗️ 试验</button>
+          <button class="workshop-tab" data-tab="catalog">🔍 图鉴反查</button>
+          <button class="workshop-tab" data-tab="equipment">⚔️ 装备</button>
+        </div>
+
+        <div class="chamber-tab-content workshop-tab-content" data-tab="disassemble">
+          <div class="workshop-two-col">
+            <div class="workshop-col">
+              <p class="workshop-hint">选择要拆解的机械残骸</p>
+              <div class="inventory-grid" id="disassemble-grid"></div>
+            </div>
+            <div class="workshop-col">
+              <div id="disassemble-detail"></div>
+              <div class="modal-footer" style="padding:12px 0 0;">
+                <button class="modal-btn danger full-width" id="btn-disassemble-confirm" disabled>🔧 拆解</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chamber-tab-content workshop-tab-content hidden" data-tab="recipe">
+          <div class="workshop-two-col">
+            <div class="workshop-col">
+              <p class="workshop-hint">已解锁配方列表</p>
+              <div class="recipe-list" id="recipe-list"></div>
+            </div>
+            <div class="workshop-col">
+              <div id="recipe-detail"></div>
+              <div class="modal-footer" style="padding:12px 0 0;">
+                <button class="modal-btn primary full-width" id="btn-craft-confirm" disabled>⚒️ 拼装</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chamber-tab-content workshop-tab-content hidden" data-tab="experiment">
+          <p class="workshop-hint">试验未知配方，点击试验槽取回零件</p>
+          <div class="experiment-slots" id="experiment-slots"></div>
+          <div class="experiment-result" id="experiment-result"></div>
+          <div class="modal-footer">
+            <button class="modal-btn secondary" id="btn-experiment-clear">清空</button>
+            <button class="modal-btn accent" id="btn-experiment-confirm" disabled>⚗️ 开始试验</button>
+          </div>
+        </div>
+
+        <div class="chamber-tab-content workshop-tab-content hidden" data-tab="catalog">
+          <div class="catalog-search">
+            <input type="text" id="catalog-search-input" placeholder="输入装备名或零件名反查..." class="catalog-input">
+          </div>
+          <div class="catalog-results" id="catalog-results"></div>
+        </div>
+
+        <div class="chamber-tab-content workshop-tab-content hidden" data-tab="equipment">
+          <div class="workshop-two-col">
+            <div class="workshop-col">
+              <p class="workshop-hint">已拼装的装备</p>
+              <div class="inventory-grid" id="equipment-grid"></div>
+            </div>
+            <div class="workshop-col">
+              <div id="equipment-detail"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-scrap-workshop">关闭</button>
+        </div>
+      </div>
     </div>
   </div>
 

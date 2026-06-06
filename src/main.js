@@ -7,6 +7,7 @@ import { TaskSystem } from './modules/TaskSystem.js';
 import { Storage } from './modules/Storage.js';
 import { TideSystem } from './modules/TideSystem.js';
 import { ReinforceSystem } from './modules/ReinforceSystem.js';
+import { ScrapWorkshop } from './modules/ScrapWorkshop.js';
 import { ChamberOfCommerce } from './modules/ChamberOfCommerce.js';
 import { DeepSeaExpedition } from './modules/DeepSeaExpedition.js';
 import { COMBO_CONFIG, getComboEnergyDiscount, getComboEnergyRegenBonus } from './data/creatures.js';
@@ -21,6 +22,7 @@ class Game {
     this.taskSystem = null;
     this.tideSystem = null;
     this.reinforceSystem = null;
+    this.scrapWorkshop = null;
     this.chamber = null;
     this.expedition = null;
     
@@ -76,6 +78,15 @@ class Game {
     });
     document.getElementById('btn-collection').addEventListener('click', () => this.inventory.openCollection());
     document.getElementById('btn-task').addEventListener('click', () => this.taskSystem.openTaskList());
+    document.getElementById('btn-chamber').addEventListener('click', () => {
+      if (this.chamber) this.chamber.open();
+    });
+    document.getElementById('btn-expedition').addEventListener('click', () => {
+      if (this.expedition) this.expedition.open();
+    });
+    document.getElementById('btn-scrap-workshop').addEventListener('click', () => {
+      if (this.scrapWorkshop) this.scrapWorkshop.open();
+    });
   }
 
   async loadResources() {
@@ -115,6 +126,7 @@ class Game {
     this.inventory = new Inventory(this);
     this.taskSystem = new TaskSystem(this);
     this.reinforceSystem = new ReinforceSystem(this);
+    this.scrapWorkshop = new ScrapWorkshop(this);
     this.chamber = new ChamberOfCommerce(this);
     this.expedition = new DeepSeaExpedition(this);
     this.stallSystem = this.chamber.stallSystem;
@@ -358,6 +370,7 @@ class Game {
       tasks: this.taskSystem.toJSON(),
       tide: this.tideSystem ? this.tideSystem.toJSON() : null,
       reinforce: this.reinforceSystem ? this.reinforceSystem.toJSON() : null,
+      scrapWorkshop: this.scrapWorkshop ? this.scrapWorkshop.toJSON() : null,
       chamber: this.chamber ? this.chamber.toJSON() : null,
       expedition: this.expedition ? this.expedition.toJSON() : null,
       timestamp: Date.now()
@@ -381,6 +394,9 @@ class Game {
       this.taskSystem.loadData(data.tasks || {});
       if (this.reinforceSystem && data.reinforce) {
         this.reinforceSystem.loadData(data.reinforce);
+      }
+      if (this.scrapWorkshop && data.scrapWorkshop) {
+        this.scrapWorkshop.loadData(data.scrapWorkshop);
       }
       if (this.chamber && data.chamber) {
         this.chamber.loadData(data.chamber);
