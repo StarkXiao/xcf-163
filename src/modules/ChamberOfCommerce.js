@@ -5,7 +5,6 @@ import { OrderSystem } from './OrderSystem.js';
 import { BlackMarket } from './BlackMarket.js';
 import { Storage } from './Storage.js';
 import { CYCLE_LENGTH_SECONDS, MARKET_CHANGE_INTERVAL, CUSTOMER_ARRIVAL_INTERVAL, DAILY_BONUSES } from '../data/chamber.js';
-import { BLACK_MARKET_DAILY_REFRESH_INTERVAL } from '../data/blackMarket.js';
 
 export class ChamberOfCommerce {
   constructor(game) {
@@ -25,7 +24,6 @@ export class ChamberOfCommerce {
     this.marketTimer = 0;
     this.customerTimer = 0;
     this.cycleTimer = 0;
-    this.blackMarketTimer = 0;
     this.lastTick = 0;
 
     this.stats = {
@@ -584,13 +582,12 @@ export class ChamberOfCommerce {
   renderBlackMarket() {
     const el = document.getElementById('chamber-blackmarket');
     if (!el) return;
-    this.blackMarket.init();
+    this.blackMarket.init(this.cycleDay);
 
     const bm = this.blackMarket;
     const merchant = bm.merchant;
     const fluctuation = bm.fluctuation;
     const orders = bm.getActiveOrders();
-    const nextRefresh = Math.max(0, BLACK_MARKET_DAILY_REFRESH_INTERVAL - bm.refreshTimer);
 
     el.innerHTML = `
       <div class="blackmarket-header">
@@ -615,14 +612,14 @@ export class ChamberOfCommerce {
         </div>
       </div>
       <div class="bm-timer">
-        下次黑市刷新: <span style="color:#ffaa00;">${Math.ceil(nextRefresh)}s</span>
+        当前经营日: <span style="color:#ffaa00;">第 ${this.cycleDay} 天</span> · 黑市每日凌晨刷新
       </div>
       <div class="bm-actions">
         <button class="modal-btn primary full-width" id="btn-bm-sell">🎒 从背包出售物品</button>
       </div>
       <div class="bm-orders-header">
         <span>黑市限时订单 ${orders.length}</span>
-        <button class="modal-btn accent" id="btn-bm-refresh" ${orders.length >= 3 ? 'disabled' : ''}>🔄 刷新商人</button>
+        <button class="modal-btn accent" id="btn-bm-refresh">🔄 提前刷新(模拟跨天)</button>
       </div>
       ${orders.length === 0 ? `
         <div style="color:#666;text-align:center;padding:20px;">暂无黑市订单</div>
@@ -652,10 +649,10 @@ export class ChamberOfCommerce {
 
     const refreshBtn = document.getElementById('btn-bm-refresh');
     if (refreshBtn) refreshBtn.addEventListener('click', () => {
-      const refreshed = this.blackMarket.refreshDaily(true);
-      if (refreshed) {
-        this.game.taskSystem.showHint(`黑市已刷新！新商人：${this.blackMarket.merchant.icon} ${this.blackMarket.merchant.name}`);
-      }
+      const newDay = this.cycleDay + 1;
+      this.cycleDay = newDay;
+      const bmResult = this.blackMarket.onNewDay(newDay);
+      this.game.taskSystem.showHint(`🌙 模拟跨天刷新！新商人：${bmResult.newMerchant.icon} ${bmResult.newMerchant.name}`);
       this.game.saveProgress();
       this.renderBlackMarket();
     });
@@ -899,12 +896,13 @@ export class ChamberOfCommerce {
     this.cycleTimer += delta;
     this.marketTimer += delta;
     this.customerTimer += delta;
-    this.blackMarketTimer += delta;
 
     if (this.cycleTimer >= CYCLE_LENGTH_SECONDS / 7) {
       this.cycleTimer = 0;
       this.cycleDay++;
-      this.game.taskSystem.showHint(`🌅 第 ${this.cycleDay} 天开始了`);
+      const bmResult = this.blackMarket.onNewDay(this.cycleDay);
+      this.game.taskSystem.showHint(`🌅 第 ${this.cycleDay} 天开始了 🌙 黑市刷新：${bmResult.newMerchant.icon} ${bmResult.newMerchant.name}`);
+      this.game.saveProgress();
     }
 
     if (this.cycleElapsed >= CYCLE_LENGTH_SECONDS) {
@@ -969,7 +967,6 @@ export class ChamberOfCommerce {
       marketTimer: this.marketTimer,
       customerTimer: this.customerTimer,
       cycleTimer: this.cycleTimer,
-      blackMarketTimer: this.blackMarketTimer,
       stats: this.stats,
       _claimedBonuses: this._claimedBonuses || [],
       stall: this.stallSystem.toJSON(),
@@ -990,7 +987,6 @@ export class ChamberOfCommerce {
     if (typeof data.marketTimer === 'number') this.marketTimer = data.marketTimer;
     if (typeof data.customerTimer === 'number') this.customerTimer = data.customerTimer;
     if (typeof data.cycleTimer === 'number') this.cycleTimer = data.cycleTimer;
-    if (typeof data.blackMarketTimer === 'number') this.blackMarketTimer = data.blackMarketTimer;
     if (data.stats) this.stats = { ...this.stats, ...data.stats };
     if (data._claimedBonuses) this._claimedBonuses = data._claimedBonuses;
     if (data.stall) this.stallSystem.loadData(data.stall);

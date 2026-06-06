@@ -6,7 +6,6 @@ import {
   getRandomBlackMarketOrderTemplate,
   BLACK_MARKET_FLUCTUATIONS,
   getRandomBlackMarketFluctuation,
-  BLACK_MARKET_DAILY_REFRESH_INTERVAL,
   BLACK_MARKET_ORDER_COUNT
 } from '../data/blackMarket.js';
 
@@ -16,7 +15,6 @@ export class BlackMarket {
     this.merchant = null;
     this.fluctuation = BLACK_MARKET_FLUCTUATIONS[1];
     this.orders = [];
-    this.refreshTimer = 0;
     this.lastRefreshDay = 0;
     this.stats = {
       totalSales: 0,
@@ -31,27 +29,30 @@ export class BlackMarket {
     this._fulfillOrderMode = null;
   }
 
-  init() {
+  init(cycleDay = 1) {
     if (!this.merchant) {
       this.merchant = getRandomBlackMarketMerchant();
     }
     if (this.orders.length === 0) {
       this.generateOrders();
     }
+    if (this.lastRefreshDay === 0) {
+      this.lastRefreshDay = cycleDay;
+    }
   }
 
-  refreshDaily(force = false) {
-    const currentDay = this.game.chamber ? this.game.chamber.cycleDay : 1;
-    if (force || currentDay !== this.lastRefreshDay) {
-      this.lastRefreshDay = currentDay;
-      this.merchant = getRandomBlackMarketMerchant();
-      this.fluctuation = getRandomBlackMarketFluctuation();
-      this.orders = [];
-      this.generateOrders();
-      this.stats.daysTraded++;
-      return true;
-    }
-    return false;
+  onNewDay(newDay) {
+    this.lastRefreshDay = newDay;
+    const oldMerchantName = this.merchant ? this.merchant.name : null;
+    this.merchant = getRandomBlackMarketMerchant();
+    this.fluctuation = getRandomBlackMarketFluctuation();
+    this.orders = [];
+    this.generateOrders();
+    this.stats.daysTraded++;
+    return {
+      merchantChanged: oldMerchantName !== this.merchant.name,
+      newMerchant: this.merchant
+    };
   }
 
   generateOrders() {
@@ -321,16 +322,6 @@ export class BlackMarket {
   }
 
   tick(deltaSeconds) {
-    this.refreshTimer += deltaSeconds;
-    if (this.refreshTimer >= BLACK_MARKET_DAILY_REFRESH_INTERVAL) {
-      this.refreshTimer = 0;
-      if (this.refreshDaily()) {
-        if (this.game.taskSystem) {
-          this.game.taskSystem.showHint(`🌙 黑市交易日刷新！新商人：${this.merchant.icon} ${this.merchant.name}`);
-        }
-      }
-    }
-
     let expired = 0;
     this.orders.forEach(order => {
       if (order.status === 'active') {
@@ -351,7 +342,6 @@ export class BlackMarket {
       merchant: this.merchant ? this.merchant.id : null,
       fluctuation: this.fluctuation ? this.fluctuation.id : null,
       orders: this.orders,
-      refreshTimer: this.refreshTimer,
       lastRefreshDay: this.lastRefreshDay,
       stats: this.stats
     };
@@ -368,7 +358,6 @@ export class BlackMarket {
       if (found) this.fluctuation = found;
     }
     if (data.orders) this.orders = data.orders;
-    if (typeof data.refreshTimer === 'number') this.refreshTimer = data.refreshTimer;
     if (typeof data.lastRefreshDay === 'number') this.lastRefreshDay = data.lastRefreshDay;
     if (data.stats) this.stats = { ...this.stats, ...data.stats };
   }
