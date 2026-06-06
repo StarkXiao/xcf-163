@@ -504,6 +504,7 @@ export class DeepSeaExpedition {
     }
 
     const maxHull = this.getMaxHull();
+    const shipSupplies = { ...requiredSupplies };
     this.currentExpedition = {
       id: Storage.generateExpeditionId(),
       route: route,
@@ -515,7 +516,11 @@ export class DeepSeaExpedition {
       currentDay: 0,
       hull: maxHull,
       maxHull: maxHull,
-      supplies: { ...this.supplies },
+      supplies: shipSupplies,
+      dailyCost: {
+        food: Math.max(1, Math.ceil(requiredSupplies.food / route.duration)),
+        fuel: Math.max(1, Math.ceil(requiredSupplies.fuel / route.duration))
+      },
       cargo: [],
       bonusCoins: 0,
       wrecksFound: 0,
@@ -525,10 +530,11 @@ export class DeepSeaExpedition {
       returnedEarly: false
     };
 
-    this.supplies = { food: 0, fuel: 0, repair: 0 };
-
     this.stats.totalExpeditions++;
-    this.addLog('info', `🚀 开始远征：${route.icon} ${route.name}`);
+    const logMsg = Object.entries(requiredSupplies)
+      .map(([k, v]) => `${SUPPLY_ITEMS[k].icon}${v}`)
+      .join(' ');
+    this.addLog('info', `🚀 开始远征：${route.icon} ${route.name}，携带补给：${logMsg}`);
     this.game.taskSystem.showHint(`${route.name} 远征开始！`);
     this.game.checkTasks('expedition_start');
     this.game.saveProgress();
@@ -542,23 +548,27 @@ export class DeepSeaExpedition {
     const route = exp.route;
     exp.currentDay++;
 
-    const dailyFoodCost = Math.max(1, Math.ceil(route.supplyCost.food / route.duration));
-    const dailyFuelCost = Math.max(1, Math.ceil(route.supplyCost.fuel / route.duration));
+    const dailyFoodCost = exp.dailyCost?.food || Math.max(1, Math.ceil(route.supplyCost.food / route.duration));
+    const dailyFuelCost = exp.dailyCost?.fuel || Math.max(1, Math.ceil(route.supplyCost.fuel / route.duration));
 
     if (exp.supplies.food >= dailyFoodCost) {
       exp.supplies.food -= dailyFoodCost;
     } else {
-      const hullDamage = 10 * (dailyFoodCost - exp.supplies.food);
+      const shortage = dailyFoodCost - exp.supplies.food;
+      const hullDamage = 10 * shortage;
       exp.hull -= hullDamage;
       exp.supplies.food = 0;
-      this.addLog('danger', `🍖 食物不足！船体受损 ${hullDamage}%`);
+      this.addLog('danger', `🍖 食物不足（缺${shortage}）！船体受损 ${hullDamage}%`);
     }
 
     if (exp.supplies.fuel >= dailyFuelCost) {
       exp.supplies.fuel -= dailyFuelCost;
     } else {
-      exp.hull -= 15;
-      this.addLog('danger', `⛽ 燃料耗尽！船体受损 15%`);
+      const shortage = dailyFuelCost - exp.supplies.fuel;
+      const hullDamage = 15 + 5 * shortage;
+      exp.hull -= hullDamage;
+      exp.supplies.fuel = 0;
+      this.addLog('danger', `⛽ 燃料不足（缺${shortage}）！船体受损 ${hullDamage}%`);
     }
 
     if (exp.hull <= 0) {
@@ -777,7 +787,20 @@ export class DeepSeaExpedition {
     const exp = this.currentExpedition;
     if (!exp) return;
 
-    const summary = this.calculateSettlement(exp, success);
+    const maxSupply = this.getMaxSupply();
+    const returnedSupplies = {};
+    if (success) {
+      for (const [key, amount] of Object.entries(exp.supplies)) {
+        if (amount > 0) {
+          const before = this.supplies[key] || 0;
+          const actualReturn = Math.min(amount, maxSupply - before);
+          this.supplies[key] = before + actualReturn;
+          returnedSupplies[key] = actualReturn;
+        }
+      }
+    }
+
+    const summary = this.calculateSettlement(exp, success, returnedSupplies);
 
     if (success && exp.cargo.length > 0) {
       exp.cargo.forEach(item => {
@@ -823,7 +846,7 @@ export class DeepSeaExpedition {
     this.renderAll();
   }
 
-  calculateSettlement(exp, success) {
+  calculateSettlement(exp, success, returnedSupplies = {}) {
     if (!success) {
       return {
         baseReward: 0,
@@ -833,7 +856,8 @@ export class DeepSeaExpedition {
         earlyPenalty: 0,
         totalCoins: 0,
         cargoItems: [],
-        messages: ['远征失败，所有货物已丢失']
+        returnedSupplies: {},
+        messages: ['远征失败，所有货物和补给已丢失']
       };
     }
 
@@ -869,6 +893,7 @@ export class DeepSeaExpedition {
       earlyPenalty,
       totalCoins,
       cargoItems: exp.cargo,
+      returnedSupplies,
       messages
     };
   }
@@ -922,6 +947,16 @@ export class DeepSeaExpedition {
         ${summary.earlyPenalty > 0 ? `<div class="reward-row penalty"><span>提前回港</span><span>-${summary.earlyPenalty}💰</span></div>` : ''}
         <div class="reward-row total"><span>总计</span><span>${summary.totalCoins}💰</span></div>
       </div>
+      ${summary.returnedSupplies && Object.values(summary.returnedSupplies).some(v => v > 0) ? `
+        <div class="settlement-supplies-return">
+          <div class="chamber-stat-label">剩余补给已归还港口</div>
+          <div class="supplies-return-row">
+            ${Object.entries(summary.returnedSupplies).filter(([, v]) => v > 0).map(([k, v]) => `
+              <span>${SUPPLY_ITEMS[k].icon} ${SUPPLY_ITEMS[k].name} +${v}</span>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
       ${summary.cargoItems && summary.cargoItems.length > 0 ? `
         <div class="settlement-cargo">
           <div class="chamber-stat-label">捕获物品 (已存入背包)</div>

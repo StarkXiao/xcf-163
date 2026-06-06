@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>深海远征链路测试</title>
+  <style>
+    body { font-family: monospace; background: #111; color: #eee; padding: 20px; line-height: 1.6; }
+    h1 { color: #00ffff; }
+    h2 { color: #ffaa00; margin-top: 30px; }
+    .pass { color: #44ff44; }
+    .fail { color: #ff4444; }
+    .info { color: #88aaff; }
+    .warn { color: #ffaa44; }
+    .data { background: #1a1a2a; padding: 10px; border-radius: 4px; margin: 10px 0; overflow-x: auto; }
+    button { background: #0088ff; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #00aaff; }
+  </style>
+</head>
+<body>
+  <h1>🚢 深海远征完整链路测试</h1>
+  <button onclick="runAllTests()">▶ 运行全部测试</button>
+  <button onclick="openGame()">🎮 打开游戏</button>
+  <div id="result"></div>
+
+<script>
+const result = document.getElementById('result');
+
+function log(msg, cls='') {
+  const div = document.createElement('div');
+  div.className = cls;
+  div.innerHTML = msg;
+  result.appendChild(div);
+}
+
+function logData(obj) {
+  const div = document.createElement('pre');
+  div.className = 'data';
+  div.textContent = JSON.stringify(obj, null, 2);
+  result.appendChild(div);
+}
+
+function assert(cond, passMsg, failMsg) {
+  if (cond) {
+    log(`✅ ${passMsg}`, 'pass');
+    return true;
+  } else {
+    log(`❌ ${failMsg}`, 'fail');
+    return false;
+  }
+}
+
+async function waitForGame() {
+  log('等待游戏加载...', 'info');
+  for (let i = 0; i < 30; i++) {
+    const win = window.parent || window.opener || window;
+    if (win.__game) {
+      log('游戏加载完成', 'pass');
+      return win.__game;
+    }
+    await new Promise(r => setTimeout(r, 300));
+  }
+  throw new Error('游戏加载超时');
+}
+
+async function runAllTests() {
+  result.innerHTML = '';
+  log('<h2>=== 初始化 ===</h2>');
+  let game;
+  try {
+    game = await waitForGame();
+  } catch(e) {
+    log(e.message, 'fail');
+    log('请先在游戏页面(http://localhost:5181/)打开后再运行测试', 'warn');
+    return;
+  }
+  const exp = game.expedition;
+
+  let allPass = true;
+
+  log('<h2>--- 测试1: 购买补给 ---</h2>');
+  const beforeFood = exp.supplies.food;
+  const beforeFuel = exp.supplies.fuel;
+  const beforeRepair = exp.supplies.repair;
+  const beforeCoins = game.stats.coins;
+  log(`购买前: 🍖${beforeFood} ⛽${beforeFuel} 🔧${beforeRepair} 💰${beforeCoins}`, 'info');
+  exp.buySupply('food', 10);
+  exp.buySupply('fuel', 10);
+  exp.buySupply('repair', 5);
+  log(`购买后: 🍖${exp.supplies.food} ⛽${exp.supplies.fuel} 🔧${exp.supplies.repair} 💰${game.stats.coins}`, 'info');
+  allPass &= assert(exp.supplies.food === beforeFood + 10, '食物购买正确', `食物错误: 期望${beforeFood + 10}实际${exp.supplies.food}`);
+  allPass &= assert(exp.supplies.fuel === beforeFuel + 10, '燃料购买正确', `燃料错误`);
+  allPass &= assert(exp.supplies.repair === beforeRepair + 5, '零件购买正确', `零件错误`);
+
+  log('<h2>--- 测试2: 出发近海航线 (验证补给正确带上船) ---</h2>');
+  const portBefore = { ...exp.supplies };
+  log(`出发前港口库存: 🍖${portBefore.food} ⛽${portBefore.fuel} 🔧${portBefore.repair}`, 'info');
+  exp.startExpedition('coastal');
+  const cur = exp.currentExpedition;
+  log(`船上补给: 🍖${cur.supplies.food} ⛽${cur.supplies.fuel} 🔧${cur.supplies.repair}`, 'info');
+  log(`港口剩余: 🍖${exp.supplies.food} ⛽${exp.supplies.fuel} 🔧${exp.supplies.repair}`, 'info');
+  log(`每日消耗: 🍖${cur.dailyCost.food} ⛽${cur.dailyCost.fuel}`, 'info');
+  allPass &= assert(cur.supplies.food === 5, '船上食物=5 (近海要求)', `实际:${cur.supplies.food}`);
+  allPass &= assert(cur.supplies.repair === 2, '船上零件=2 (近海要求)', `实际:${cur.supplies.repair}`);
+  allPass &= assert(exp.supplies.food === portBefore.food - 5, '港口扣减食物正确');
+  allPass &= assert(exp.supplies.repair === portBefore.repair - 2, '港口扣减零件正确');
+  allPass &= assert(cur.totalDays === 3, '近海航线=3天', `实际:${cur.totalDays}`);
+
+  log('<h2>--- 测试3: 按日推进 (验证消耗) ---</h2>');
+  let day = 0;
+  while (exp.currentExpedition && day < 5) {
+    day++;
+    const beforeDay = exp.currentExpedition?.currentDay;
+    const beforeFood = exp.currentExpedition?.supplies.food;
+    const beforeFuel = exp.currentExpedition?.supplies.fuel;
+    const beforeHull = exp.currentExpedition?.hull;
+    const beforeCargo = exp.currentExpedition?.cargo.length;
+    const beforeWrecks = exp.currentExpedition?.wrecksFound;
+    const beforeEvents = exp.currentExpedition?.eventsEncountered.length;
+    const beforeCoinsBonus = exp.currentExpedition?.bonusCoins;
+    const beforeCreatures = exp.currentExpedition?.creaturesCaught;
+    const preLogLen = exp.expeditionLog.length;
+
+    exp.advanceDay();
+
+    if (!exp.currentExpedition) {
+      log(`第${day}天: 远征已结束`, 'warn');
+      break;
+    }
+
+    const after = exp.currentExpedition;
+    log(`第${after.currentDay}天结束: 🍖${after.supplies.food}(消耗${beforeFood-after.supplies.food}) ⛽${after.supplies.fuel}(消耗${beforeFuel-after.supplies.fuel}) 船体${Math.floor(beforeHull)}→${Math.floor(after.hull)} 货物${beforeCargo}→${after.cargo.length} 残骸${beforeWrecks}→${after.wrecksFound} 事件${beforeEvents}→${after.eventsEncountered.length} 金币${beforeCoinsBonus}→${after.bonusCoins} 捕获${beforeCreatures}→${after.creaturesCaught}`, 'info');
+    const newLogs = exp.expeditionLog.slice(0, exp.expeditionLog.length - preLogLen);
+    newLogs.slice().reverse().forEach(l => log(`  📜 [${l.time}] ${l.message}`, l.type === 'danger' ? 'fail' : l.type === 'success' ? 'pass' : 'info'));
+
+    if (after.hull <= 0) {
+      log('船体损毁，远征失败', 'fail');
+      break;
+    }
+  }
+
+  log('<h2>--- 测试4: 回港结算 (验证补给归还+收益) ---</h2>');
+  if (!exp.currentExpedition) {
+    log('远征已自动完成，查看结果', 'info');
+  } else {
+    log('手动触发回港', 'info');
+    const remainingBefore = { ...exp.currentExpedition.supplies };
+    const portBeforeReturn = { ...exp.supplies };
+    exp.returnToPort(false);
+    log(`船上剩余: 🍖${remainingBefore.food} ⛽${remainingBefore.fuel} 🔧${remainingBefore.repair}`, 'info');
+    log(`归还后港口: 🍖${exp.supplies.food} ⛽${exp.supplies.fuel} 🔧${exp.supplies.repair}`, 'info');
+    allPass &= assert(exp.supplies.food >= portBeforeReturn.food, '食物已归还港口', `港口食物:${exp.supplies.food} 原:${portBeforeReturn.food}`);
+  }
+
+  log('<h2>--- 测试5: 查看历史记录 ---</h2>');
+  const history = game.expedition ? Storage.listExpeditions() : [];
+  log(`历史记录数: ${history.length}`, 'info');
+  if (history.length > 0) {
+    const last = history[0];
+    log(`最近一次: ${last.routeIcon} ${last.routeName} - ${last.daysTravelled}天 - ${last.earnings}💰 - ${last.completed ? '✅' : '💀'}`, 'info');
+    logData(last);
+  }
+
+  log('<h2>=== 测试总结 ===</h2>');
+  log(allPass ? '🎉 所有关键断言通过！' : '⚠️ 部分断言失败，请检查上方日志', allPass ? 'pass' : 'fail');
+  log(`累计远征: ${exp.stats.totalExpeditions} 次，累计收益: ${exp.stats.totalExpeditionCoins} 💰`, 'info');
+}
+
+function openGame() {
+  window.open('http://localhost:5181/', 'game');
+}
+</script>
+</body>
+</html>

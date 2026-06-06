@@ -1869,6 +1869,24 @@ html, body {
   margin-bottom: 6px;
 }
 
+.settlement-supplies-return {
+  background: #1a2a3a;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #2a4a6a;
+}
+
+.supplies-return-row {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+  color: #44ddff;
+}
+
 @media (max-width: 480px) {
   .expedition-content,
   .settlement-content {
