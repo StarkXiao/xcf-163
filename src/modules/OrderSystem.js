@@ -105,8 +105,12 @@ export class OrderSystem {
     }
   }
 
-  tryFulfillWithBackpackItem(item, inventoryIndex) {
-    const eligibleOrders = this.orders.filter(o => o.status === 'active' && this.itemMatchesOrder(item, o));
+  tryFulfillWithBackpackItem(item, inventoryIndex, preferredOrderId = null) {
+    let eligibleOrders = this.orders.filter(o => o.status === 'active' && this.itemMatchesOrder(item, o));
+    if (preferredOrderId) {
+      const preferred = eligibleOrders.find(o => o.id === preferredOrderId);
+      if (preferred) eligibleOrders = [preferred];
+    }
     if (eligibleOrders.length === 0) {
       return { success: false, message: '没有匹配的订单' };
     }

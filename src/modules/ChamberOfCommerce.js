@@ -36,29 +36,30 @@ export class ChamberOfCommerce {
     this.tabContents = document.querySelectorAll('.chamber-tab-content');
     this.currentTab = 'overview';
 
-    this.bindEvents();
+    this._serveMode = false;
+    this._fulfillOrderMode = null;
+    this._claimedBonuses = [];
+
+    this.bindStaticEvents();
   }
 
-  bindEvents() {
-    document.getElementById('btn-chamber').addEventListener('click', () => this.openChamber());
-    document.getElementById('btn-close-chamber').addEventListener('click', () => this.closeChamber());
-
-    this.tabBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tab = btn.dataset.tab;
-        this.switchTab(tab);
+  bindStaticEvents() {
+    const btnChamber = document.getElementById('btn-chamber');
+    if (btnChamber) {
+      btnChamber.addEventListener('click', () => this.openChamber());
+    }
+    const btnClose = document.getElementById('btn-close-chamber');
+    if (btnClose) {
+      btnClose.addEventListener('click', () => this.closeChamber());
+    }
+    if (this.tabBtns) {
+      this.tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tab = btn.dataset.tab;
+          this.switchTab(tab);
+        });
       });
-    });
-
-    document.getElementById('btn-start-cycle').addEventListener('click', () => this.startNewCycle());
-    document.getElementById('btn-end-cycle').addEventListener('click', () => this.endCurrentCycle());
-    document.getElementById('btn-cycles-list').addEventListener('click', () => this.showCyclesList());
-
-    document.getElementById('btn-haggle').addEventListener('click', () => this.handleHaggle());
-    document.getElementById('btn-dismiss-customer').addEventListener('click', () => this.handleDismissCustomer());
-    document.getElementById('btn-serve-from-bp').addEventListener('click', () => this.openBackpackToServe());
-
-    document.getElementById('btn-new-order').addEventListener('click', () => this.generateNewOrder());
+    }
   }
 
   openChamber() {
@@ -162,7 +163,7 @@ export class ChamberOfCommerce {
     if (!el) return;
     const claimable = DAILY_BONUSES.filter(b => {
       const dayNum = parseInt(b.id.replace('d', ''));
-      return this.cycleDay >= dayNum && !this._claimedBonuses?.includes(b.id);
+      return this.cycleDay >= dayNum && !(this._claimedBonuses || []).includes(b.id);
     });
     if (claimable.length === 0) {
       el.innerHTML = '';
@@ -217,6 +218,7 @@ export class ChamberOfCommerce {
         }
         this.renderStalls();
         this.renderOverview();
+        this.renderOrders();
       });
     });
   }
@@ -224,17 +226,17 @@ export class ChamberOfCommerce {
   renderStallCard(s) {
     const priceBonus = (s.priceBonus * 100).toFixed(0);
     let statusHtml = '';
+    const stallKey = s.key;
     if (!s.isUnlocked) {
       const canAfford = this.game.stats.coins >= s.unlockCost;
-      statusHtml = `<button class="modal-btn primary full-width" data-stall-key="${Object.keys(this.stallSystem.stalls).find(k => this.stallSystem.stalls[k] && s.id === this.stallSystem.constructor && k)}" data-stall-action="unlock" ${canAfford ? '' : 'disabled'}>🔓 解锁 ${s.unlockCost}💰</button>`;
+      statusHtml = `<button class="modal-btn primary full-width" data-stall-key="${stallKey}" data-stall-action="unlock" ${canAfford ? '' : 'disabled'}>🔓 解锁 ${s.unlockCost}💰</button>`;
     } else if (s.canUpgrade) {
       const cost = s.upgradeCost;
       const canAfford = this.game.stats.coins >= cost.coins;
-      statusHtml = `<button class="modal-btn accent full-width" data-stall-key="${this.findStallKeyById(s.id)}" data-stall-action="upgrade" ${canAfford ? '' : 'disabled'}>⬆ 升级 Lv.${s.currentLevel + 1} (${cost.coins}💰)</button>`;
+      statusHtml = `<button class="modal-btn accent full-width" data-stall-key="${stallKey}" data-stall-action="upgrade" ${canAfford ? '' : 'disabled'}>⬆ 升级 Lv.${s.currentLevel + 1} (${cost.coins}💰)</button>`;
     } else {
       statusHtml = `<div class="stall-maxed">⭐ 已满级 Lv.${s.currentLevel}</div>`;
     }
-    const key = this.findStallKeyById(s.id);
     return `
       <div class="stall-card ${s.isUnlocked ? '' : 'stall-locked'}">
         <div class="stall-card-header">
@@ -254,17 +256,6 @@ export class ChamberOfCommerce {
     `;
   }
 
-  findStallKeyById(stallId) {
-    const STALL_TYPES = { SCRAP: 'scrap', REFINERY: 'refinery', BOUTIQUE: 'boutique', LEGENDARY: 'legendary', AUCTION: 'auction' };
-    for (const [k, v] of Object.entries(STALL_TYPES)) {
-      if (v === stallId) return k;
-    }
-    return Object.keys(this.stallSystem.stalls).find(k => {
-      const info = this.stallSystem.getStallInfo(k);
-      return info && info.id === stallId;
-    }) || 'SCRAP';
-  }
-
   renderMarket() {
     const el = document.getElementById('chamber-market');
     if (!el) return;
@@ -282,13 +273,15 @@ export class ChamberOfCommerce {
         下次行情变化: <span style="color:#ffaa00;">${Math.ceil(nextChange)}s</span>
       </div>
       <div class="market-history">
-        <div class="chamber-stat-label">近期交易记录</div>
+        <div class="chamber-stat-label">近期行情记录</div>
         ${this.pricingSystem.priceHistory.length > 0 ? `
           <div class="history-list">
-            ${this.pricingSystem.priceHistory.slice(-5).reverse().map(h => {
-              const m = this.pricingSystem.constructor ? null : null;
-              return `<div class="history-item"><span>${new Date(h.timestamp).toLocaleTimeString()}</span><span>行情变化</span></div>`;
-            }).join('')}
+            ${this.pricingSystem.priceHistory.slice(-5).reverse().map(h => `
+              <div class="history-item">
+                <span>${new Date(h.timestamp).toLocaleTimeString()}</span>
+                <span>行情变化</span>
+              </div>
+            `).join('')}
           </div>
         ` : '<div style="color:#666;text-align:center;padding:15px;">暂无记录</div>'}
       </div>
@@ -321,7 +314,7 @@ export class ChamberOfCommerce {
           <div style="font-size:48px;">🚶</div>
           <p>暂无顾客</p>
           <p class="chamber-stat-sub">下一位顾客: ${Math.ceil(nextArrival)}s</p>
-          <p class="chamber-hint" style="margin-top:20px;">点击下方「从背包选货」可以在顾客到来时快速出售</p>
+          <p class="chamber-hint" style="margin-top:20px;">开启经营周目后，顾客会自动来访</p>
           <button class="modal-btn primary full-width" id="btn-serve-from-bp-main">🎒 从背包选货出售</button>
         </div>
       `;
@@ -330,7 +323,7 @@ export class ChamberOfCommerce {
       return;
     }
 
-    const patiencePct = (this.customerSystem.getPatience() / c.patience) * 100;
+    const patiencePct = Math.max(0, (this.customerSystem.getPatience() / c.patience) * 100);
     el.innerHTML = `
       <div class="customer-card">
         <div class="customer-header">
@@ -345,7 +338,7 @@ export class ChamberOfCommerce {
           <div class="chamber-progress">
             <div class="chamber-progress-fill ${patiencePct < 30 ? 'danger-fill' : ''}" style="width:${patiencePct}%"></div>
           </div>
-          <div class="chamber-stat-sub">${Math.ceil(this.customerSystem.getPatience())}s</div>
+          <div class="chamber-stat-sub">${Math.ceil(Math.max(0, this.customerSystem.getPatience()))}s</div>
         </div>
         <div class="customer-preferences">
           ${c.preferredRarities && c.preferredRarities.length > 0 ? `
@@ -449,6 +442,7 @@ export class ChamberOfCommerce {
 
     const repSign = serveResult.reputationDelta >= 0 ? '+' : '';
     this.game.taskSystem.showHint(`${serveResult.message}（声望 ${repSign}${serveResult.reputationDelta}）`);
+    this.openChamber();
     return true;
   }
 
@@ -514,8 +508,8 @@ export class ChamberOfCommerce {
   }
 
   renderOrderCard(o) {
-    const timePct = (o.timeRemaining / o.timeLimit) * 100;
-    const progressPct = (o.currentQuantity / o.requiredQuantity) * 100;
+    const timePct = Math.max(0, (o.timeRemaining / o.timeLimit) * 100);
+    const progressPct = Math.max(0, (o.currentQuantity / o.requiredQuantity) * 100);
     return `
       <div class="order-card">
         <div class="order-header">
@@ -545,7 +539,7 @@ export class ChamberOfCommerce {
           <div class="chamber-progress small">
             <div class="chamber-progress-fill ${timePct < 30 ? 'danger-fill' : ''}" style="width:${timePct}%"></div>
           </div>
-          <span>${Math.ceil(o.timeRemaining)}s</span>
+          <span>${Math.ceil(Math.max(0, o.timeRemaining))}s</span>
         </div>
         <div class="order-actions">
           <button class="modal-btn primary" data-order-id="${o.id}" data-order-action="fulfill">📦 交付</button>
@@ -571,10 +565,14 @@ export class ChamberOfCommerce {
     if (!this._fulfillOrderMode) return false;
     const orderId = this._fulfillOrderMode;
     this._fulfillOrderMode = null;
-    const r = this.orderSystem.tryFulfillWithBackpackItem(item, inventoryIndex);
+    const r = this.orderSystem.tryFulfillWithBackpackItem(item, inventoryIndex, orderId);
     this.game.inventory.renderBackpack();
     this.game.inventory.closeBackpack();
     this.game.taskSystem.showHint(r.message);
+    if (r.success && !r.partial) {
+      this.game.saveProgress();
+    }
+    this.openChamber();
     return true;
   }
 
@@ -776,7 +774,7 @@ export class ChamberOfCommerce {
       this.saveCycleState();
     }
 
-    if (!this.modal?.classList.contains('hidden')) {
+    if (this.modal && !this.modal.classList.contains('hidden')) {
       this.renderOverview();
       this.renderMarket();
       this.renderCustomer();

@@ -42,7 +42,10 @@ export class StallSystem {
   }
 
   getAllStalls() {
-    return Object.keys(STALL_TYPES).map(key => this.getStallInfo(key)).filter(Boolean);
+    return Object.keys(STALL_TYPES).map(key => {
+      const info = this.getStallInfo(key);
+      return info ? { ...info, key } : null;
+    }).filter(Boolean);
   }
 
   isUnlocked(stallKey) {
