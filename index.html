@@ -82,6 +82,10 @@
           <span class="btn-icon">🏪</span>
           <span class="btn-text">商会</span>
         </button>
+        <button class="action-btn" id="btn-expedition">
+          <span class="btn-icon">🚢</span>
+          <span class="btn-text">远征</span>
+        </button>
       </div>
     </div>
 
@@ -254,6 +258,33 @@
           <button class="modal-btn secondary" id="btn-close-chamber">关闭</button>
         </div>
       </div>
+    </div>
+
+    <div id="expedition-modal" class="modal hidden">
+      <div class="modal-content expedition-content">
+        <h2 class="modal-title">🚢 深海远征</h2>
+        <div class="chamber-tabs expedition-tabs">
+          <button class="expedition-tab active" data-tab="overview">📊 总览</button>
+          <button class="expedition-tab" data-tab="routes">🗺️ 航线</button>
+          <button class="expedition-tab" data-tab="supplies">📦 补给</button>
+          <button class="expedition-tab" data-tab="upgrades">⚙️ 升级</button>
+          <button class="expedition-tab" data-tab="history">📜 历史</button>
+        </div>
+
+        <div class="chamber-tab-content expedition-tab-content" data-tab="overview" id="expedition-overview"></div>
+        <div class="chamber-tab-content expedition-tab-content hidden" data-tab="routes" id="expedition-routes"></div>
+        <div class="chamber-tab-content expedition-tab-content hidden" data-tab="supplies" id="expedition-supplies"></div>
+        <div class="chamber-tab-content expedition-tab-content hidden" data-tab="upgrades" id="expedition-upgrades"></div>
+        <div class="chamber-tab-content expedition-tab-content hidden" data-tab="history" id="expedition-history"></div>
+
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-expedition">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="expedition-settlement-modal" class="modal hidden">
+      <div class="modal-content settlement-content" id="expedition-settlement-content"></div>
     </div>
   </div>
 

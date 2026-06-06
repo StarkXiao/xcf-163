@@ -413,6 +413,71 @@ export const TASKS = [
     type: 'reroll_count',
     target: 5,
     reward: { coins: 600, energy: 50 }
+  },
+  {
+    id: 'tut_expedition',
+    name: '探索远征',
+    desc: '点击底部「远征」按钮，开启深海远征。',
+    type: 'expedition_open',
+    target: 1,
+    reward: { coins: 100 },
+    isTutorial: true
+  },
+  {
+    id: 'first_expedition',
+    name: '首次出航',
+    desc: '完成第一次深海远征。',
+    type: 'expedition_complete',
+    target: 1,
+    reward: { coins: 300, energy: 50 }
+  },
+  {
+    id: 'expedition_3',
+    name: '老练航海家',
+    desc: '累计完成3次深海远征。',
+    type: 'expedition_complete',
+    target: 3,
+    reward: { coins: 800 }
+  },
+  {
+    id: 'expedition_10',
+    name: '远征船长',
+    desc: '累计完成10次深海远征。',
+    type: 'expedition_complete',
+    target: 10,
+    reward: { coins: 2000, energy: 100 }
+  },
+  {
+    id: 'expedition_unlock_route',
+    name: '航线开拓者',
+    desc: '解锁一条新的远征航线。',
+    type: 'expedition_unlock_route',
+    target: 1,
+    reward: { coins: 500 }
+  },
+  {
+    id: 'expedition_upgrade',
+    name: '潜艇工程师',
+    desc: '完成一次潜艇升级。',
+    type: 'expedition_upgrade',
+    target: 1,
+    reward: { coins: 400 }
+  },
+  {
+    id: 'expedition_wreck_5',
+    name: '残骸猎人',
+    desc: '在远征中累计发现5处残骸。',
+    type: 'expedition_complete',
+    target: 5,
+    reward: { coins: 600 }
+  },
+  {
+    id: 'expedition_abyss',
+    name: '深渊征服者',
+    desc: '完成一次深渊航线远征。',
+    type: 'expedition_complete',
+    target: 1,
+    reward: { coins: 3000, energy: 200 }
   }
 ];
 

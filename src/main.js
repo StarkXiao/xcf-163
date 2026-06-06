@@ -8,6 +8,7 @@ import { Storage } from './modules/Storage.js';
 import { TideSystem } from './modules/TideSystem.js';
 import { ReinforceSystem } from './modules/ReinforceSystem.js';
 import { ChamberOfCommerce } from './modules/ChamberOfCommerce.js';
+import { DeepSeaExpedition } from './modules/DeepSeaExpedition.js';
 
 class Game {
   constructor() {
@@ -20,6 +21,7 @@ class Game {
     this.tideSystem = null;
     this.reinforceSystem = null;
     this.chamber = null;
+    this.expedition = null;
     
     this.stats = {
       energy: 100,
@@ -108,6 +110,7 @@ class Game {
     this.taskSystem = new TaskSystem(this);
     this.reinforceSystem = new ReinforceSystem(this);
     this.chamber = new ChamberOfCommerce(this);
+    this.expedition = new DeepSeaExpedition(this);
     this.stallSystem = this.chamber.stallSystem;
     this.pricingSystem = this.chamber.pricingSystem;
     this.customerSystem = this.chamber.customerSystem;
@@ -257,6 +260,7 @@ class Game {
       tide: this.tideSystem ? this.tideSystem.toJSON() : null,
       reinforce: this.reinforceSystem ? this.reinforceSystem.toJSON() : null,
       chamber: this.chamber ? this.chamber.toJSON() : null,
+      expedition: this.expedition ? this.expedition.toJSON() : null,
       timestamp: Date.now()
     };
     Storage.save(saveData);
@@ -275,6 +279,9 @@ class Game {
       }
       if (this.chamber && data.chamber) {
         this.chamber.loadData(data.chamber);
+      }
+      if (this.expedition && data.expedition) {
+        this.expedition.loadData(data.expedition);
       }
       if (this.tideSystem && data.tide) {
         this.tideSystem.init(data.tide);

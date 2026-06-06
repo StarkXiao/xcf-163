@@ -135,6 +135,59 @@ export class TaskSystem {
             progressValue = task.progress + 1;
           }
           break;
+
+        case 'chamber_open':
+          if (task.type === 'chamber_open') {
+            shouldUpdate = true;
+            progressValue = 1;
+          }
+          break;
+
+        case 'stall_unlock':
+        case 'stall_upgrade':
+        case 'chamber_sale':
+        case 'cycle_start':
+        case 'cycle_end':
+          if (task.type === type) {
+            shouldUpdate = true;
+            progressValue = task.progress + 1;
+          }
+          break;
+
+        case 'expedition_open':
+          if (task.type === 'expedition_open') {
+            shouldUpdate = true;
+            progressValue = 1;
+          }
+          break;
+
+        case 'expedition_start':
+          if (task.type === 'expedition_start') {
+            shouldUpdate = true;
+            progressValue = task.progress + 1;
+          }
+          break;
+
+        case 'expedition_complete':
+          if (task.type === 'expedition_complete') {
+            shouldUpdate = true;
+            progressValue = this.game.expedition ? this.game.expedition.stats.totalExpeditions : 0;
+          }
+          break;
+
+        case 'expedition_unlock_route':
+          if (task.type === 'expedition_unlock_route') {
+            shouldUpdate = true;
+            progressValue = task.progress + 1;
+          }
+          break;
+
+        case 'expedition_upgrade':
+          if (task.type === 'expedition_upgrade') {
+            shouldUpdate = true;
+            progressValue = task.progress + 1;
+          }
+          break;
       }
       
       if (shouldUpdate) {
