@@ -65,6 +65,12 @@ export class Inventory {
 
     this.collection.add(creature.id);
     this.game.checkTasks('collect_creature', creature);
+
+    if (this.game.storySystem) {
+      this.game.storySystem.onGameEvent('unique_collected');
+      this.game.storySystem.onGameEvent('collect_rarity', creature);
+    }
+
     this.game.saveProgress();
     return true;
   }

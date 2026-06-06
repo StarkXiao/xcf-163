@@ -103,6 +103,12 @@
           <span class="btn-icon">⚓</span>
           <span class="btn-text">港口</span>
         </button>
+        <button class="action-btn story-btn" id="btn-story">
+          <span class="btn-icon">📖</span>
+          <span class="btn-text">剧情</span>
+          <span class="new-indicator hidden" id="new-broadcast-indicator">📡</span>
+          <span class="new-indicator hidden" id="new-story-indicator">✨</span>
+        </button>
       </div>
     </div>
 
@@ -430,6 +436,41 @@
 
     <div id="night-voyage-modal" class="hidden">
       <div id="night-voyage-content"></div>
+    </div>
+
+    <div id="dialogue-modal" class="modal dialogue-modal hidden">
+      <div class="modal-content dialogue-content">
+        <div class="dialogue-header">
+          <span class="dialogue-icon" id="dialogue-icon">🧔</span>
+          <span class="dialogue-speaker" id="dialogue-speaker">角色名</span>
+          <button class="dialogue-close-btn" id="dialogue-close-btn">×</button>
+        </div>
+        <div class="dialogue-body">
+          <p class="dialogue-text" id="dialogue-text"></p>
+          <div class="dialogue-choices hidden" id="dialogue-choices"></div>
+        </div>
+        <div class="dialogue-footer">
+          <button class="modal-btn primary" id="dialogue-next-btn">继续 ▶</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="story-modal" class="modal story-modal hidden">
+      <div class="modal-content story-content">
+        <h2 class="modal-title">📖 主线剧情</h2>
+
+        <div class="chamber-tabs story-tabs">
+          <button class="chamber-tab story-tab active" data-story-tab="chapters">📚 章节</button>
+          <button class="chamber-tab story-tab" data-story-tab="broadcasts">📻 广播日志</button>
+        </div>
+
+        <div class="chamber-tab-content story-tab-content" data-story-tab-content="chapters" id="story-chapter-list"></div>
+        <div class="chamber-tab-content story-tab-content hidden" data-story-tab-content="broadcasts" id="story-broadcast-list"></div>
+
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-story">关闭</button>
+        </div>
+      </div>
     </div>
   </div>
 

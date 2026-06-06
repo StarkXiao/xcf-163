@@ -843,6 +843,9 @@ export class DeepSeaExpedition {
     this.currentExpedition = null;
     this.game.saveProgress();
     this.game.checkTasks('expedition_complete');
+    if (this.game.storySystem) {
+      this.game.storySystem.onGameEvent('expedition_complete');
+    }
     this.renderAll();
   }
 

@@ -12,6 +12,7 @@ import { ChamberOfCommerce } from './modules/ChamberOfCommerce.js';
 import { DeepSeaExpedition } from './modules/DeepSeaExpedition.js';
 import { TavernSystem } from './modules/TavernSystem.js';
 import { PortCommission } from './modules/PortCommission.js';
+import { StorySystem } from './modules/StorySystem.js';
 import { COMBO_CONFIG, getComboEnergyDiscount, getComboEnergyRegenBonus } from './data/creatures.js';
 import { rollNightVoyageEvent } from './data/deepSeaExpedition.js';
 
@@ -30,6 +31,7 @@ class Game {
     this.expedition = null;
     this.tavernSystem = null;
     this.portCommission = null;
+    this.storySystem = null;
 
     this.stats = {
       energy: 100,
@@ -75,11 +77,18 @@ class Game {
       this.taskSystem.showHint(`潮汐变化：${phase.icon} ${phase.name} - ${phase.desc}`);
       this.updateUI();
       this.saveProgress();
+      if (this.storySystem) this.storySystem.onGameEvent('tide_phase', phase);
     });
     
     setTimeout(() => {
       this.taskSystem.showTutorialHint();
     }, 1000);
+
+    setTimeout(() => {
+      if (this.storySystem && !this.storySystem.completedChapters.size && !Storage.hasSave()) {
+        this.storySystem.startChapter('chapter_01');
+      }
+    }, 1500);
   }
 
   bindUIEvents() {
@@ -146,6 +155,7 @@ class Game {
     this.expedition = new DeepSeaExpedition(this);
     this.tavernSystem = new TavernSystem(this);
     this.portCommission = new PortCommission(this);
+    this.storySystem = new StorySystem(this);
     this.stallSystem = this.chamber.stallSystem;
     this.pricingSystem = this.chamber.pricingSystem;
     this.customerSystem = this.chamber.customerSystem;
@@ -207,6 +217,8 @@ class Game {
     
     this.checkTasks('combo_reach', this.stats.comboCount);
     this.checkTasks('total_combo_hits');
+
+    if (this.storySystem) this.storySystem.onGameEvent('combo_reach', this.stats.comboCount);
     
     return this.stats.comboCount;
   }
@@ -453,9 +465,11 @@ class Game {
         break;
       case 'coins':
         this.stats.coins = Math.max(0, this.stats.coins + value);
+        if (this.storySystem) this.storySystem.onGameEvent('coins');
         break;
       case 'catchCount':
         this.stats.catchCount += value;
+        if (this.storySystem) this.storySystem.onGameEvent('catch_count');
         break;
     }
     this.updateUI();
@@ -584,6 +598,7 @@ class Game {
       expedition: this.expedition ? this.expedition.toJSON() : null,
       tavern: this.tavernSystem ? this.tavernSystem.toJSON() : null,
       portCommission: this.portCommission ? this.portCommission.toJSON() : null,
+      story: this.storySystem ? this.storySystem.toJSON() : null,
       timestamp: Date.now()
     };
     Storage.save(saveData);
@@ -620,6 +635,9 @@ class Game {
       }
       if (this.portCommission && data.portCommission) {
         this.portCommission.loadData(data.portCommission);
+      }
+      if (this.storySystem && data.story) {
+        this.storySystem.loadData(data.story);
       }
       if (this.tideSystem && data.tide) {
         this.tideSystem.init(data.tide);
