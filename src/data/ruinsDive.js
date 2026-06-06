@@ -289,6 +289,12 @@ export function generateRuinsMap(tier) {
     }
   }
 
+  ensurePassableAround(grid, size, startX, startY);
+  ensurePassableAround(grid, size, exitX, exitY);
+  if (!hasPath(grid, size, startX, startY, exitX, exitY)) {
+    clearPath(grid, size, startX, startY, exitX, exitY);
+  }
+
   return {
     size,
     grid,
@@ -298,6 +304,64 @@ export function generateRuinsMap(tier) {
     tier: tier.id,
     difficulty: tier.difficulty
   };
+}
+
+function ensurePassableAround(grid, size, cx, cy) {
+  const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+  const blocked = dirs.filter(([dx, dy]) => {
+    const nx = cx + dx, ny = cy + dy;
+    if (nx < 0 || nx >= size || ny < 0 || ny >= size) return true;
+    return !grid[ny][nx].type.passable;
+  });
+  if (blocked.length === 4) {
+    for (const [dx, dy] of dirs) {
+      const nx = cx + dx, ny = cy + dy;
+      if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
+        grid[ny][nx].type = CELL_TYPES.EMPTY;
+        grid[ny][nx].content = null;
+        return;
+      }
+    }
+  }
+}
+
+function hasPath(grid, size, sx, sy, ex, ey) {
+  const visited = Array.from({ length: size }, () => Array(size).fill(false));
+  const queue = [[sx, sy]];
+  visited[sy][sx] = true;
+  const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+  while (queue.length > 0) {
+    const [x, y] = queue.shift();
+    if (x === ex && y === ey) return true;
+    for (const [dx, dy] of dirs) {
+      const nx = x + dx, ny = y + dy;
+      if (nx >= 0 && nx < size && ny >= 0 && ny < size
+        && !visited[ny][nx] && grid[ny][nx].type.passable) {
+        visited[ny][nx] = true;
+        queue.push([nx, ny]);
+      }
+    }
+  }
+  return false;
+}
+
+function clearPath(grid, size, sx, sy, ex, ey) {
+  let cx = sx, cy = sy;
+  while (cx !== ex || cy !== ey) {
+    if (cx < ex) {
+      cx++;
+    } else if (cx > ex) {
+      cx--;
+    } else if (cy < ey) {
+      cy++;
+    } else if (cy > ey) {
+      cy--;
+    }
+    if (grid[cy][cx].type !== CELL_TYPES.START && grid[cy][cx].type !== CELL_TYPES.EXIT) {
+      grid[cy][cx].type = CELL_TYPES.EMPTY;
+      grid[cy][cx].content = null;
+    }
+  }
 }
 
 function generateCellContent(type, tier) {

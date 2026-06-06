@@ -61,27 +61,39 @@ function log(msg, color) {
 }
 
 function assert(cond, passMsg, failMsg) {
+  totalAsserts++;
   if (cond) {
     log('✅ ' + passMsg, 'green');
     return true;
   } else {
+    failedAsserts++;
     log('❌ ' + failMsg, 'red');
-    return false;
+    throw new Error(failMsg || '断言失败');
   }
 }
 
 let passed = 0;
 let failed = 0;
+let totalAsserts = 0;
+let failedAsserts = 0;
 
 function test(title, fn) {
   console.log('\n📝 ' + title);
   try {
+    const assertsBefore = totalAsserts;
+    const failedBefore = failedAsserts;
     fn();
     passed++;
+    const assertsCount = totalAsserts - assertsBefore;
+    const failedCount = failedAsserts - failedBefore;
+    if (assertsCount === 0) {
+      log('⚠️  警告：该测试未包含任何断言', 'yellow');
+    } else if (failedCount > 0) {
+      log(`⚠️  警告：该测试存在断言失败但未被捕获 (${failedCount}/${assertsCount})`, 'yellow');
+    }
   } catch (e) {
-    log('💥 EXCEPTION: ' + e.message, 'red');
-    console.error(e.stack);
     failed++;
+    log('💥 测试中断: ' + e.message, 'red');
   }
 }
 
@@ -313,9 +325,28 @@ test('13. 模块层：迷雾地图 - 移动与视野更新', () => {
     }
   }
 
-  ruins.movePlayer('up');
+  const dirs = [
+    { dir: 'up', dx: 0, dy: -1 },
+    { dir: 'down', dx: 0, dy: 1 },
+    { dir: 'left', dx: -1, dy: 0 },
+    { dir: 'right', dx: 1, dy: 0 }
+  ];
+
+  let availableDir = null;
+  for (const d of dirs) {
+    const nx = startPos.x + d.dx;
+    const ny = startPos.y + d.dy;
+    if (nx >= 0 && nx < dive.map.size && ny >= 0 && ny < dive.map.size
+      && dive.map.grid[ny][nx].type.passable) {
+      availableDir = d;
+      break;
+    }
+  }
+  assert(availableDir !== null, `找到可通行方向 (${availableDir ? availableDir.dir : '无'})`, '出生点周围无可通行方向');
+
+  ruins.movePlayer(availableDir.dir);
   const moved = dive.map.playerPos.y !== startPos.y || dive.map.playerPos.x !== startPos.x;
-  assert(moved || dive.energy < 100, `移动执行（位置变化或能量消耗）`, '移动未执行');
+  assert(moved, `移动成功 (${startPos.x},${startPos.y})→(${dive.map.playerPos.x},${dive.map.playerPos.y})`, '移动未执行');
 
   let exploredAfter = 0;
   for (let y = 0; y < dive.map.size; y++) {
@@ -592,12 +623,67 @@ test('23. 模块层：视野更新揭示周围迷雾', () => {
   }
 });
 
+test('24. 数据层：地图可达性 - 起点不被墙堵死且有路径到撤离点', () => {
+  Storage.clear();
+  Storage.clearAllRuinsDives();
+
+  const testRounds = 50;
+  let blockedCount = 0;
+  let noPathCount = 0;
+
+  for (let i = 0; i < testRounds; i++) {
+    for (const tier of Object.values(RUINS_TIERS)) {
+      const map = generateRuinsMap(tier);
+      const { startPos, exitPos, grid, size } = map;
+
+      const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+      let hasPassable = false;
+      for (const [dx, dy] of dirs) {
+        const nx = startPos.x + dx, ny = startPos.y + dy;
+        if (nx >= 0 && nx < size && ny >= 0 && ny < size
+          && grid[ny][nx].type.passable) {
+          hasPassable = true;
+          break;
+        }
+      }
+      if (!hasPassable) blockedCount++;
+
+      const visited = Array.from({ length: size }, () => Array(size).fill(false));
+      const queue = [[startPos.x, startPos.y]];
+      visited[startPos.y][startPos.x] = true;
+      let reachable = false;
+      while (queue.length > 0) {
+        const [x, y] = queue.shift();
+        if (x === exitPos.x && y === exitPos.y) {
+          reachable = true;
+          break;
+        }
+        for (const [dx, dy] of dirs) {
+          const nx = x + dx, ny = y + dy;
+          if (nx >= 0 && nx < size && ny >= 0 && ny < size
+            && !visited[ny][nx] && grid[ny][nx].type.passable) {
+            visited[ny][nx] = true;
+            queue.push([nx, ny]);
+          }
+        }
+      }
+      if (!reachable) noPathCount++;
+    }
+  }
+
+  assert(blockedCount === 0, `出生点不被墙堵死 (${testRounds * 4}次生成 堵死=${blockedCount})`, '出生点存在被堵死的情况');
+  assert(noPathCount === 0, `起点可达撤离点 (${testRounds * 4}次生成 无路径=${noPathCount})`, '存在起点无法到达撤离点的地图');
+});
+
 console.log('\n════════════════════════════════════════════════════════');
-if (failed === 0) {
-  log(`🎉 全部 ${passed} 个测试通过! 废墟潜航系统验证成功（迷雾地图 · 机关互动 · 残骸战斗 · 撤离结算）。`, 'green');
+const allOk = failed === 0 && failedAsserts === 0;
+log(`  测试套件: ${passed} 通过 / ${failed} 失败  (共 ${passed + failed} 个)`, allOk ? 'green' : 'red');
+log(`  断言统计: ${totalAsserts - failedAsserts} 通过 / ${failedAsserts} 失败  (共 ${totalAsserts} 个)`, allOk ? 'green' : 'red');
+if (allOk) {
+  log(`🎉 全部测试通过! 废墟潜航系统验证成功（迷雾地图 · 机关互动 · 残骸战斗 · 撤离结算）。`, 'green');
 } else {
-  log(`⚠️  ${passed} 通过, ${failed} 失败`, 'red');
+  log(`⚠️  存在失败项，请检查上方红色日志`, 'red');
 }
 log('════════════════════════════════════════════════════════\n');
 
-process.exit(failed === 0 ? 0 : 1);
+process.exit(allOk ? 0 : 1);
