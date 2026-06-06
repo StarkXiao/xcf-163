@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test:expedition": "node --experimental-vm-modules test/run-expedition-test.js",
     "test:blackmarket": "node --experimental-vm-modules test/run-blackmarket-refresh-test.js",
-    "test:combo": "node --experimental-vm-modules test/run-combo-persistence-test.js"
+    "test:combo": "node --experimental-vm-modules test/run-combo-persistence-test.js",
+    "test:entrypoints": "node --experimental-vm-modules test/run-entrypoints-test.js"
   },
   "dependencies": {
     "pixi.js": "^7.4.0"

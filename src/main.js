@@ -79,10 +79,10 @@ class Game {
     document.getElementById('btn-collection').addEventListener('click', () => this.inventory.openCollection());
     document.getElementById('btn-task').addEventListener('click', () => this.taskSystem.openTaskList());
     document.getElementById('btn-chamber').addEventListener('click', () => {
-      if (this.chamber) this.chamber.open();
+      if (this.chamber) this.chamber.openChamber();
     });
     document.getElementById('btn-expedition').addEventListener('click', () => {
-      if (this.expedition) this.expedition.open();
+      if (this.expedition) this.expedition.openExpedition();
     });
     document.getElementById('btn-scrap-workshop').addEventListener('click', () => {
       if (this.scrapWorkshop) this.scrapWorkshop.open();
