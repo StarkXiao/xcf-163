@@ -376,13 +376,9 @@ export class StorySystem {
       case 'collect_rarity': {
         const targetRarityName = condition.rarityName;
         const targetCount = condition.target || 1;
-        let count = 0;
-        if (this.game.inventory?.collection) {
-          for (const id of this.game.inventory.collection) {
-            const c = CREATURES.find(x => x.id === id);
-            if (c && c.rarity.name === targetRarityName) count++;
-          }
-        }
+        const count = this.game.inventory?.getTotalCaughtByRarityName
+          ? this.game.inventory.getTotalCaughtByRarityName(targetRarityName)
+          : 0;
         return count >= targetCount;
       }
 
@@ -461,14 +457,9 @@ export class StorySystem {
           progress = this.game.inventory?.getCollection?.()?.size || 0;
           break;
         case 'collect_rarity': {
-          let count = 0;
-          if (this.game.inventory?.collection) {
-            for (const id of this.game.inventory.collection) {
-              const c = CREATURES.find(x => x.id === id);
-              if (c && c.rarity.name === obj.rarityName) count++;
-            }
-          }
-          progress = count;
+          progress = this.game.inventory?.getTotalCaughtByRarityName
+            ? this.game.inventory.getTotalCaughtByRarityName(obj.rarityName)
+            : 0;
           break;
         }
         case 'coins':

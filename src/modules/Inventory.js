@@ -5,6 +5,7 @@ export class Inventory {
     this.game = game;
     this.backpack = [];
     this.collection = new Set();
+    this.rarityCatchStats = {};
     this.maxSlots = 20;
     this.selectedItem = null;
     
@@ -58,6 +59,11 @@ export class Inventory {
     }
     
     const isNewToCollection = !this.collection.has(creature.id);
+
+    const rarityName = creature.rarity?.name;
+    if (rarityName) {
+      this.rarityCatchStats[rarityName] = (this.rarityCatchStats[rarityName] || 0) + 1;
+    }
 
     if (this.game.portCommission) {
       this.game.portCommission.checkCollectionUpdate(creature, isNewToCollection);
@@ -277,6 +283,10 @@ export class Inventory {
       .reduce((sum, item) => sum + item.count, 0);
   }
 
+  getTotalCaughtByRarityName(rarityName) {
+    return this.rarityCatchStats[rarityName] || 0;
+  }
+
   getCreatureCount(creatureId) {
     return this.backpack
       .filter(item => item.id === creatureId)
@@ -309,6 +319,10 @@ export class Inventory {
     if (data.collection) {
       this.collection = new Set(data.collection);
     }
+
+    if (data.rarityCatchStats) {
+      this.rarityCatchStats = { ...data.rarityCatchStats };
+    }
   }
 
   toJSON() {
@@ -319,7 +333,8 @@ export class Inventory {
         tier: item.tier || 1,
         affixes: item.affixes || []
       })),
-      collection: Array.from(this.collection)
+      collection: Array.from(this.collection),
+      rarityCatchStats: { ...this.rarityCatchStats }
     };
   }
 }
