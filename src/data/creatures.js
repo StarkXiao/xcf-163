@@ -615,7 +615,7 @@ export const COMBO_CONFIG = {
   comboMilestones: [3, 5, 8, 10, 15, 20, 30, 50]
 };
 
-export function getRandomCreature(tideSystem = null, comboCount = 0) {
+export function getRandomCreature(tideSystem = null, comboCount = 0, intelEffects = null) {
   const rarityEntries = Object.entries(RARITY);
   
   let totalWeight = 0;
@@ -634,6 +634,24 @@ export function getRandomCreature(tideSystem = null, comboCount = 0) {
       weight = weight * boost;
     }
     
+    if (intelEffects) {
+      if (intelEffects.rarityBoost) {
+        weight = weight * (1 + intelEffects.rarityBoost);
+      }
+      if (intelEffects.rareAndAboveBoost && (rarity === RARITY.RARE || rarity === RARITY.EPIC || rarity === RARITY.LEGENDARY)) {
+        weight = weight * (1 + intelEffects.rareAndAboveBoost);
+      }
+      if (intelEffects.epicAndAboveBoost && (rarity === RARITY.EPIC || rarity === RARITY.LEGENDARY)) {
+        weight = weight * (1 + intelEffects.epicAndAboveBoost);
+      }
+      if (intelEffects.legendaryBoostInStorm && rarity === RARITY.LEGENDARY && tideSystem) {
+        const currentTide = tideSystem.getCurrentPhase();
+        if (currentTide && currentTide.id === 'storm_tide') {
+          weight = weight * intelEffects.legendaryBoostInStorm;
+        }
+      }
+    }
+    
     adjustedWeights[name] = weight;
     totalWeight += weight;
   }
@@ -649,7 +667,27 @@ export function getRandomCreature(tideSystem = null, comboCount = 0) {
     random -= adjustedWeights[name];
   }
   
-  const availableCreatures = CREATURES.filter(c => c.rarity === selectedRarity);
+  let availableCreatures = CREATURES.filter(c => c.rarity === selectedRarity);
+  
+  if (intelEffects && intelEffects.creatureBoosts) {
+    const boostedCreatures = availableCreatures.filter(c => intelEffects.creatureBoosts[c.id]);
+    if (boostedCreatures.length > 0) {
+      const totalCreatureWeight = availableCreatures.reduce((sum, c) => {
+        const boost = intelEffects.creatureBoosts[c.id] || 1;
+        return sum + boost;
+      }, 0);
+      
+      let creatureRandom = Math.random() * totalCreatureWeight;
+      for (const creature of availableCreatures) {
+        const boost = intelEffects.creatureBoosts[creature.id] || 1;
+        creatureRandom -= boost;
+        if (creatureRandom <= 0) {
+          return creature;
+        }
+      }
+    }
+  }
+  
   return availableCreatures[Math.floor(Math.random() * availableCreatures.length)];
 }
 

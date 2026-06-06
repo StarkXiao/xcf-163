@@ -10,6 +10,7 @@ import { ReinforceSystem } from './modules/ReinforceSystem.js';
 import { ScrapWorkshop } from './modules/ScrapWorkshop.js';
 import { ChamberOfCommerce } from './modules/ChamberOfCommerce.js';
 import { DeepSeaExpedition } from './modules/DeepSeaExpedition.js';
+import { TavernSystem } from './modules/TavernSystem.js';
 import { COMBO_CONFIG, getComboEnergyDiscount, getComboEnergyRegenBonus } from './data/creatures.js';
 
 class Game {
@@ -25,6 +26,7 @@ class Game {
     this.scrapWorkshop = null;
     this.chamber = null;
     this.expedition = null;
+    this.tavernSystem = null;
     
     this.stats = {
       energy: 100,
@@ -87,6 +89,9 @@ class Game {
     document.getElementById('btn-scrap-workshop').addEventListener('click', () => {
       if (this.scrapWorkshop) this.scrapWorkshop.open();
     });
+    document.getElementById('btn-tavern').addEventListener('click', () => {
+      if (this.tavernSystem) this.tavernSystem.openTavern();
+    });
   }
 
   async loadResources() {
@@ -129,6 +134,7 @@ class Game {
     this.scrapWorkshop = new ScrapWorkshop(this);
     this.chamber = new ChamberOfCommerce(this);
     this.expedition = new DeepSeaExpedition(this);
+    this.tavernSystem = new TavernSystem(this);
     this.stallSystem = this.chamber.stallSystem;
     this.pricingSystem = this.chamber.pricingSystem;
     this.customerSystem = this.chamber.customerSystem;
@@ -156,6 +162,14 @@ class Game {
     }
     const comboDiscount = getComboEnergyDiscount(this.stats.comboCount || 0);
     cost = Math.max(1, Math.ceil(cost * (1 - comboDiscount)));
+    
+    if (this.tavernSystem) {
+      const intelEffects = this.tavernSystem.getIntelEffects();
+      if (intelEffects.energyDiscount) {
+        cost = Math.max(1, Math.ceil(cost * (1 - intelEffects.energyDiscount)));
+      }
+    }
+    
     return cost;
   }
 
@@ -202,9 +216,18 @@ class Game {
     if (this.comboTimer) {
       clearTimeout(this.comboTimer);
     }
+    
+    let timeout = COMBO_CONFIG.comboTimeout;
+    if (this.tavernSystem) {
+      const intelEffects = this.tavernSystem.getIntelEffects();
+      if (intelEffects.comboTimeoutExtend) {
+        timeout = timeout * (1 + intelEffects.comboTimeoutExtend);
+      }
+    }
+    
     this.comboTimer = setTimeout(() => {
       this.resetCombo();
-    }, COMBO_CONFIG.comboTimeout);
+    }, timeout);
   }
 
   tryCatch() {
@@ -357,6 +380,9 @@ class Game {
 
   checkTasks(type, data = null) {
     this.taskSystem.checkTasks(type, data);
+    if (this.tavernSystem) {
+      this.tavernSystem.checkQuests(type, data);
+    }
   }
 
   saveProgress() {
@@ -373,6 +399,7 @@ class Game {
       scrapWorkshop: this.scrapWorkshop ? this.scrapWorkshop.toJSON() : null,
       chamber: this.chamber ? this.chamber.toJSON() : null,
       expedition: this.expedition ? this.expedition.toJSON() : null,
+      tavern: this.tavernSystem ? this.tavernSystem.toJSON() : null,
       timestamp: Date.now()
     };
     Storage.save(saveData);
@@ -403,6 +430,9 @@ class Game {
       }
       if (this.expedition && data.expedition) {
         this.expedition.loadData(data.expedition);
+      }
+      if (this.tavernSystem && data.tavern) {
+        this.tavernSystem.loadData(data.tavern);
       }
       if (this.tideSystem && data.tide) {
         this.tideSystem.init(data.tide);

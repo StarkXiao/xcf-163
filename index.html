@@ -95,6 +95,10 @@
           <span class="btn-icon">🔨</span>
           <span class="btn-text">残骸工坊</span>
         </button>
+        <button class="action-btn" id="btn-tavern">
+          <span class="btn-icon">🍺</span>
+          <span class="btn-text">酒馆</span>
+        </button>
       </div>
     </div>
 
@@ -372,6 +376,27 @@
 
         <div class="modal-footer">
           <button class="modal-btn secondary" id="btn-close-scrap-workshop">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tavern-modal" class="modal hidden">
+      <div class="modal-content tavern-content">
+        <h2 class="modal-title">🍺 渔港酒馆 · 人脉系统</h2>
+        <div class="chamber-tabs tavern-tabs">
+          <button class="tavern-tab active" data-tab="characters">👥 角色人脉</button>
+          <button class="tavern-tab" data-tab="intels">📡 情报</button>
+          <button class="tavern-tab" data-tab="exchanges">🔄 材料交换</button>
+          <button class="tavern-tab" data-tab="quests">📜 支线任务</button>
+        </div>
+
+        <div class="tavern-tab-content" data-tab="characters" id="tavern-characters"></div>
+        <div class="tavern-tab-content hidden" data-tab="intels" id="tavern-intels"></div>
+        <div class="tavern-tab-content hidden" data-tab="exchanges" id="tavern-exchanges"></div>
+        <div class="tavern-tab-content hidden" data-tab="quests" id="tavern-quests"></div>
+
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-tavern">关闭</button>
         </div>
       </div>
     </div>

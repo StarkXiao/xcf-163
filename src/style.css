@@ -2518,3 +2518,405 @@ html, body {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+.tavern-content {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.tavern-tabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 15px 0 20px;
+  border-bottom: 1px solid #333;
+  overflow-x: auto;
+}
+
+.tavern-tab {
+  background: transparent;
+  border: none;
+  color: #888;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tavern-tab:hover {
+  color: #00ffff;
+  background: rgba(0, 255, 255, 0.1);
+}
+
+.tavern-tab.active {
+  color: #00ffff;
+  border-bottom-color: #00ffff;
+}
+
+.tavern-tab-content {
+  padding: 10px 0;
+}
+
+.character-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  margin-top: 15px 0;
+}
+
+.character-card {
+  background: rgba(20, 20, 40, 0.8);
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 15px;
+  transition: all 0.3s;
+}
+
+.character-card:hover {
+  border-color: #4488ff;
+  box-shadow: 0 0 15px rgba(68, 136, 255, 0.2);
+}
+
+.character-card.character-locked {
+  opacity: 0.7;
+}
+
+.character-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.character-icon {
+  font-size: 40px;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255, 170, 0, 0.2), rgba(0, 255, 255, 0.2));
+  border-radius: 10px;
+  border: 1px solid #444;
+}
+
+.character-info {
+  flex: 1;
+}
+
+.character-name {
+  font-size: 15px;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.character-specialties {
+  font-size: 11px;
+  color: #ffaa00;
+}
+
+.character-desc {
+  font-size: 12px;
+  color: #aaa;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.character-reputation {
+  margin: 10px 0;
+}
+
+.character-greeting {
+  font-size: 12px;
+  color: #88ccff;
+  font-style: italic;
+  padding: 8px 10px;
+  background: rgba(0, 255, 255, 0.05);
+  border-left: 2px solid #4488ff;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+.character-action {
+  margin-top: 10px;
+}
+
+.intel-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 15px 0;
+}
+
+.intel-card {
+  background: rgba(20, 20, 40, 0.8);
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 15px;
+  transition: all 0.3s;
+}
+
+.intel-card:hover {
+  border-color: #00ffff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+}
+
+.intel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.intel-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #00ffff;
+}
+
+.intel-cost {
+  font-size: 13px;
+  color: #ffaa00;
+  font-weight: bold;
+}
+
+.intel-desc {
+  font-size: 12px;
+  color: #ccc;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.intel-source {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+.intel-duration {
+  font-size: 11px;
+  color: #ff88ff;
+  margin-bottom: 10px;
+}
+
+.intel-action {
+  margin-top: 8px;
+}
+
+.active-intels-section {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #333;
+}
+
+.active-intel-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.active-intel-card {
+  background: rgba(0, 255, 255, 0.08);
+  border: 1px solid #00ffff;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.active-intel-name {
+  font-size: 13px;
+  font-weight: bold;
+  color: #00ffff;
+  margin-bottom: 4px;
+}
+
+.active-intel-desc {
+  font-size: 11px;
+  color: #aaa;
+  margin-bottom: 6px;
+}
+
+.active-intel-duration {
+  font-size: 11px;
+  color: #ffaa00;
+  margin-bottom: 8px;
+}
+
+.exchange-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 15px 0;
+}
+
+.exchange-card {
+  background: rgba(20, 20, 40, 0.8);
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 15px;
+  transition: all 0.3s;
+}
+
+.exchange-card:hover {
+  border-color: #44ff44;
+  box-shadow: 0 0 15px rgba(68, 255, 68, 0.2);
+}
+
+.exchange-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.exchange-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #44ff44;
+}
+
+.exchange-source {
+  font-size: 11px;
+  color: #888;
+}
+
+.exchange-desc {
+  font-size: 12px;
+  color: #ccc;
+  margin-bottom: 10px;
+}
+
+.exchange-trade {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.exchange-input, .exchange-output {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  color: #fff;
+}
+
+.exchange-arrow {
+  font-size: 18px;
+  color: #ffaa00;
+}
+
+.exchange-action {
+  margin-top: 8px;
+}
+
+.quest-section {
+  margin-bottom: 20px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.quest-card {
+  background: rgba(20, 20, 40, 0.8);
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.quest-card.quest-active {
+  border-left: 3px solid #4488ff;
+}
+
+.quest-card.quest-completed {
+  border-left: 3px solid #44ff44;
+  opacity: 0.9;
+}
+
+.quest-card.quest-locked {
+  opacity: 0.6;
+  border-left: 3px solid #666;
+}
+
+.quest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.quest-source {
+  font-size: 11px;
+  color: #888;
+}
+
+.quest-status {
+  font-size: 11px;
+  color: #44ff44;
+}
+
+.quest-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.quest-desc {
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 8px;
+}
+
+.quest-hint {
+  font-size: 11px;
+  color: #ff8888;
+  font-style: italic;
+}
+
+.quest-progress-text {
+  font-size: 11px;
+  color: #88ccff;
+  text-align: right;
+  margin: 4px 0 8px;
+}
+
+.quest-reward {
+  font-size: 12px;
+  color: #ffaa00;
+  margin-top: 6px;
+}
+
+.quest-action {
+  margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+  .tavern-content {
+    width: 320px;
+    padding: 15px;
+  }
+
+  .tavern-tab {
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+
+  .character-list,
+  .intel-list,
+  .exchange-list,
+  .active-intel-list {
+    grid-template-columns: 1fr;
+  }
+
+  .exchange-trade {
+    flex-direction: column;
+    gap: 5px;
+  }
+}

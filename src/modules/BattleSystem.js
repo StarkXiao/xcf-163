@@ -33,23 +33,31 @@ export class BattleSystem {
     
     const tideSystem = this.game.tideSystem;
     const currentCombo = this.game.stats.comboCount || 0;
+    const tavernSystem = this.game.tavernSystem;
+    const intelEffects = tavernSystem ? tavernSystem.getIntelEffects() : null;
     
     if (tideSystem) {
       const encounterRate = tideSystem.getAdjustedEncounterRate();
-      if (Math.random() > encounterRate) {
+      const finalEncounterRate = (intelEffects && intelEffects.noEmptyCatch) ? 1.0 : encounterRate;
+      if (Math.random() > finalEncounterRate) {
         this.game.resetCombo();
         this.showEmptyCatch();
+        if (tavernSystem) tavernSystem.consumeCatchIntels();
         return;
       }
     }
     
     const newCombo = this.game.incrementCombo();
-    this.currentCreature = getRandomCreature(tideSystem, newCombo);
+    this.currentCreature = getRandomCreature(tideSystem, newCombo, intelEffects);
     this.currentCreature.tier = 1;
     this.currentCreature.affixes = generateRandomAffixes(this.currentCreature);
     
     if (tideSystem) {
       tideSystem.recordCatch();
+    }
+    
+    if (tavernSystem) {
+      tavernSystem.consumeCatchIntels();
     }
     
     this.showModal(newCombo);
@@ -60,6 +68,8 @@ export class BattleSystem {
       rarity: this.currentCreature.rarity,
       combo: newCombo
     });
+    this.game.checkTasks('find_creature', this.currentCreature);
+    this.game.checkTasks('tavern_find_creature', this.currentCreature);
     
     if (tideSystem) {
       this.game.checkTasks('catch_in_tide', tideSystem.getCurrentPhase());
