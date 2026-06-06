@@ -13,6 +13,7 @@ export class BattleSystem {
     this.nameEl = document.getElementById('creature-name');
     this.rarityEl = document.getElementById('creature-rarity');
     this.valueEl = document.getElementById('creature-value');
+    this.tideHintEl = document.getElementById('battle-tide-hint');
     
     this.collectBtn = document.getElementById('btn-collect');
     this.releaseBtn = document.getElementById('btn-release');
@@ -29,12 +30,55 @@ export class BattleSystem {
     if (this.isBattling) return;
     
     this.isBattling = true;
-    this.currentCreature = getRandomCreature();
+    
+    const tideSystem = this.game.tideSystem;
+    
+    if (tideSystem) {
+      const encounterRate = tideSystem.getAdjustedEncounterRate();
+      if (Math.random() > encounterRate) {
+        this.showEmptyCatch();
+        return;
+      }
+    }
+    
+    this.currentCreature = getRandomCreature(tideSystem);
+    
+    if (tideSystem) {
+      tideSystem.recordCatch();
+    }
     
     this.showModal();
     this.game.updateStats('catchCount', 1);
     this.game.checkTasks('catch_count');
     this.game.checkTasks('find_rarity', this.currentCreature.rarity);
+    
+    if (tideSystem) {
+      this.game.checkTasks('catch_in_tide', tideSystem.getCurrentPhase());
+      this.game.checkTasks('find_rarity_in_tide', {
+        rarity: this.currentCreature.rarity,
+        tide: tideSystem.getCurrentPhase()
+      });
+    }
+  }
+
+  showEmptyCatch() {
+    const tidePhase = this.game.tideSystem ? this.game.tideSystem.getCurrentPhase() : null;
+    
+    this.titleEl.textContent = '一无所获...';
+    this.displayEl.innerHTML = '<span style="font-size: 60px;">🌀</span>';
+    this.displayEl.style.background = 'radial-gradient(circle, rgba(100, 100, 150, 0.3) 0%, transparent 70%)';
+    this.quoteEl.textContent = tidePhase 
+      ? `"${tidePhase.name}时海里空空如也，再试一次吧..."`
+      : '"这次没捞到东西，再试一次吧..."';
+    this.nameEl.textContent = '空网';
+    this.rarityEl.textContent = tidePhase ? tidePhase.name : '-';
+    this.rarityEl.className = 'stat-data';
+    this.valueEl.textContent = '0 金币';
+    
+    this.collectBtn.style.display = 'none';
+    this.releaseBtn.textContent = '继续';
+    
+    this.modal.classList.remove('hidden');
   }
 
   showModal() {
@@ -52,6 +96,9 @@ export class BattleSystem {
     this.rarityEl.textContent = c.rarity.name;
     this.rarityEl.className = `stat-data ${c.rarity.class}`;
     this.valueEl.textContent = `${c.value} 金币`;
+    
+    this.collectBtn.style.display = '';
+    this.releaseBtn.textContent = '放生';
     
     this.modal.classList.remove('hidden');
   }
@@ -71,10 +118,10 @@ export class BattleSystem {
   }
 
   releaseCreature() {
-    if (!this.currentCreature) return;
-    
-    const bonus = Math.floor(this.currentCreature.value * 0.3);
-    this.game.updateStats('coins', bonus);
+    if (this.currentCreature) {
+      const bonus = Math.floor(this.currentCreature.value * 0.3);
+      this.game.updateStats('coins', bonus);
+    }
     
     this.endBattle();
   }

@@ -5,6 +5,7 @@ import { BattleSystem } from './modules/BattleSystem.js';
 import { Inventory } from './modules/Inventory.js';
 import { TaskSystem } from './modules/TaskSystem.js';
 import { Storage } from './modules/Storage.js';
+import { TideSystem } from './modules/TideSystem.js';
 
 class Game {
   constructor() {
@@ -14,6 +15,7 @@ class Game {
     this.battleSystem = null;
     this.inventory = null;
     this.taskSystem = null;
+    this.tideSystem = null;
     
     this.stats = {
       energy: 100,
@@ -21,7 +23,7 @@ class Game {
       catchCount: 0
     };
     
-    this.energyCost = 10;
+    this.baseEnergyCost = 10;
     this.energyRegenRate = 1;
     this.energyRegenInterval = 3000;
     
@@ -35,8 +37,19 @@ class Game {
     this.initModules();
     this.loadProgress();
     this.startEnergyRegen();
+    this.startTideUIUpdate();
     this.showGameUI();
     this.updateUI();
+    
+    if (this.tideSystem && this.mapScene) {
+      this.mapScene.applyTideEffect(this.tideSystem.getCurrentPhase());
+    }
+    
+    this.tideSystem.addListener((phase) => {
+      this.taskSystem.showHint(`潮汐变化：${phase.icon} ${phase.name} - ${phase.desc}`);
+      this.updateUI();
+      this.saveProgress();
+    });
     
     setTimeout(() => {
       this.taskSystem.showTutorialHint();
@@ -81,6 +94,7 @@ class Game {
   }
 
   initModules() {
+    this.tideSystem = new TideSystem(this);
     this.mapScene = new MapScene(this.app);
     this.battleSystem = new BattleSystem(this);
     this.inventory = new Inventory(this);
@@ -92,9 +106,20 @@ class Game {
     document.getElementById('game-ui').classList.remove('hidden');
   }
 
+  getCurrentEnergyCost() {
+    if (this.tideSystem) {
+      return this.tideSystem.getAdjustedEnergyCost(this.baseEnergyCost);
+    }
+    return this.baseEnergyCost;
+  }
+
   tryCatch() {
-    if (this.stats.energy < this.energyCost) {
-      this.taskSystem.showHint('能量不足！请等待恢复。');
+    const cost = this.getCurrentEnergyCost();
+    
+    if (this.stats.energy < cost) {
+      const phase = this.tideSystem ? this.tideSystem.getCurrentPhase() : null;
+      const phaseName = phase ? `${phase.name} ` : '';
+      this.taskSystem.showHint(`能量不足！${phaseName}拖网需要 ${cost} 能量，请等待恢复。`);
       return;
     }
     
@@ -106,7 +131,7 @@ class Game {
       return;
     }
     
-    this.updateStats('energy', -this.energyCost);
+    this.updateStats('energy', -cost);
     this.mapScene.startNetAnimation(() => {
       this.battleSystem.startBattle();
     });
@@ -142,8 +167,46 @@ class Game {
     document.getElementById('coin-value').textContent = this.stats.coins;
     document.getElementById('catch-count').textContent = this.stats.catchCount;
     
+    const cost = this.getCurrentEnergyCost();
     const catchBtn = document.getElementById('btn-catch');
-    catchBtn.disabled = this.stats.energy < this.energyCost;
+    catchBtn.disabled = this.stats.energy < cost;
+    
+    const costEl = document.getElementById('energy-cost');
+    if (costEl) {
+      costEl.textContent = cost;
+    }
+    
+    this.updateTideUI();
+  }
+
+  updateTideUI() {
+    if (!this.tideSystem) return;
+    
+    const phase = this.tideSystem.getCurrentPhase();
+    const tideNameEl = document.getElementById('tide-name');
+    const tideIconEl = document.getElementById('tide-icon');
+    const tideDescEl = document.getElementById('tide-desc');
+    const tideProgressEl = document.getElementById('tide-progress');
+    const tideTimeEl = document.getElementById('tide-time');
+    const tideBarEl = document.getElementById('tide-progress-bar');
+    
+    if (tideNameEl) tideNameEl.textContent = phase.name;
+    if (tideIconEl) tideIconEl.textContent = phase.icon;
+    if (tideDescEl) tideDescEl.textContent = phase.desc;
+    
+    const remaining = this.tideSystem.getPhaseRemainingTime();
+    const seconds = Math.ceil(remaining / 1000);
+    if (tideTimeEl) {
+      tideTimeEl.textContent = `${seconds}s`;
+    }
+    
+    const progress = this.tideSystem.getPhaseProgress();
+    if (tideProgressEl) {
+      tideProgressEl.style.width = `${progress * 100}%`;
+    }
+    if (tideBarEl) {
+      tideBarEl.style.background = `linear-gradient(90deg, #${phase.color.toString(16).padStart(6, '0')}, #00ffff)`;
+    }
   }
 
   startEnergyRegen() {
@@ -152,6 +215,12 @@ class Game {
         this.updateStats('energy', this.energyRegenRate);
       }
     }, this.energyRegenInterval);
+  }
+
+  startTideUIUpdate() {
+    setInterval(() => {
+      this.updateTideUI();
+    }, 1000);
   }
 
   checkTasks(type, data = null) {
@@ -163,6 +232,7 @@ class Game {
       stats: this.stats,
       inventory: this.inventory.toJSON(),
       tasks: this.taskSystem.toJSON(),
+      tide: this.tideSystem ? this.tideSystem.toJSON() : null,
       timestamp: Date.now()
     };
     Storage.save(saveData);
@@ -176,7 +246,14 @@ class Game {
       }
       this.inventory.loadData(data.inventory || {});
       this.taskSystem.loadData(data.tasks || {});
+      if (this.tideSystem && data.tide) {
+        this.tideSystem.init(data.tide);
+      } else if (this.tideSystem) {
+        this.tideSystem.init();
+      }
       console.log('存档加载成功');
+    } else if (this.tideSystem) {
+      this.tideSystem.init();
     }
   }
 

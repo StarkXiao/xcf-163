@@ -180,6 +180,18 @@ export const CREATURES = [
   }
 ];
 
+const RARITY_KEYS = {
+  [RARITY.COMMON.name]: 'common',
+  [RARITY.UNCOMMON.name]: 'uncommon',
+  [RARITY.RARE.name]: 'rare',
+  [RARITY.EPIC.name]: 'epic',
+  [RARITY.LEGENDARY.name]: 'legendary'
+};
+
+export function getRarityKey(rarity) {
+  return RARITY_KEYS[rarity.name] || 'common';
+}
+
 export const TASKS = [
   {
     id: 'tut_first_catch',
@@ -197,6 +209,15 @@ export const TASKS = [
     type: 'backpack_open',
     target: 1,
     reward: { coins: 30 },
+    isTutorial: true
+  },
+  {
+    id: 'tut_tide',
+    name: '观潮者',
+    desc: '等待潮汐变化，了解不同潮时的影响。',
+    type: 'tide_change',
+    target: 1,
+    reward: { coins: 80, energy: 30 },
     isTutorial: true
   },
   {
@@ -235,6 +256,24 @@ export const TASKS = [
     reward: { coins: 500, energy: 50 }
   },
   {
+    id: 'catch_in_high_tide',
+    name: '乘风破浪',
+    desc: '在满潮时打捞5次。',
+    type: 'catch_in_tide',
+    target: 5,
+    tideId: 'high_tide',
+    reward: { coins: 300, energy: 50 }
+  },
+  {
+    id: 'catch_in_storm',
+    name: '风暴猎手',
+    desc: '在风暴潮时打捞3次。',
+    type: 'catch_in_tide',
+    target: 3,
+    tideId: 'storm_tide',
+    reward: { coins: 600, energy: 80 }
+  },
+  {
     id: 'collect_10_different',
     name: '收藏家',
     desc: '图鉴收集10种不同的机械残骸。',
@@ -260,6 +299,14 @@ export const TASKS = [
     reward: { coins: 1000, energy: 100 }
   },
   {
+    id: 'experience_all_tides',
+    name: '潮汐行者',
+    desc: '体验所有8种不同的潮汐。',
+    type: 'experience_tide',
+    target: 8,
+    reward: { coins: 1500, energy: 150 }
+  },
+  {
     id: 'find_legendary',
     name: '传说降临',
     desc: '捕获1个传说品质的机械残骸。',
@@ -267,6 +314,16 @@ export const TASKS = [
     target: 1,
     rarity: RARITY.LEGENDARY,
     reward: { coins: 5000, energy: 200 }
+  },
+  {
+    id: 'find_legendary_in_storm',
+    name: '风暴传说',
+    desc: '在风暴潮时捕获1个传说品质的机械残骸。',
+    type: 'find_rarity_in_tide',
+    target: 1,
+    rarity: RARITY.LEGENDARY,
+    tideId: 'storm_tide',
+    reward: { coins: 8000, energy: 300 }
   },
   {
     id: 'collect_all',
@@ -278,17 +335,33 @@ export const TASKS = [
   }
 ];
 
-export function getRandomCreature() {
-  const totalWeight = Object.values(RARITY).reduce((sum, r) => sum + r.weight, 0);
+export function getRandomCreature(tideSystem = null) {
+  const rarityEntries = Object.entries(RARITY);
+  
+  let totalWeight = 0;
+  const adjustedWeights = {};
+  
+  for (const [name, rarity] of rarityEntries) {
+    const key = getRarityKey(rarity);
+    let weight = rarity.weight;
+    
+    if (tideSystem) {
+      weight = tideSystem.getAdjustedRarityWeight(weight, key);
+    }
+    
+    adjustedWeights[name] = weight;
+    totalWeight += weight;
+  }
+  
   let random = Math.random() * totalWeight;
   
   let selectedRarity = RARITY.COMMON;
-  for (const rarity of Object.values(RARITY)) {
-    if (random < rarity.weight) {
+  for (const [name, rarity] of rarityEntries) {
+    if (random < adjustedWeights[name]) {
       selectedRarity = rarity;
       break;
     }
-    random -= rarity.weight;
+    random -= adjustedWeights[name];
   }
   
   const availableCreatures = CREATURES.filter(c => c.rarity === selectedRarity);

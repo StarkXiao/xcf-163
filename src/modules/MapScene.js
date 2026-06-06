@@ -12,6 +12,11 @@ export class MapScene {
     this.boat = null;
     this.rainParticles = [];
     this.time = 0;
+    this.currentTide = null;
+    this.tideOverlay = null;
+    this.baseRainSpeed = 8;
+    this.baseWaveAmplitude = 3;
+    this.baseFloatSpeed = 0.02;
     
     this.init();
   }
@@ -24,8 +29,59 @@ export class MapScene {
     this.createFloatingObjects();
     this.createBoat();
     this.createNet();
+    this.createTideOverlay();
     
     this.app.ticker.add(this.update.bind(this));
+  }
+
+  createTideOverlay() {
+    this.tideOverlay = new PIXI.Graphics();
+    this.tideOverlay.alpha = 0;
+    this.container.addChild(this.tideOverlay);
+  }
+
+  applyTideEffect(tidePhase) {
+    if (!tidePhase) return;
+    
+    this.currentTide = tidePhase;
+    
+    if (this.tideOverlay) {
+      this.tideOverlay.clear();
+      this.tideOverlay.beginFill(tidePhase.bgTint, 0.4);
+      this.tideOverlay.drawRect(0, 0, this.app.screen.width, this.app.screen.height);
+      this.tideOverlay.endFill();
+      this.tideOverlay.alpha = 0.5;
+    }
+    
+    const intensityMap = {
+      'calm_sea': { rain: 0.3, wave: 0.6, float: 0.7 },
+      'low_tide': { rain: 0.5, wave: 0.7, float: 0.8 },
+      'ebb_tide': { rain: 0.7, wave: 0.9, float: 0.9 },
+      'neap_tide': { rain: 0.6, wave: 0.8, float: 0.85 },
+      'flood_tide': { rain: 1.0, wave: 1.1, float: 1.1 },
+      'high_tide': { rain: 1.2, wave: 1.3, float: 1.2 },
+      'spring_tide': { rain: 1.5, wave: 1.6, float: 1.4 },
+      'storm_tide': { rain: 2.5, wave: 2.2, float: 1.8 }
+    };
+    
+    const intensity = intensityMap[tidePhase.id] || { rain: 1.0, wave: 1.0, float: 1.0 };
+    
+    this.rainParticles.forEach(rain => {
+      rain.sprite.alpha = 0.2 * intensity.rain;
+      rain.speed = (this.baseRainSpeed + Math.random() * 5) * intensity.rain;
+    });
+    
+    this.floatingObjects.forEach(obj => {
+      if (obj.type === 'wave') {
+        obj.amplitude = (this.baseWaveAmplitude + obj.offset * 0.2) * intensity.wave;
+        obj.frequency = (0.02 + obj.offset * 0.003) * intensity.wave;
+        obj.speed = (0.5 + obj.offset * 0.1) * intensity.wave;
+      } else if (obj.type === 'debris') {
+        obj.floatSpeed = (this.baseFloatSpeed + Math.random() * 0.01) * intensity.float;
+        obj.floatAmplitude = (10 + Math.random() * 10) * intensity.float;
+        obj.horizontalSpeed = (0.2 + Math.random() * 0.2) * intensity.float;
+      }
+    });
   }
 
   createBackground() {
@@ -446,6 +502,11 @@ export class MapScene {
     this.createFloatingObjects();
     this.createBoat();
     this.createNet();
+    this.createTideOverlay();
+    
+    if (this.currentTide) {
+      this.applyTideEffect(this.currentTide);
+    }
   }
 
   destroy() {

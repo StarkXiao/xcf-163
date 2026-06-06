@@ -142,9 +142,87 @@ html, body {
   text-shadow: 0 0 5px #00ffff;
 }
 
-.task-hint {
+.stat-sub {
+  display: block;
+  font-size: 10px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.stat-sub span {
+  color: #ffaa00;
+  font-weight: bold;
+}
+
+.tide-panel {
   position: absolute;
   top: 80px;
+  left: 10px;
+  right: 10px;
+  background: rgba(10, 10, 30, 0.9);
+  border: 1px solid #00ffff;
+  border-radius: 10px;
+  padding: 10px 15px;
+  pointer-events: auto;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+}
+
+.tide-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.tide-icon {
+  font-size: 28px;
+}
+
+.tide-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.tide-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #00ffff;
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+}
+
+.tide-desc {
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 2px;
+}
+
+.tide-time {
+  font-size: 14px;
+  font-weight: bold;
+  color: #ffaa00;
+  font-family: monospace;
+}
+
+.tide-progress-bar {
+  height: 4px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.tide-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #00ffff, #0088ff);
+  border-radius: 2px;
+  transition: width 1s linear;
+  box-shadow: 0 0 8px #00ffff;
+}
+
+.task-hint {
+  position: absolute;
+  top: 150px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(20, 20, 50, 0.95);
@@ -155,6 +233,7 @@ html, body {
   pointer-events: auto;
   box-shadow: 0 0 20px rgba(255, 170, 0, 0.4);
   animation: slideDown 0.3s ease;
+  z-index: 200;
 }
 
 @keyframes slideDown {
@@ -592,5 +671,29 @@ html, body {
   
   .slot-icon {
     font-size: 26px;
+  }
+
+  .tide-panel {
+    padding: 8px 10px;
+  }
+
+  .tide-icon {
+    font-size: 22px;
+  }
+
+  .tide-name {
+    font-size: 12px;
+  }
+
+  .tide-desc {
+    font-size: 10px;
+  }
+
+  .tide-time {
+    font-size: 12px;
+  }
+
+  .task-hint {
+    top: 140px;
   }
 }

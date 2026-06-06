@@ -4,6 +4,7 @@ export class TaskSystem {
   constructor(game) {
     this.game = game;
     this.tasks = [];
+    this.experiencedTides = new Set();
     this.taskHint = document.getElementById('task-hint');
     this.taskText = document.getElementById('task-text');
     this.taskModal = document.getElementById('task-modal');
@@ -69,6 +70,34 @@ export class TaskSystem {
           if (task.type === 'unique_collected') {
             shouldUpdate = true;
             progressValue = this.game.inventory.getCollection().size;
+          }
+          break;
+          
+        case 'tide_change':
+          if (task.type === 'tide_change') {
+            shouldUpdate = true;
+            progressValue = task.progress + 1;
+          }
+          if (task.type === 'experience_tide' && data) {
+            this.experiencedTides.add(data.id);
+            shouldUpdate = true;
+            progressValue = this.experiencedTides.size;
+          }
+          break;
+          
+        case 'catch_in_tide':
+          if (task.type === 'catch_in_tide' && data && data.id === task.tideId) {
+            shouldUpdate = true;
+            progressValue = task.progress + 1;
+          }
+          break;
+          
+        case 'find_rarity_in_tide':
+          if (task.type === 'find_rarity_in_tide' && data) {
+            if (data.rarity === task.rarity && data.tide && data.tide.id === task.tideId) {
+              shouldUpdate = true;
+              progressValue = task.progress + 1;
+            }
           }
           break;
       }
@@ -186,6 +215,9 @@ export class TaskSystem {
         }
       });
     }
+    if (data.experiencedTides) {
+      this.experiencedTides = new Set(data.experiencedTides);
+    }
   }
 
   toJSON() {
@@ -195,7 +227,8 @@ export class TaskSystem {
         progress: task.progress,
         completed: task.completed,
         claimed: task.claimed
-      }))
+      })),
+      experiencedTides: Array.from(this.experiencedTides)
     };
   }
 }
