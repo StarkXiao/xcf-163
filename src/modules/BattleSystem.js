@@ -1,4 +1,4 @@
-import { getRandomCreature, generateRandomAffixes, calculateCreatureValue } from '../data/creatures.js';
+import { getRandomCreature, generateRandomAffixes, calculateCreatureValue, isComboMilestone } from '../data/creatures.js';
 
 export class BattleSystem {
   constructor(game) {
@@ -32,16 +32,19 @@ export class BattleSystem {
     this.isBattling = true;
     
     const tideSystem = this.game.tideSystem;
+    const currentCombo = this.game.stats.comboCount || 0;
     
     if (tideSystem) {
       const encounterRate = tideSystem.getAdjustedEncounterRate();
       if (Math.random() > encounterRate) {
+        this.game.resetCombo();
         this.showEmptyCatch();
         return;
       }
     }
     
-    this.currentCreature = getRandomCreature(tideSystem);
+    const newCombo = this.game.incrementCombo();
+    this.currentCreature = getRandomCreature(tideSystem, newCombo);
     this.currentCreature.tier = 1;
     this.currentCreature.affixes = generateRandomAffixes(this.currentCreature);
     
@@ -49,10 +52,14 @@ export class BattleSystem {
       tideSystem.recordCatch();
     }
     
-    this.showModal();
+    this.showModal(newCombo);
     this.game.updateStats('catchCount', 1);
     this.game.checkTasks('catch_count');
     this.game.checkTasks('find_rarity', this.currentCreature.rarity);
+    this.game.checkTasks('find_rarity_in_combo', {
+      rarity: this.currentCreature.rarity,
+      combo: newCombo
+    });
     
     if (tideSystem) {
       this.game.checkTasks('catch_in_tide', tideSystem.getCurrentPhase());
@@ -83,17 +90,35 @@ export class BattleSystem {
     this.modal.classList.remove('hidden');
   }
 
-  showModal() {
+  showModal(comboCount = 0) {
     const c = this.currentCreature;
     const quote = c.quotes[Math.floor(Math.random() * c.quotes.length)];
     const actualValue = calculateCreatureValue(c, c.tier || 1, c.affixes);
     
-    this.titleEl.textContent = c.rarity.name === '传说' ? '传说降临！' : 
-                              c.rarity.name === '史诗' ? '史诗发现！' :
-                              '发现机械残骸！';
+    let titleText = c.rarity.name === '传说' ? '传说降临！' : 
+                    c.rarity.name === '史诗' ? '史诗发现！' :
+                    '发现机械残骸！';
+    
+    if (comboCount >= 2) {
+      const milestoneText = isComboMilestone(comboCount) ? ` ⭐里程碑！` : '';
+      titleText = `🔥 ${comboCount}连击${milestoneText} ${titleText}`;
+    }
+    
+    this.titleEl.textContent = titleText;
     
     this.displayEl.innerHTML = `<span style="font-size: 80px;">${c.icon}</span>`;
     this.displayEl.style.background = `radial-gradient(circle, rgba(${this.hexToRgb(c.rarity.color)}, 0.3) 0%, transparent 70%)`;
+    
+    if (comboCount >= 3) {
+      this.displayEl.classList.add('combo-glow');
+      const tier = Math.min(Math.floor(comboCount / 5), 5);
+      this.displayEl.style.animation = `comboPulse 0.6s ease-in-out ${tier + 1}`;
+      setTimeout(() => {
+        this.displayEl.classList.remove('combo-glow');
+        this.displayEl.style.animation = '';
+      }, 600 * (tier + 2));
+    }
+    
     this.quoteEl.textContent = `"${quote}"`;
     this.nameEl.textContent = c.name;
     this.rarityEl.textContent = c.rarity.name;
@@ -105,12 +130,36 @@ export class BattleSystem {
       this.valueEl.textContent += ` | ${affixNames}`;
       this.valueEl.style.fontSize = '12px';
       this.valueEl.style.lineHeight = '1.4';
+    } else {
+      this.valueEl.style.fontSize = '';
+      this.valueEl.style.lineHeight = '';
+    }
+    
+    if (comboCount >= 5) {
+      this.valueEl.innerHTML = `<span class="combo-value-boost">${this.valueEl.textContent} 🔥连击加成!</span>`;
     }
     
     this.collectBtn.style.display = '';
     this.releaseBtn.textContent = '放生';
     
     this.modal.classList.remove('hidden');
+    
+    if (comboCount >= 3 && isComboMilestone(comboCount)) {
+      this.showComboEffect(comboCount);
+    }
+  }
+
+  showComboEffect(comboCount) {
+    const effect = document.createElement('div');
+    effect.className = 'combo-milestone-effect';
+    effect.textContent = `${comboCount} COMBO!`;
+    effect.style.left = '50%';
+    effect.style.top = '30%';
+    document.getElementById('game-container').appendChild(effect);
+    
+    setTimeout(() => {
+      effect.remove();
+    }, 1500);
   }
 
   hideModal() {

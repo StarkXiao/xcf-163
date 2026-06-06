@@ -535,10 +535,87 @@ export const TASKS = [
     type: 'blackmarket_order',
     target: 20,
     reward: { coins: 10000, energy: 200 }
+  },
+  {
+    id: 'first_combo_3',
+    name: '初次连击',
+    desc: '连续打捞3次，触发初级连击。',
+    type: 'combo_reach',
+    target: 3,
+    reward: { coins: 200, energy: 30 }
+  },
+  {
+    id: 'combo_5',
+    name: '连击新星',
+    desc: '达成5连击。',
+    type: 'combo_reach',
+    target: 5,
+    reward: { coins: 400, energy: 50 }
+  },
+  {
+    id: 'combo_10',
+    name: '连击达人',
+    desc: '达成10连击，稀有残骸概率显著提升。',
+    type: 'combo_reach',
+    target: 10,
+    reward: { coins: 1000, energy: 80 }
+  },
+  {
+    id: 'combo_20',
+    name: '连击大师',
+    desc: '达成20连击，传说残骸概率大幅提升。',
+    type: 'combo_reach',
+    target: 20,
+    reward: { coins: 3000, energy: 150 }
+  },
+  {
+    id: 'combo_rare_in_combo',
+    name: '连击中的惊喜',
+    desc: '在5连击以上时捕获稀有品质残骸。',
+    type: 'find_rarity_in_combo',
+    target: 1,
+    rarity: RARITY.RARE,
+    minCombo: 5,
+    reward: { coins: 800, energy: 60 }
+  },
+  {
+    id: 'combo_legendary_in_combo_10',
+    name: '连击传说',
+    desc: '在10连击以上时捕获传说品质残骸。',
+    type: 'find_rarity_in_combo',
+    target: 1,
+    rarity: RARITY.LEGENDARY,
+    minCombo: 10,
+    reward: { coins: 8000, energy: 200 }
+  },
+  {
+    id: 'total_combo_count_50',
+    name: '连击狂热者',
+    desc: '累计触发50次连击（每次打捞成功开始即计1次。',
+    type: 'total_combo_hits',
+    target: 50,
+    reward: { coins: 2000, energy: 100 }
   }
 ];
 
-export function getRandomCreature(tideSystem = null) {
+export const COMBO_CONFIG = {
+  comboTimeout: 8000,
+  maxComboMultiplier: 10,
+  rarityBoostPerCombo: {
+    common: 0.92,
+    uncommon: 1.0,
+    rare: 1.15,
+    epic: 1.3,
+    legendary: 1.6
+  },
+  energyDiscountPerCombo: 0.03,
+  maxEnergyDiscount: 0.4,
+  energyRegenBonusPerCombo: 0.1,
+  maxEnergyRegenBonus: 1.0,
+  comboMilestones: [3, 5, 8, 10, 15, 20, 30, 50]
+};
+
+export function getRandomCreature(tideSystem = null, comboCount = 0) {
   const rarityEntries = Object.entries(RARITY);
   
   let totalWeight = 0;
@@ -550,6 +627,11 @@ export function getRandomCreature(tideSystem = null) {
     
     if (tideSystem) {
       weight = tideSystem.getAdjustedRarityWeight(weight, key);
+    }
+    
+    if (comboCount > 0 && COMBO_CONFIG.rarityBoostPerCombo[key]) {
+      const boost = Math.pow(COMBO_CONFIG.rarityBoostPerCombo[key], Math.min(comboCount, COMBO_CONFIG.maxComboMultiplier));
+      weight = weight * boost;
     }
     
     adjustedWeights[name] = weight;
@@ -569,6 +651,25 @@ export function getRandomCreature(tideSystem = null) {
   
   const availableCreatures = CREATURES.filter(c => c.rarity === selectedRarity);
   return availableCreatures[Math.floor(Math.random() * availableCreatures.length)];
+}
+
+export function getComboEnergyDiscount(comboCount) {
+  const discount = Math.min(
+    comboCount * COMBO_CONFIG.energyDiscountPerCombo,
+    COMBO_CONFIG.maxEnergyDiscount
+  );
+  return discount;
+}
+
+export function getComboEnergyRegenBonus(comboCount) {
+  return Math.min(
+    comboCount * COMBO_CONFIG.energyRegenBonusPerCombo,
+    COMBO_CONFIG.maxEnergyRegenBonus
+  );
+}
+
+export function isComboMilestone(comboCount) {
+  return COMBO_CONFIG.comboMilestones.includes(comboCount);
 }
 
 export const AFFIX_POOL = {

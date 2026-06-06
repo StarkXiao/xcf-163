@@ -9,6 +9,7 @@ import { TideSystem } from './modules/TideSystem.js';
 import { ReinforceSystem } from './modules/ReinforceSystem.js';
 import { ChamberOfCommerce } from './modules/ChamberOfCommerce.js';
 import { DeepSeaExpedition } from './modules/DeepSeaExpedition.js';
+import { COMBO_CONFIG, getComboEnergyDiscount, getComboEnergyRegenBonus } from './data/creatures.js';
 
 class Game {
   constructor() {
@@ -26,12 +27,17 @@ class Game {
     this.stats = {
       energy: 100,
       coins: 0,
-      catchCount: 0
+      catchCount: 0,
+      comboCount: 0,
+      maxComboReached: 0,
+      totalComboHits: 0
     };
     
     this.baseEnergyCost = 10;
     this.energyRegenRate = 1;
     this.energyRegenInterval = 3000;
+    this.comboTimer = null;
+    this.lastCatchTime = 0;
     
     this.init();
   }
@@ -132,10 +138,61 @@ class Game {
   }
 
   getCurrentEnergyCost() {
+    let cost = this.baseEnergyCost;
     if (this.tideSystem) {
-      return this.tideSystem.getAdjustedEnergyCost(this.baseEnergyCost);
+      cost = this.tideSystem.getAdjustedEnergyCost(cost);
     }
-    return this.baseEnergyCost;
+    const comboDiscount = getComboEnergyDiscount(this.stats.comboCount || 0);
+    cost = Math.max(1, Math.ceil(cost * (1 - comboDiscount)));
+    return cost;
+  }
+
+  incrementCombo() {
+    const now = Date.now();
+    const withinTimeout = (now - this.lastCatchTime) <= COMBO_CONFIG.comboTimeout;
+    
+    if (withinTimeout || this.stats.comboCount === 0) {
+      this.stats.comboCount = (this.stats.comboCount || 0) + 1;
+    } else {
+      this.stats.comboCount = 1;
+    }
+    
+    this.lastCatchTime = now;
+    this.stats.totalComboHits = (this.stats.totalComboHits || 0) + 1;
+    
+    if (this.stats.comboCount > (this.stats.maxComboReached || 0)) {
+      this.stats.maxComboReached = this.stats.comboCount;
+    }
+    
+    this.resetComboTimer();
+    this.updateUI();
+    this.saveProgress();
+    
+    this.checkTasks('combo_reach', this.stats.comboCount);
+    this.checkTasks('total_combo_hits');
+    
+    return this.stats.comboCount;
+  }
+
+  resetCombo() {
+    if (this.stats.comboCount > 0) {
+      this.stats.comboCount = 0;
+      this.updateUI();
+      this.saveProgress();
+    }
+    if (this.comboTimer) {
+      clearTimeout(this.comboTimer);
+      this.comboTimer = null;
+    }
+  }
+
+  resetComboTimer() {
+    if (this.comboTimer) {
+      clearTimeout(this.comboTimer);
+    }
+    this.comboTimer = setTimeout(() => {
+      this.resetCombo();
+    }, COMBO_CONFIG.comboTimeout);
   }
 
   tryCatch() {
@@ -201,7 +258,43 @@ class Game {
       costEl.textContent = cost;
     }
     
+    this.updateComboUI();
     this.updateTideUI();
+  }
+
+  updateComboUI() {
+    const comboDisplay = document.getElementById('combo-display');
+    const comboCountEl = document.getElementById('combo-count');
+    const comboMultiplierEl = document.getElementById('combo-multiplier');
+    
+    if (!comboDisplay || !comboCountEl) return;
+    
+    const combo = this.stats.comboCount || 0;
+    if (combo >= 2) {
+      comboDisplay.classList.remove('hidden');
+      comboCountEl.textContent = `${combo} COMBO`;
+      
+      const tier = this.getComboTier(combo);
+      comboDisplay.className = `combo-display combo-tier-${tier}`;
+      
+      if (comboMultiplierEl) {
+        const rarityBoost = Math.round((Math.pow(1.15, Math.min(combo, 10)) - 1) * 100);
+        const energyDiscount = Math.round(getComboEnergyDiscount(combo) * 100);
+        comboMultiplierEl.textContent = `稀有+${rarityBoost}% 能量-${energyDiscount}%`;
+      }
+    } else {
+      comboDisplay.classList.add('hidden');
+    }
+  }
+
+  getComboTier(combo) {
+    if (combo >= 30) return 6;
+    if (combo >= 20) return 5;
+    if (combo >= 10) return 4;
+    if (combo >= 8) return 3;
+    if (combo >= 5) return 2;
+    if (combo >= 3) return 1;
+    return 0;
   }
 
   updateTideUI() {
@@ -237,7 +330,9 @@ class Game {
   startEnergyRegen() {
     setInterval(() => {
       if (this.stats.energy < 100) {
-        this.updateStats('energy', this.energyRegenRate);
+        const regenBonus = getComboEnergyRegenBonus(this.stats.comboCount || 0);
+        const totalRegen = this.energyRegenRate * (1 + regenBonus);
+        this.updateStats('energy', totalRegen);
       }
     }, this.energyRegenInterval);
   }

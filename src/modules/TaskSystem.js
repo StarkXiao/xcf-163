@@ -190,6 +190,30 @@ export class TaskSystem {
             progressValue = task.progress + 1;
           }
           break;
+
+        case 'combo_reach':
+          if (task.type === 'combo_reach' && typeof data === 'number') {
+            shouldUpdate = true;
+            progressValue = Math.max(task.progress, data);
+          }
+          break;
+
+        case 'find_rarity_in_combo':
+          if (task.type === 'find_rarity_in_combo' && data) {
+            const minCombo = task.minCombo || 1;
+            if (data.rarity === task.rarity && data.combo >= minCombo) {
+              shouldUpdate = true;
+              progressValue = task.progress + 1;
+            }
+          }
+          break;
+
+        case 'total_combo_hits':
+          if (task.type === 'total_combo_hits') {
+            shouldUpdate = true;
+            progressValue = this.game.stats.totalComboHits || 0;
+          }
+          break;
       }
       
       if (shouldUpdate) {
