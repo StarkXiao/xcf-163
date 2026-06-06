@@ -11,6 +11,7 @@ import { ScrapWorkshop } from './modules/ScrapWorkshop.js';
 import { ChamberOfCommerce } from './modules/ChamberOfCommerce.js';
 import { DeepSeaExpedition } from './modules/DeepSeaExpedition.js';
 import { TavernSystem } from './modules/TavernSystem.js';
+import { PortCommission } from './modules/PortCommission.js';
 import { COMBO_CONFIG, getComboEnergyDiscount, getComboEnergyRegenBonus } from './data/creatures.js';
 
 class Game {
@@ -27,6 +28,7 @@ class Game {
     this.chamber = null;
     this.expedition = null;
     this.tavernSystem = null;
+    this.portCommission = null;
     
     this.stats = {
       energy: 100,
@@ -135,6 +137,7 @@ class Game {
     this.chamber = new ChamberOfCommerce(this);
     this.expedition = new DeepSeaExpedition(this);
     this.tavernSystem = new TavernSystem(this);
+    this.portCommission = new PortCommission(this);
     this.stallSystem = this.chamber.stallSystem;
     this.pricingSystem = this.chamber.pricingSystem;
     this.customerSystem = this.chamber.customerSystem;
@@ -400,6 +403,7 @@ class Game {
       chamber: this.chamber ? this.chamber.toJSON() : null,
       expedition: this.expedition ? this.expedition.toJSON() : null,
       tavern: this.tavernSystem ? this.tavernSystem.toJSON() : null,
+      portCommission: this.portCommission ? this.portCommission.toJSON() : null,
       timestamp: Date.now()
     };
     Storage.save(saveData);
@@ -433,6 +437,9 @@ class Game {
       }
       if (this.tavernSystem && data.tavern) {
         this.tavernSystem.loadData(data.tavern);
+      }
+      if (this.portCommission && data.portCommission) {
+        this.portCommission.loadData(data.portCommission);
       }
       if (this.tideSystem && data.tide) {
         this.tideSystem.init(data.tide);

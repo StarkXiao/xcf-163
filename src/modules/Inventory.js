@@ -59,6 +59,9 @@ export class Inventory {
     
     this.collection.add(creature.id);
     this.game.checkTasks('collect_creature', creature);
+    if (this.game.portCommission) {
+      this.game.portCommission.checkCollectionUpdate(creature);
+    }
     this.game.saveProgress();
     return true;
   }
@@ -117,6 +120,13 @@ export class Inventory {
             if (bmSellHandled) return;
             const bmOrderHandled = this.game.chamber.tryBlackMarketFulfillOrderFromBackpack(item, i);
             if (bmOrderHandled) return;
+          }
+          if (this.game.portCommission) {
+            const portHandled = this.game.portCommission.trySubmitBackpackItem(item, i);
+            if (portHandled && portHandled.success) {
+              this.game.taskSystem.showHint(portHandled.message);
+              return;
+            }
           }
           this.showItemDetail(item, 'backpack', i);
         });

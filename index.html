@@ -99,6 +99,10 @@
           <span class="btn-icon">🍺</span>
           <span class="btn-text">酒馆</span>
         </button>
+        <button class="action-btn" id="btn-port-commission">
+          <span class="btn-icon">⚓</span>
+          <span class="btn-text">港口</span>
+        </button>
       </div>
     </div>
 
@@ -397,6 +401,27 @@
 
         <div class="modal-footer">
           <button class="modal-btn secondary" id="btn-close-tavern">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="port-commission-modal" class="modal hidden">
+      <div class="modal-content port-commission-content">
+        <h2 class="modal-title">⚓ 港口委托 · 多阶段回收任务</h2>
+        <div id="port-player-stats" class="port-player-stats"></div>
+        <div class="chamber-tabs port-tabs">
+          <button class="port-tab active" data-tab="active">📋 进行中</button>
+          <button class="port-tab" data-tab="available">📌 可接委托</button>
+          <button class="port-tab" data-tab="history">📜 历史记录</button>
+        </div>
+
+        <div class="port-tab-content" data-tab="active" id="port-active-commissions"></div>
+        <div class="port-tab-content hidden" data-tab="available" id="port-available-commissions"></div>
+        <div class="port-tab-content hidden" data-tab="history" id="port-commission-history"></div>
+
+        <div class="modal-footer">
+          <button class="modal-btn accent" id="btn-port-refresh" data-port-refresh="all">🔄 刷新委托</button>
+          <button class="modal-btn secondary" id="btn-close-port-commission">关闭</button>
         </div>
       </div>
     </div>
