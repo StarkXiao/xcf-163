@@ -106,7 +106,15 @@ export class Inventory {
           ${item.count > 1 ? `<span class="slot-count">${item.count}</span>` : ''}
           ${tier > 1 ? `<span class="slot-tier">+${tier - 1}</span>` : ''}
         `;
-        slot.addEventListener('click', () => this.showItemDetail(item, 'backpack', i));
+        slot.addEventListener('click', () => {
+          if (this.game.chamber) {
+            const handled = this.game.chamber.tryServeItemFromBackpack(item, i);
+            if (handled) return;
+            const orderHandled = this.game.chamber.tryFulfillOrderFromBackpack(item, i);
+            if (orderHandled) return;
+          }
+          this.showItemDetail(item, 'backpack', i);
+        });
       }
       
       this.backpackGrid.appendChild(slot);

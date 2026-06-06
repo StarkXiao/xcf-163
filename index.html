@@ -78,6 +78,10 @@
           <span class="btn-icon">📋</span>
           <span class="btn-text">任务</span>
         </button>
+        <button class="action-btn" id="btn-chamber">
+          <span class="btn-icon">🏪</span>
+          <span class="btn-text">商会</span>
+        </button>
       </div>
     </div>
 
@@ -223,6 +227,31 @@
         </div>
         <div class="modal-footer">
           <button class="modal-btn secondary" id="btn-close-reinforce">返回</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="chamber-modal" class="modal hidden">
+      <div class="modal-content chamber-content">
+        <h2 class="modal-title">🏪 赛博渔港商会</h2>
+        <div class="chamber-tabs">
+          <button class="chamber-tab active" data-tab="overview">📊 总览</button>
+          <button class="chamber-tab" data-tab="stalls">🏗️ 摊位</button>
+          <button class="chamber-tab" data-tab="market">📈 市场</button>
+          <button class="chamber-tab" data-tab="customer">🧑 顾客</button>
+          <button class="chamber-tab" data-tab="orders">📋 订单</button>
+          <button class="chamber-tab" data-tab="cycles">💾 周目</button>
+        </div>
+
+        <div class="chamber-tab-content" data-tab="overview" id="chamber-overview"></div>
+        <div class="chamber-tab-content hidden" data-tab="stalls" id="chamber-stalls"></div>
+        <div class="chamber-tab-content hidden" data-tab="market" id="chamber-market"></div>
+        <div class="chamber-tab-content hidden" data-tab="customer" id="chamber-customer"></div>
+        <div class="chamber-tab-content hidden" data-tab="orders" id="chamber-orders"></div>
+        <div class="chamber-tab-content hidden" data-tab="cycles" id="chamber-cycles"></div>
+
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-chamber">关闭</button>
         </div>
       </div>
     </div>

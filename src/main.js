@@ -7,6 +7,7 @@ import { TaskSystem } from './modules/TaskSystem.js';
 import { Storage } from './modules/Storage.js';
 import { TideSystem } from './modules/TideSystem.js';
 import { ReinforceSystem } from './modules/ReinforceSystem.js';
+import { ChamberOfCommerce } from './modules/ChamberOfCommerce.js';
 
 class Game {
   constructor() {
@@ -18,6 +19,7 @@ class Game {
     this.taskSystem = null;
     this.tideSystem = null;
     this.reinforceSystem = null;
+    this.chamber = null;
     
     this.stats = {
       energy: 100,
@@ -105,6 +107,20 @@ class Game {
     this.inventory = new Inventory(this);
     this.taskSystem = new TaskSystem(this);
     this.reinforceSystem = new ReinforceSystem(this);
+    this.chamber = new ChamberOfCommerce(this);
+    this.stallSystem = this.chamber.stallSystem;
+    this.pricingSystem = this.chamber.pricingSystem;
+    this.customerSystem = this.chamber.customerSystem;
+    this.orderSystem = this.chamber.orderSystem;
+    this.startChamberTick();
+  }
+
+  startChamberTick() {
+    setInterval(() => {
+      if (this.chamber) {
+        this.chamber.tick();
+      }
+    }, 1000);
   }
 
   showGameUI() {
@@ -240,6 +256,7 @@ class Game {
       tasks: this.taskSystem.toJSON(),
       tide: this.tideSystem ? this.tideSystem.toJSON() : null,
       reinforce: this.reinforceSystem ? this.reinforceSystem.toJSON() : null,
+      chamber: this.chamber ? this.chamber.toJSON() : null,
       timestamp: Date.now()
     };
     Storage.save(saveData);
@@ -255,6 +272,9 @@ class Game {
       this.taskSystem.loadData(data.tasks || {});
       if (this.reinforceSystem && data.reinforce) {
         this.reinforceSystem.loadData(data.reinforce);
+      }
+      if (this.chamber && data.chamber) {
+        this.chamber.loadData(data.chamber);
       }
       if (this.tideSystem && data.tide) {
         this.tideSystem.init(data.tide);
