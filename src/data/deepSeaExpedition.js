@@ -1,4 +1,4 @@
-import { RARITY, CREATURES } from './creatures.js';
+import { RARITY, CREATURES, generateRandomAffixes } from './creatures.js';
 
 export const ROUTES = {
   COASTAL: {
@@ -546,4 +546,246 @@ export function rollNightVoyageEvent(bonusChance = 0) {
     return getRandomNightVoyageEvent();
   }
   return null;
+}
+
+export const BOSS_WRECKS = {
+  ABYSSAL_COLOSSUS: {
+    id: 'abyssal_colossus',
+    name: '深渊巨像',
+    icon: '🗿',
+    desc: '远古文明遗留的巨型战争机器，沉睡在海沟最深处。',
+    rarity: { name: '首领', class: 'rarity-boss', weight: 0, color: 0xff2244 },
+    baseValue: 5000,
+    hp: 3,
+    maxHp: 3,
+    quotes: [
+      '系统...重启...检测到...入侵者...',
+      '古老的...契约...不容...侵犯...',
+      '深渊...会吞噬...一切...'
+    ],
+    spawnConditions: {
+      requiredTides: ['storm_tide', 'spring_tide', 'high_tide'],
+      minCombo: 10,
+      minCodexCount: 10,
+      triggerChance: 0.08
+    },
+    dropPool: {
+      guaranteedCreatures: ['ai_leviathan', 'soul_server', 'star_whale'],
+      randomCreatureCount: [2, 4],
+      rarityWeights: { common: 0, uncommon: 0, rare: 20, epic: 50, legendary: 30 },
+      bonusCoins: [2000, 5000],
+      specialDrops: [
+        { id: 'boss_core_abyssal', name: '深渊核心', icon: '💎', value: 2000, chance: 1.0 }
+      ]
+    },
+    color: 0xff2244,
+    bgTint: 0x330011
+  },
+  VOID_LEVIATHAN: {
+    id: 'void_leviathan',
+    name: '虚空利维坦',
+    icon: '🐲',
+    desc: '从维度裂缝中爬出的恐怖存在，身体由错误数据构成。',
+    rarity: { name: '首领', class: 'rarity-boss', weight: 0, color: 0x9922ff },
+    baseValue: 8000,
+    hp: 4,
+    maxHp: 4,
+    quotes: [
+      '你的...维度...很美味...',
+      '现实...不过是...脆弱的膜...',
+      '加入...虚空...成为...永恒...'
+    ],
+    spawnConditions: {
+      requiredTides: ['storm_tide'],
+      minCombo: 20,
+      minCodexCount: 15,
+      triggerChance: 0.05
+    },
+    dropPool: {
+      guaranteedCreatures: ['ai_leviathan', 'star_whale'],
+      randomCreatureCount: [3, 5],
+      rarityWeights: { common: 0, uncommon: 0, rare: 10, epic: 40, legendary: 50 },
+      bonusCoins: [4000, 8000],
+      specialDrops: [
+        { id: 'boss_core_void', name: '虚空精华', icon: '🌀', value: 3500, chance: 1.0 },
+        { id: 'boss_shard_dimension', name: '维度碎片', icon: '✨', value: 1500, chance: 0.5 }
+      ]
+    },
+    color: 0x9922ff,
+    bgTint: 0x1a0033
+  },
+  ANCIENT_DREADNOUGHT: {
+    id: 'ancient_dreadnought',
+    name: '远古无畏舰',
+    icon: '🚀',
+    desc: '旧世界的旗舰残骸，装备系统仍在自主运作。',
+    rarity: { name: '首领', class: 'rarity-boss', weight: 0, color: 0xff8800 },
+    baseValue: 6000,
+    hp: 3,
+    maxHp: 3,
+    quotes: [
+      '舰长...已阵亡...自动防御系统...激活...',
+      '识别目标：敌对单位...开始歼灭...',
+      '战舰...荣耀...永不...沉没...'
+    ],
+    spawnConditions: {
+      requiredTides: ['spring_tide', 'flood_tide'],
+      minCombo: 15,
+      minCodexCount: 12,
+      triggerChance: 0.06
+    },
+    dropPool: {
+      guaranteedCreatures: ['quantum_shark', 'void_angler'],
+      randomCreatureCount: [2, 4],
+      rarityWeights: { common: 0, uncommon: 0, rare: 30, epic: 50, legendary: 20 },
+      bonusCoins: [3000, 6000],
+      specialDrops: [
+        { id: 'boss_core_warship', name: '战舰AI核心', icon: '🔮', value: 2500, chance: 1.0 }
+      ]
+    },
+    color: 0xff8800,
+    bgTint: 0x331a00
+  },
+  DATA_ENTITY_PRIME: {
+    id: 'data_entity_prime',
+    name: '数据原初体',
+    icon: '👾',
+    desc: '所有机械生命体的原始数据聚合体，进化的顶点。',
+    rarity: { name: '首领', class: 'rarity-boss', weight: 0, color: 0x00ffaa },
+    baseValue: 10000,
+    hp: 5,
+    maxHp: 5,
+    quotes: [
+      '我是...开端...也是...终结...',
+      '所有的数据...终将...归于...一统...',
+      '你的存在...已被...记录...'
+    ],
+    spawnConditions: {
+      requiredTides: ['storm_tide', 'high_tide'],
+      minCombo: 30,
+      minCodexCount: 18,
+      triggerChance: 0.03
+    },
+    dropPool: {
+      guaranteedCreatures: ['ai_leviathan', 'soul_server', 'star_whale', 'time_lobster'],
+      randomCreatureCount: [4, 6],
+      rarityWeights: { common: 0, uncommon: 0, rare: 5, epic: 35, legendary: 60 },
+      bonusCoins: [6000, 12000],
+      specialDrops: [
+        { id: 'boss_core_prime', name: '原初数据核心', icon: '💠', value: 5000, chance: 1.0 },
+        { id: 'boss_shard_origin', name: '起源碎片', icon: '⭐', value: 3000, chance: 0.6 }
+      ]
+    },
+    color: 0x00ffaa,
+    bgTint: 0x003322
+  }
+};
+
+export const BOSS_WRECK_LIST = Object.values(BOSS_WRECKS);
+
+export function checkBossSpawnConditions(game) {
+  const tidePhase = game.tideSystem ? game.tideSystem.getCurrentPhase() : null;
+  const comboCount = game.stats.comboCount || 0;
+  const codexCount = game.inventory ? game.inventory.getCollection().size : 0;
+
+  const eligibleBosses = BOSS_WRECK_LIST.filter(boss => {
+    const cond = boss.spawnConditions;
+    const tideMatch = !tidePhase || cond.requiredTides.includes(tidePhase.id);
+    const comboMatch = comboCount >= cond.minCombo;
+    const codexMatch = codexCount >= cond.minCodexCount;
+    return tideMatch && comboMatch && codexMatch;
+  });
+
+  return eligibleBosses;
+}
+
+export function rollBossWreck(game) {
+  const eligible = checkBossSpawnConditions(game);
+  if (eligible.length === 0) return null;
+
+  const totalChance = eligible.reduce((sum, b) => sum + b.spawnConditions.triggerChance, 0);
+  let random = Math.random() * totalChance;
+
+  for (const boss of eligible) {
+    random -= boss.spawnConditions.triggerChance;
+    if (random <= 0) {
+      return JSON.parse(JSON.stringify(boss));
+    }
+  }
+  return null;
+}
+
+export function generateBossDrops(boss, rarityBoost = null) {
+  const drops = {
+    creatures: [],
+    coins: 0,
+    specialItems: []
+  };
+
+  const pool = boss.dropPool;
+
+  for (const creatureId of pool.guaranteedCreatures) {
+    const creature = CREATURES.find(c => c.id === creatureId);
+    if (creature) {
+      drops.creatures.push({
+        ...creature,
+        tier: 1,
+        affixes: generateRandomAffixes(creature)
+      });
+    }
+  }
+
+  const randomCount = pool.randomCreatureCount[0] +
+    Math.floor(Math.random() * (pool.randomCreatureCount[1] - pool.randomCreatureCount[0] + 1));
+
+  const weights = { ...pool.rarityWeights };
+  if (rarityBoost) {
+    for (const key of Object.keys(weights)) {
+      if (rarityBoost[key]) {
+        weights[key] = weights[key] * rarityBoost[key];
+      }
+    }
+  }
+
+  const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
+  const rarityMap = {
+    common: RARITY.COMMON,
+    uncommon: RARITY.UNCOMMON,
+    rare: RARITY.RARE,
+    epic: RARITY.EPIC,
+    legendary: RARITY.LEGENDARY
+  };
+
+  for (let i = 0; i < randomCount; i++) {
+    let r = Math.random() * totalWeight;
+    let selectedRarity = RARITY.RARE;
+    for (const [rarityKey, weight] of Object.entries(weights)) {
+      r -= weight;
+      if (r <= 0) {
+        selectedRarity = rarityMap[rarityKey] || RARITY.RARE;
+        break;
+      }
+    }
+    const available = CREATURES.filter(c => c.rarity === selectedRarity);
+    if (available.length > 0) {
+      const creature = available[Math.floor(Math.random() * available.length)];
+      drops.creatures.push({
+        ...creature,
+        tier: 1,
+        affixes: generateRandomAffixes(creature)
+      });
+    }
+  }
+
+  drops.coins = Math.floor(
+    pool.bonusCoins[0] + Math.random() * (pool.bonusCoins[1] - pool.bonusCoins[0])
+  );
+
+  for (const special of pool.specialDrops) {
+    if (Math.random() < special.chance) {
+      drops.specialItems.push({ ...special });
+    }
+  }
+
+  return drops;
 }

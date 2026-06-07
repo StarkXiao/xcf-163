@@ -250,6 +250,46 @@ export class TaskSystem {
             progressValue = data;
           }
           break;
+
+        case 'boss_encounter':
+          if (task.type === 'boss_encounter') {
+            shouldUpdate = true;
+            progressValue = task.progress + 1;
+          }
+          break;
+
+        case 'boss_defeat':
+        case 'boss_defeat_count':
+          if (task.type === 'boss_defeat_count' || task.type === 'boss_defeat') {
+            shouldUpdate = true;
+            progressValue = this.game.battleSystem ? this.game.battleSystem.getTotalBossesDefeated() : 0;
+          }
+          break;
+
+        case 'boss_defeat_specific':
+          if (task.type === 'boss_defeat_specific' && data) {
+            const bossId = typeof data === 'object' ? data.id : data;
+            if (task.bossId === bossId) {
+              shouldUpdate = true;
+              progressValue = this.game.battleSystem ? this.game.battleSystem.getBossDefeatCount(task.bossId) : 0;
+            }
+          }
+          break;
+
+        case 'boss_defeat_all':
+          if (task.type === 'boss_defeat_all') {
+            shouldUpdate = true;
+            const battleSys = this.game.battleSystem;
+            if (battleSys) {
+              let uniqueDefeated = 0;
+              const bossIds = ['abyssal_colossus', 'void_leviathan', 'ancient_dreadnought', 'data_entity_prime'];
+              bossIds.forEach(id => {
+                if (battleSys.getBossDefeatCount(id) > 0) uniqueDefeated++;
+              });
+              progressValue = uniqueDefeated;
+            }
+          }
+          break;
       }
       
       if (shouldUpdate) {

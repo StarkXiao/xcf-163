@@ -146,6 +146,43 @@
       </div>
     </div>
 
+    <div id="boss-battle-modal" class="modal hidden">
+      <div class="modal-content boss-battle-content">
+        <h2 class="modal-title" id="boss-battle-title">首领出现！</h2>
+        <div class="creature-display boss-display" id="boss-display"></div>
+        <p class="creature-quote" id="boss-quote"></p>
+        <div class="boss-hp-bar">
+          <div class="boss-hp-label" id="boss-hp-label">HP: 3/3</div>
+          <div class="boss-hp-fill-container">
+            <div class="boss-hp-fill" id="boss-hp-fill"></div>
+          </div>
+        </div>
+        <div class="battle-stats">
+          <div class="stat-row">
+            <span class="stat-name">名称</span>
+            <span class="stat-data" id="boss-name"></span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">类型</span>
+            <span class="stat-data rarity-boss" id="boss-rarity">首领</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">描述</span>
+            <span class="stat-data" id="boss-desc"></span>
+          </div>
+        </div>
+        <div class="boss-hint" id="boss-hint">每次拖网可对首领造成1点伤害，击败首领后领取战利品！</div>
+        <div class="battle-actions">
+          <button class="modal-btn accent" id="btn-boss-attack">⚔️ 攻击 (消耗能量)</button>
+          <button class="modal-btn secondary" id="btn-boss-flee">🏃 撤退</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="boss-settlement-modal" class="modal hidden">
+      <div class="modal-content settlement-content" id="boss-settlement-content"></div>
+    </div>
+
     <div id="backpack-modal" class="modal hidden">
       <div class="modal-content">
         <h2 class="modal-title">背包</h2>

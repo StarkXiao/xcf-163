@@ -1,5 +1,5 @@
 import { getRandomCreature, generateRandomAffixes, calculateCreatureValue, isComboMilestone, getRarityKey, RARITY, CREATURES, COMBO_CONFIG } from '../data/creatures.js';
-import { rollNightVoyageEvent } from '../data/deepSeaExpedition.js';
+import { rollNightVoyageEvent, rollBossWreck, generateBossDrops, BOSS_WRECK_LIST } from '../data/deepSeaExpedition.js';
 
 export class BattleSystem {
   constructor(game) {
@@ -10,6 +10,10 @@ export class BattleSystem {
     this.currentEventBranch = null;
     this.eventBonusCoins = 0;
     this.currentBattleResult = null;
+
+    this.currentBoss = null;
+    this.isBossBattle = false;
+    this.bossBattleStats = { totalBossesDefeated: 0, bossesDefeated: {} };
 
     this.modal = document.getElementById('battle-modal');
     this.titleEl = document.getElementById('battle-title');
@@ -22,6 +26,22 @@ export class BattleSystem {
 
     this.collectBtn = document.getElementById('btn-collect');
     this.releaseBtn = document.getElementById('btn-release');
+
+    this.bossModal = document.getElementById('boss-battle-modal');
+    this.bossTitleEl = document.getElementById('boss-battle-title');
+    this.bossDisplayEl = document.getElementById('boss-display');
+    this.bossQuoteEl = document.getElementById('boss-quote');
+    this.bossNameEl = document.getElementById('boss-name');
+    this.bossRarityEl = document.getElementById('boss-rarity');
+    this.bossDescEl = document.getElementById('boss-desc');
+    this.bossHpLabelEl = document.getElementById('boss-hp-label');
+    this.bossHpFillEl = document.getElementById('boss-hp-fill');
+    this.bossHintEl = document.getElementById('boss-hint');
+    this.bossAttackBtn = document.getElementById('btn-boss-attack');
+    this.bossFleeBtn = document.getElementById('btn-boss-flee');
+
+    this.bossSettlementModal = document.getElementById('boss-settlement-modal');
+    this.bossSettlementContent = document.getElementById('boss-settlement-content');
 
     this.bindEvents();
   }
@@ -220,10 +240,42 @@ export class BattleSystem {
   bindEvents() {
     this.collectBtn.addEventListener('click', () => this.collectCreature());
     this.releaseBtn.addEventListener('click', () => this.releaseCreature());
+
+    if (this.bossAttackBtn) {
+      this.bossAttackBtn.addEventListener('click', () => this.attackBoss());
+    }
+    if (this.bossFleeBtn) {
+      this.bossFleeBtn.addEventListener('click', () => this.fleeBoss());
+    }
+  }
+
+  hasActiveBossBattle() {
+    return this.isBossBattle && this.currentBoss !== null;
+  }
+
+  getBossDefeatCount(bossId) {
+    return this.bossBattleStats.bossesDefeated[bossId] || 0;
+  }
+
+  getTotalBossesDefeated() {
+    return this.bossBattleStats.totalBossesDefeated || 0;
   }
 
   startBattle() {
     if (this.isBattling) return;
+
+    if (this.hasActiveBossBattle()) {
+      this.attackBoss();
+      return;
+    }
+
+    if (!this.isBossBattle) {
+      const boss = rollBossWreck(this.game);
+      if (boss) {
+        this.startBossBattle(boss);
+        return;
+      }
+    }
 
     this.isBattling = true;
     this.currentBattleResult = this.rollEventRiskPerBattle();
@@ -586,5 +638,248 @@ export class BattleSystem {
     const g = (hex >> 8) & 255;
     const b = hex & 255;
     return `${r}, ${g}, ${b}`;
+  }
+
+  startBossBattle(boss) {
+    this.isBattling = true;
+    this.isBossBattle = true;
+    this.currentBoss = boss;
+
+    this.game.checkTasks('boss_encounter', boss);
+    if (this.game.storySystem) {
+      this.game.storySystem.onGameEvent('boss_encounter', boss);
+    }
+
+    this.showBossModal();
+    this.game.taskSystem.showHint(`⚠️ 首领出现！${boss.icon} ${boss.name}！`);
+  }
+
+  showBossModal() {
+    if (!this.bossModal || !this.currentBoss) return;
+
+    const boss = this.currentBoss;
+    const quote = boss.quotes[Math.floor(Math.random() * boss.quotes.length)];
+    const hpPercent = (boss.hp / boss.maxHp) * 100;
+
+    this.bossTitleEl.textContent = `⚔️ 首领战！${boss.icon} ${boss.name}`;
+    this.bossDisplayEl.innerHTML = `<span style="font-size: 100px;">${boss.icon}</span>`;
+    this.bossDisplayEl.style.background = `radial-gradient(circle, rgba(${this.hexToRgb(boss.color)}, 0.5) 0%, transparent 70%)`;
+    this.bossDisplayEl.style.filter = `drop-shadow(0 0 30px rgba(${this.hexToRgb(boss.color)}, 0.9)) saturate(1.3)`;
+    this.bossQuoteEl.textContent = `"${quote}"`;
+    this.bossNameEl.textContent = boss.name;
+    this.bossRarityEl.textContent = '首领';
+    this.bossRarityEl.className = 'stat-data rarity-boss';
+    this.bossDescEl.textContent = boss.desc;
+    this.bossHpLabelEl.textContent = `HP: ${boss.hp}/${boss.maxHp}`;
+    this.bossHpFillEl.style.width = `${hpPercent}%`;
+
+    const attackCost = this.game.getCurrentEnergyCost ? this.game.getCurrentEnergyCost() : 10;
+    this.bossHintEl.textContent = `每次攻击消耗 ${attackCost} 能量，对首领造成 1 点伤害。击败后领取丰厚战利品！`;
+    this.bossAttackBtn.textContent = `⚔️ 攻击 (${attackCost}⚡)`;
+
+    this.bossModal.classList.remove('hidden');
+  }
+
+  attackBoss() {
+    if (!this.currentBoss) return;
+
+    const cost = this.game.getCurrentEnergyCost ? this.game.getCurrentEnergyCost() : 10;
+    if (this.game.stats.energy < cost) {
+      this.game.taskSystem.showHint(`能量不足！攻击首领需要 ${cost} 能量。`);
+      return;
+    }
+
+    this.game.updateStats('energy', -cost);
+    this.game.updateStats('catchCount', 1);
+    this.game.checkTasks('catch_count');
+
+    this.currentBoss.hp -= 1;
+
+    const displayEl = this.bossDisplayEl;
+    displayEl.style.animation = 'none';
+    displayEl.offsetHeight;
+    displayEl.style.animation = 'bossShake 0.4s ease-in-out';
+
+    const tideSystem = this.game.tideSystem;
+    if (tideSystem) {
+      tideSystem.recordCatch();
+    }
+
+    const tavernSystem = this.game.tavernSystem;
+    if (tavernSystem) {
+      tavernSystem.consumeCatchIntels();
+    }
+
+    if (this.currentBoss.hp <= 0) {
+      this.defeatBoss();
+    } else {
+      this.showBossModal();
+    }
+
+    this.game.saveProgress();
+  }
+
+  defeatBoss() {
+    const boss = this.currentBoss;
+
+    this.bossBattleStats.totalBossesDefeated++;
+    this.bossBattleStats.bossesDefeated[boss.id] = (this.bossBattleStats.bossesDefeated[boss.id] || 0) + 1;
+
+    const rarityBoost = this.getEventRarityBoost();
+    const drops = generateBossDrops(boss, rarityBoost);
+
+    this.game.checkTasks('boss_defeat', boss);
+    this.game.checkTasks('boss_defeat_count');
+    if (this.game.storySystem) {
+      this.game.storySystem.onGameEvent('boss_defeat', boss);
+    }
+
+    this.hideBossModal();
+    this.showBossSettlement(boss, drops);
+  }
+
+  showBossSettlement(boss, drops) {
+    const modal = this.bossSettlementModal;
+    const content = this.bossSettlementContent;
+    if (!modal || !content) return;
+
+    let totalCreatureValue = 0;
+    drops.creatures.forEach(c => {
+      totalCreatureValue += calculateCreatureValue(c, c.tier || 1, c.affixes);
+    });
+
+    let totalSpecialValue = 0;
+    drops.specialItems.forEach(s => {
+      totalSpecialValue += s.value;
+    });
+
+    const totalCoins = drops.coins + totalCreatureValue + totalSpecialValue;
+
+    content.innerHTML = `
+      <div class="settlement-header success" style="border-color: #${boss.color.toString(16).padStart(6, '0')};">
+        <div style="font-size:64px;">${boss.icon}</div>
+        <h2 style="color: #ff6677; text-shadow: 0 0 20px rgba(255, 51, 85, 0.8);">首领已击败！</h2>
+        <p style="color: #aaa; margin-top: 8px;">${boss.name}</p>
+      </div>
+      <div class="settlement-stats">
+        <div class="stat-row">
+          <span>首领名称</span>
+          <span class="rarity-boss">${boss.icon} ${boss.name}</span>
+        </div>
+        <div class="stat-row">
+          <span>击败次数</span>
+          <span>第 ${this.getBossDefeatCount(boss.id)} 次</span>
+        </div>
+        <div class="stat-row">
+          <span>累计击败首领</span>
+          <span>${this.getTotalBossesDefeated()} 只</span>
+        </div>
+      </div>
+      <div class="settlement-rewards">
+        <div class="chamber-stat-label">战利品明细</div>
+        <div class="reward-row"><span>击败赏金</span><span style="color: #ffcc44;">+${drops.coins}💰</span></div>
+        <div class="reward-row"><span>生物价值</span><span>+${totalCreatureValue}💰</span></div>
+        ${totalSpecialValue > 0 ? `<div class="reward-row"><span>特殊战利品</span><span style="color: #ff88ff;">+${totalSpecialValue}💰</span></div>` : ''}
+        <div class="reward-row total"><span>总计</span><span style="color: #ffcc44;">${totalCoins}💰</span></div>
+      </div>
+      ${drops.creatures.length > 0 ? `
+        <div class="boss-settlement-reward-section">
+          <div class="chamber-stat-label">捕获生物 (${drops.creatures.length}只，已存入背包)</div>
+          <div class="boss-reward-grid">
+            ${drops.creatures.map(item => `
+              <div class="boss-reward-item rarity-${item.rarity?.name?.toLowerCase() || 'common'}">
+                <span class="boss-reward-icon">${item.icon}</span>
+                <span class="boss-reward-name">${item.name}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+      ${drops.specialItems.length > 0 ? `
+        <div class="boss-settlement-reward-section">
+          <div class="chamber-stat-label">✨ 特殊战利品</div>
+          <div class="boss-reward-grid">
+            ${drops.specialItems.map(item => `
+              <div class="boss-reward-item boss-special-item">
+                <span class="boss-reward-icon">${item.icon}</span>
+                <span class="boss-reward-name">${item.name}</span>
+                <span class="boss-reward-name" style="color: #ffcc44;">${item.value}💰</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+      <div class="modal-footer">
+        <button class="modal-btn primary" id="btn-close-boss-settlement">领取战利品</button>
+      </div>
+    `;
+
+    modal.classList.remove('hidden');
+
+    drops.creatures.forEach(creature => {
+      this.game.addToBackpack(creature);
+    });
+
+    drops.specialItems.forEach(special => {
+      this.game.updateStats('coins', special.value);
+    });
+
+    this.game.updateStats('coins', drops.coins);
+
+    const closeBtn = document.getElementById('btn-close-boss-settlement');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        modal.classList.add('hidden');
+        this.endBossBattle();
+      });
+    }
+  }
+
+  fleeBoss() {
+    if (!this.currentBoss) return;
+
+    const boss = this.currentBoss;
+    this.game.taskSystem.showHint(`从 ${boss.icon} ${boss.name} 的战斗中撤退了...`);
+    this.game.resetCombo();
+    this.hideBossModal();
+    this.endBossBattle();
+  }
+
+  hideBossModal() {
+    if (this.bossModal) {
+      this.bossModal.classList.add('hidden');
+    }
+  }
+
+  endBossBattle() {
+    this.currentBoss = null;
+    this.isBossBattle = false;
+    this.isBattling = false;
+    this.game.saveProgress();
+  }
+
+  loadData(data) {
+    if (!data) return;
+    if (data.bossBattleStats) {
+      this.bossBattleStats = {
+        totalBossesDefeated: data.bossBattleStats.totalBossesDefeated || 0,
+        bossesDefeated: { ...data.bossBattleStats.bossesDefeated || {} }
+      };
+    }
+    if (data.currentBoss) {
+      this.currentBoss = data.currentBoss;
+      this.isBossBattle = true;
+    }
+  }
+
+  toJSON() {
+    return {
+      bossBattleStats: {
+        totalBossesDefeated: this.bossBattleStats.totalBossesDefeated,
+        bossesDefeated: { ...this.bossBattleStats.bossesDefeated }
+      },
+      currentBoss: this.currentBoss,
+      isBossBattle: this.isBossBattle
+    };
   }
 }

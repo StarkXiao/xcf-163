@@ -437,6 +437,134 @@ html, body {
 .rarity-rare { color: #4488ff !important; }
 .rarity-epic { color: #aa44ff !important; }
 .rarity-legendary { color: #ffaa00 !important; text-shadow: 0 0 10px #ffaa00; }
+.rarity-boss { color: #ff3355 !important;
+  text-shadow: 0 0 15px #ff3355, 0 0 30px #ff3355 !important;
+  font-weight: bold !important;
+  letter-spacing: 1px;
+}
+
+.boss-battle-content {
+  max-width: 520px;
+  border: 2px solid #ff3355 !important;
+  box-shadow: 0 0 30px rgba(255, 51, 85, 0.4), inset 0 0 60px rgba(255, 51, 85, 0.1) !important;
+  animation: bossPulse 2s ease-in-out infinite;
+}
+
+@keyframes bossPulse {
+  0%, 100% { box-shadow: 0 0 30px rgba(255, 51, 85, 0.4), inset 0 0 60px rgba(255, 51, 85, 0.1); }
+  50% { box-shadow: 0 0 50px rgba(255, 51, 85, 0.7), inset 0 0 80px rgba(255, 51, 85, 0.2); }
+}
+
+.boss-display {
+  animation: bossShake 0.5s ease-in-out;
+}
+
+@keyframes bossShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px) rotate(-1deg); }
+  75% { transform: translateX(5px) rotate(1deg); }
+}
+
+.boss-hp-bar {
+  margin: 15px 0;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 51, 85, 0.3);
+}
+
+.boss-hp-label {
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: #ff6677;
+  margin-bottom: 8px;
+  text-shadow: 0 0 8px rgba(255, 51, 85, 0.8);
+}
+
+.boss-hp-fill-container {
+  width: 100%;
+  height: 18px;
+  background: #222;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #444;
+}
+
+.boss-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff3355 0%, #ff8800 50%, #ff3355 100%);
+  border-radius: 10px;
+  transition: width 0.5s ease-out;
+  box-shadow: 0 0 10px rgba(255, 51, 85, 0.8);
+  animation: hpGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes hpGlow {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 51, 85, 0.8); }
+  50% { box-shadow: 0 0 20px rgba(255, 51, 85, 1), 0 0 30px rgba(255, 136, 0, 0.6); }
+}
+
+.boss-hint {
+  text-align: center;
+  padding: 10px;
+  background: rgba(255, 51, 85, 0.15);
+  border: 1px solid rgba(255, 51, 85, 0.4);
+  border-radius: 8px;
+  color: #ff99aa;
+  font-size: 13px;
+  margin: 10px 0;
+  line-height: 1.6;
+}
+
+.boss-settlement-reward-section {
+  background: rgba(255, 51, 85, 0.08);
+  border: 1px solid rgba(255, 51, 85, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 10px 0;
+}
+
+.boss-reward-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.boss-reward-item {
+  text-align: center;
+  padding: 8px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.boss-reward-icon {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.boss-reward-name {
+  font-size: 11px;
+  color: #ddd;
+  display: block;
+}
+
+.boss-special-item {
+  background: linear-gradient(135deg, rgba(255, 51, 85, 0.2), rgba(255, 170, 0, 0.2));
+  border: 1px solid rgba(255, 51, 85, 0.5);
+}
+
+.boss-special-item .boss-reward-icon {
+  animation: specialItemGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes specialItemGlow {
+  0%, 100% { filter: drop-shadow(0 0 5px rgba(255, 51, 85, 0.6)); }
+  50% { filter: drop-shadow(0 0 15px rgba(255, 170, 0, 0.9)); }
+}
 
 .battle-actions, .modal-footer {
   display: flex;

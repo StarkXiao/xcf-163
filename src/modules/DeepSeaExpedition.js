@@ -470,6 +470,18 @@ export class DeepSeaExpedition {
     this.renderAll();
   }
 
+  addSupply(supplyId, amount = 1) {
+    const supply = SUPPLY_ITEMS[supplyId];
+    if (!supply) return;
+    const maxSupply = this.getMaxSupply();
+    const current = this.supplies[supplyId] || 0;
+    const actualAmount = Math.min(amount, maxSupply - current);
+    if (actualAmount <= 0) return;
+    this.supplies[supplyId] = current + actualAmount;
+    this.game.saveProgress();
+    this.renderAll();
+  }
+
   purchaseUpgrade(upgradeKey) {
     const upgrade = EXPEDITION_UPGRADES[upgradeKey.toUpperCase()] || EXPEDITION_UPGRADES[upgradeKey];
     if (!upgrade) return;

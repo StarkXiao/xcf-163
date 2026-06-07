@@ -652,6 +652,82 @@ export const TASKS = [
     type: 'all_creatures_max_stage',
     target: CREATURES.length,
     reward: { coins: 20000, energy: 1000 }
+  },
+  {
+    id: 'first_boss_encounter',
+    name: '深海巨兽',
+    desc: '首次遭遇首领级深海残骸。',
+    type: 'boss_encounter',
+    target: 1,
+    reward: { coins: 1000, energy: 100 }
+  },
+  {
+    id: 'first_boss_defeat',
+    name: '初战告捷',
+    desc: '击败任意1只首领级深海残骸。',
+    type: 'boss_defeat_count',
+    target: 1,
+    reward: { coins: 3000, energy: 200 }
+  },
+  {
+    id: 'boss_defeat_3',
+    name: '首领猎手',
+    desc: '累计击败3只首领级深海残骸。',
+    type: 'boss_defeat_count',
+    target: 3,
+    reward: { coins: 8000, energy: 300 }
+  },
+  {
+    id: 'boss_defeat_10',
+    name: '深渊屠者',
+    desc: '累计击败10只首领级深海残骸。',
+    type: 'boss_defeat_count',
+    target: 10,
+    reward: { coins: 20000, energy: 500 }
+  },
+  {
+    id: 'boss_defeat_abyssal_colossus',
+    name: '巨像终结者',
+    desc: '击败「深渊巨像」首领。',
+    type: 'boss_defeat_specific',
+    bossId: 'abyssal_colossus',
+    target: 1,
+    reward: { coins: 5000, energy: 200 }
+  },
+  {
+    id: 'boss_defeat_void_leviathan',
+    name: '虚空行者',
+    desc: '击败「虚空利维坦」首领。',
+    type: 'boss_defeat_specific',
+    bossId: 'void_leviathan',
+    target: 1,
+    reward: { coins: 8000, energy: 300 }
+  },
+  {
+    id: 'boss_defeat_ancient_dreadnought',
+    name: '战舰拆解师',
+    desc: '击败「远古无畏舰」首领。',
+    type: 'boss_defeat_specific',
+    bossId: 'ancient_dreadnought',
+    target: 1,
+    reward: { coins: 6000, energy: 250 }
+  },
+  {
+    id: 'boss_defeat_data_entity_prime',
+    name: '数据之敌',
+    desc: '击败「数据原初体」首领。',
+    type: 'boss_defeat_specific',
+    bossId: 'data_entity_prime',
+    target: 1,
+    reward: { coins: 15000, energy: 500 }
+  },
+  {
+    id: 'boss_defeat_all',
+    name: '四海征服者',
+    desc: '击败所有4种不同的首领级深海残骸。',
+    type: 'boss_defeat_all',
+    target: 4,
+    reward: { coins: 50000, energy: 1000 }
   }
 ];
 

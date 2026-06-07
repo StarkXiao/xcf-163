@@ -623,6 +623,7 @@ class Game {
       stats: statsToSave,
       inventory: this.inventory.toJSON(),
       tasks: this.taskSystem.toJSON(),
+      battleSystem: this.battleSystem ? this.battleSystem.toJSON() : null,
       tide: this.tideSystem ? this.tideSystem.toJSON() : null,
       reinforce: this.reinforceSystem ? this.reinforceSystem.toJSON() : null,
       scrapWorkshop: this.scrapWorkshop ? this.scrapWorkshop.toJSON() : null,
@@ -652,6 +653,9 @@ class Game {
       }
       this.inventory.loadData(data.inventory || {});
       this.taskSystem.loadData(data.tasks || {});
+      if (this.battleSystem && data.battleSystem) {
+        this.battleSystem.loadData(data.battleSystem);
+      }
       if (this.reinforceSystem && data.reinforce) {
         this.reinforceSystem.loadData(data.reinforce);
       }
