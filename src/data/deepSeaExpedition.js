@@ -356,8 +356,15 @@ export function getRandomEvent(difficulty, positive = false) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-export function generateCreatureForExpedition(route) {
-  const weights = route.rarityWeights;
+export function generateCreatureForExpedition(route, rarityBoost) {
+  const weights = { ...route.rarityWeights };
+  if (rarityBoost) {
+    for (const key of Object.keys(weights)) {
+      if (rarityBoost[key]) {
+        weights[key] = weights[key] * rarityBoost[key];
+      }
+    }
+  }
   const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
   let random = Math.random() * totalWeight;
   let selectedRarityKey = 'common';

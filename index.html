@@ -113,6 +113,10 @@
           <span class="btn-icon">🏚️</span>
           <span class="btn-text">废墟</span>
         </button>
+        <button class="action-btn" id="btn-hull-mod">
+          <span class="btn-icon">🛠️</span>
+          <span class="btn-text">船体</span>
+        </button>
       </div>
     </div>
 
@@ -539,6 +543,27 @@
         </div>
         <div class="modal-footer">
           <button class="modal-btn secondary" id="btn-close-codex-lab">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="hull-mod-modal" class="modal hidden">
+      <div class="modal-content hull-mod-content">
+        <h2 class="modal-title">🛠️ 船体改装</h2>
+        <div class="chamber-tabs hull-mod-tabs">
+          <button class="hull-mod-tab active" data-tab="status">📊 状态</button>
+          <button class="hull-mod-tab" data-tab="nets">🎣 船网</button>
+          <button class="hull-mod-tab" data-tab="cores">🔋 动力核心</button>
+          <button class="hull-mod-tab" data-tab="shop">🛒 商店</button>
+        </div>
+
+        <div class="hull-mod-tab-content" data-tab="status" id="hull-status"></div>
+        <div class="hull-mod-tab-content hidden" data-tab="nets" id="hull-nets"></div>
+        <div class="hull-mod-tab-content hidden" data-tab="cores" id="hull-cores"></div>
+        <div class="hull-mod-tab-content hidden" data-tab="shop" id="hull-shop"></div>
+
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-hull-mod">关闭</button>
         </div>
       </div>
     </div>

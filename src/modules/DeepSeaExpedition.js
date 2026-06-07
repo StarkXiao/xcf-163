@@ -595,7 +595,7 @@ export class DeepSeaExpedition {
       this.discoverWreck();
     }
 
-    if (Math.random() < 0.4 && exp.cargo.length < this.getMaxCargo()) {
+    if (Math.random() < 0.4 * (this.game?.inventory?.getCatchRate?.() || 1.0) && exp.cargo.length < this.getMaxCargo()) {
       this.catchCreature();
     }
 
@@ -756,7 +756,14 @@ export class DeepSeaExpedition {
   catchCreature() {
     const exp = this.currentExpedition;
     if (!exp) return;
-    const creature = generateCreatureForExpedition(exp.route);
+    let rarityBoost = null;
+    if (this.game?.inventory?.getEquippedNetStats) {
+      const netStats = this.game.inventory.getEquippedNetStats();
+      if (netStats?.rarityBoost) {
+        rarityBoost = netStats.rarityBoost;
+      }
+    }
+    const creature = generateCreatureForExpedition(exp.route, rarityBoost);
     const tier = 1;
     const affixes = generateRandomAffixes(creature);
     const value = calculateCreatureValue(creature, tier, affixes);

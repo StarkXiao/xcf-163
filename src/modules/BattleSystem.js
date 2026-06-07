@@ -126,7 +126,8 @@ export class BattleSystem {
   getRandomCreatureWithEventBoost(tideSystem, comboCount, intelEffects) {
     const eventBoost = this.getEventRarityBoost();
     const extraBoosts = this.getExtraRarityBoosts();
-    if (eventBoost || extraBoosts.length > 0) {
+    const inventory = this.game.inventory;
+    if (eventBoost || extraBoosts.length > 0 || inventory) {
       const rarityEntries = Object.entries(RARITY);
       let totalWeight = 0;
       const adjustedWeights = {};
@@ -179,6 +180,13 @@ export class BattleSystem {
           }
         }
 
+        if (inventory && typeof inventory.getNetRarityBoost === 'function') {
+          const netBoost = inventory.getNetRarityBoost(key);
+          if (netBoost > 1.0) {
+            weight = weight * netBoost;
+          }
+        }
+
         adjustedWeights[name] = weight;
         totalWeight += weight;
       }
@@ -226,7 +234,11 @@ export class BattleSystem {
     }
 
     if (tideSystem) {
-      const encounterRate = tideSystem.getAdjustedEncounterRate();
+      let encounterRate = tideSystem.getAdjustedEncounterRate();
+      const inventory = this.game.inventory;
+      if (inventory && typeof inventory.getCatchRate === 'function') {
+        encounterRate = Math.min(1.0, encounterRate * inventory.getCatchRate());
+      }
       let finalEncounterRate = (intelEffects && intelEffects.noEmptyCatch) ? 1.0 : encounterRate;
       if (this.hasActiveNightEvent()) {
         finalEncounterRate = Math.min(1.0, finalEncounterRate + 0.2);

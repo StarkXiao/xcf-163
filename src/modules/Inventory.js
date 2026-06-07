@@ -1,4 +1,19 @@
 import { CREATURES, RARITY_MAX_TIER, calculateCreatureValue } from '../data/creatures.js';
+import {
+  HULL_MOD_CATEGORIES,
+  HULL_NETS,
+  HULL_CORES,
+  ALL_HULL_MODS,
+  getHullModById,
+  getHullNets,
+  getHullCores,
+  calculateNetRange,
+  calculateCatchRate,
+  calculateNetRarityBoost,
+  calculateEnergyRegenRate,
+  calculateEnergyCostMultiplier,
+  calculateMaxEnergyBonus
+} from '../data/hullMods.js';
 
 export class Inventory {
   constructor(game) {
@@ -9,6 +24,18 @@ export class Inventory {
     this.creatureCatchTotal = {};
     this.maxSlots = 20;
     this.selectedItem = null;
+
+    this.ownedHullMods = {
+      basic_net: true,
+      basic_core: true
+    };
+    this.equippedNet = HULL_NETS.basic_net;
+    this.equippedCore = HULL_CORES.basic_core;
+
+    this.hullModal = document.getElementById('hull-mod-modal');
+    this.hullTabBtns = null;
+    this.hullTabContents = null;
+    this.currentHullTab = 'status';
     
     this.backpackModal = document.getElementById('backpack-modal');
     this.backpackGrid = document.getElementById('backpack-grid');
@@ -37,6 +64,25 @@ export class Inventory {
     this.sellBtn.addEventListener('click', () => this.sellSelectedItem());
     document.getElementById('btn-reinforce-item').addEventListener('click', () => this.openReinforceFromDetail());
     document.getElementById('btn-codex-lab').addEventListener('click', () => this.openCodexLabFromDetail());
+
+    const hullBtn = document.getElementById('btn-hull-mod');
+    if (hullBtn) {
+      hullBtn.addEventListener('click', () => this.openHullMod());
+    }
+    const closeHullBtn = document.getElementById('btn-close-hull-mod');
+    if (closeHullBtn) {
+      closeHullBtn.addEventListener('click', () => this.closeHullMod());
+    }
+    this.hullTabBtns = document.querySelectorAll('.hull-mod-tab');
+    this.hullTabContents = document.querySelectorAll('.hull-mod-tab-content');
+    if (this.hullTabBtns) {
+      this.hullTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tab = btn.dataset.tab;
+          this.switchHullTab(tab);
+        });
+      });
+    }
   }
 
   addToBackpack(creature) {
@@ -323,6 +369,308 @@ export class Inventory {
     return `${r}, ${g}, ${b}`;
   }
 
+  openHullMod() {
+    if (!this.hullModal) return;
+    this.hullModal.classList.remove('hidden');
+    this.switchHullTab('status');
+    this.game.checkTasks('hull_mod_open');
+  }
+
+  closeHullMod() {
+    if (!this.hullModal) return;
+    this.hullModal.classList.add('hidden');
+  }
+
+  switchHullTab(tab) {
+    this.currentHullTab = tab;
+    if (this.hullTabBtns) {
+      this.hullTabBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+      });
+    }
+    if (this.hullTabContents) {
+      this.hullTabContents.forEach(content => {
+        content.classList.toggle('hidden', content.dataset.tab !== tab);
+      });
+    }
+    this.renderHullModAll();
+  }
+
+  renderHullModAll() {
+    this.renderHullStatus();
+    this.renderHullNets();
+    this.renderHullCores();
+    this.renderHullShop();
+  }
+
+  getEquippedNet() {
+    return this.equippedNet;
+  }
+
+  getEquippedCore() {
+    return this.equippedCore;
+  }
+
+  getNetRange() {
+    return calculateNetRange(this.equippedNet);
+  }
+
+  getCatchRate() {
+    return calculateCatchRate(this.equippedNet);
+  }
+
+  getNetRarityBoost(rarityKey) {
+    return calculateNetRarityBoost(this.equippedNet, rarityKey);
+  }
+
+  getEnergyRegenRate() {
+    return calculateEnergyRegenRate(this.equippedCore);
+  }
+
+  getEnergyCostMultiplier() {
+    return calculateEnergyCostMultiplier(this.equippedCore);
+  }
+
+  getMaxEnergyBonus() {
+    return calculateMaxEnergyBonus(this.equippedCore);
+  }
+
+  getEquippedNetStats() {
+    return this.equippedNet?.stats || null;
+  }
+
+  getEquippedCoreStats() {
+    return this.equippedCore?.stats || null;
+  }
+
+  ownsHullMod(modId) {
+    return !!this.ownedHullMods[modId];
+  }
+
+  purchaseHullMod(modId) {
+    const mod = getHullModById(modId);
+    if (!mod) return false;
+    if (this.ownsHullMod(modId)) return false;
+    if (this.game.stats.coins < mod.price) {
+      this.game.taskSystem.showHint(`金币不足！需要 ${mod.price} 金币`);
+      return false;
+    }
+    this.game.updateStats('coins', -mod.price);
+    this.ownedHullMods[modId] = true;
+    this.game.saveProgress();
+    this.game.taskSystem.showHint(`✅ 成功购买「${mod.name}」！`);
+    this.game.checkTasks('hull_mod_purchase', mod);
+    this.renderHullModAll();
+    return true;
+  }
+
+  equipHullMod(modId) {
+    const mod = getHullModById(modId);
+    if (!mod) return false;
+    if (!this.ownsHullMod(modId)) return false;
+
+    if (mod.category === 'net') {
+      this.equippedNet = mod;
+    } else if (mod.category === 'core') {
+      this.equippedCore = mod;
+    }
+
+    this.game.saveProgress();
+    this.game.taskSystem.showHint(`🚀 已装备「${mod.name}」`);
+    this.game.checkTasks('hull_mod_equip', mod);
+    this.renderHullModAll();
+    return true;
+  }
+
+  renderHullStatus() {
+    const el = document.getElementById('hull-status');
+    if (!el) return;
+
+    const net = this.equippedNet;
+    const core = this.equippedCore;
+    const netRange = this.getNetRange();
+    const catchRate = this.getCatchRate();
+    const energyRegen = this.getEnergyRegenRate();
+    const energyCost = this.getEnergyCostMultiplier();
+    const maxEnergyBonus = this.getMaxEnergyBonus();
+
+    const rarityBoostText = [];
+    if (net.stats?.rarityBoost) {
+      Object.entries(net.stats.rarityBoost).forEach(([k, v]) => {
+        if (v > 1.0) {
+          const nameMap = { common: '普通', uncommon: '优秀', rare: '稀有', epic: '史诗', legendary: '传说' };
+          rarityBoostText.push(`${nameMap[k] || k} +${Math.round((v - 1) * 100)}%`);
+        }
+      });
+    }
+
+    el.innerHTML = `
+      <p class="chamber-hint">当前船体装备状态，改装会影响打捞效率和收益</p>
+      <div class="hull-equipped-display">
+        <div class="hull-equipped-card ${net.rarity.class}">
+          <div class="hull-equipped-header">
+            <span class="hull-equipped-icon">${net.icon}</span>
+            <div>
+              <div class="hull-equipped-name">${net.name}</div>
+              <div class="hull-equipped-type">${HULL_MOD_CATEGORIES.net.icon} ${HULL_MOD_CATEGORIES.net.name}</div>
+            </div>
+          </div>
+          <div class="hull-equipped-desc">${net.desc}</div>
+          <div class="hull-equipped-stats">
+            <span>🎯 拖网范围: ×${netRange.toFixed(1)}</span>
+            <span>🎣 捕获率: ${Math.round(catchRate * 100)}%</span>
+            ${rarityBoostText.length > 0 ? `<span style="color:#ffaa00;">💎 ${rarityBoostText.join(' · ')}</span>` : ''}
+          </div>
+        </div>
+        <div class="hull-equipped-card ${core.rarity.class}">
+          <div class="hull-equipped-header">
+            <span class="hull-equipped-icon">${core.icon}</span>
+            <div>
+              <div class="hull-equipped-name">${core.name}</div>
+              <div class="hull-equipped-type">${HULL_MOD_CATEGORIES.core.icon} ${HULL_MOD_CATEGORIES.core.name}</div>
+            </div>
+          </div>
+          <div class="hull-equipped-desc">${core.desc}</div>
+          <div class="hull-equipped-stats">
+            <span>⚡ 能量恢复: ×${energyRegen.toFixed(1)}</span>
+            <span>💠 能量消耗: ${Math.round(energyCost * 100)}%</span>
+            ${maxEnergyBonus > 0 ? `<span style="color:#00ffff;">🔋 能量上限: +${maxEnergyBonus}</span>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderHullNets() {
+    const el = document.getElementById('hull-nets');
+    if (!el) return;
+
+    const nets = getHullNets();
+    el.innerHTML = `
+      <p class="chamber-hint">拖网决定拖网范围、捕获率和稀有掉落加成</p>
+      <div class="hull-mod-list">
+        ${nets.map(net => this.renderHullModCard(net)).join('')}
+      </div>
+    `;
+
+    el.querySelectorAll('[data-hull-mod-action]').forEach(btn => {
+      const modId = btn.dataset.modId;
+      const action = btn.dataset.hullModAction;
+      if (action === 'purchase') {
+        btn.addEventListener('click', () => this.purchaseHullMod(modId));
+      } else if (action === 'equip') {
+        btn.addEventListener('click', () => this.equipHullMod(modId));
+      }
+    });
+  }
+
+  renderHullCores() {
+    const el = document.getElementById('hull-cores');
+    if (!el) return;
+
+    const cores = getHullCores();
+    el.innerHTML = `
+      <p class="chamber-hint">动力核心决定能量恢复速度、消耗和能量上限</p>
+      <div class="hull-mod-list">
+        ${cores.map(core => this.renderHullModCard(core)).join('')}
+      </div>
+    `;
+
+    el.querySelectorAll('[data-hull-mod-action]').forEach(btn => {
+      const modId = btn.dataset.modId;
+      const action = btn.dataset.hullModAction;
+      if (action === 'purchase') {
+        btn.addEventListener('click', () => this.purchaseHullMod(modId));
+      } else if (action === 'equip') {
+        btn.addEventListener('click', () => this.equipHullMod(modId));
+      }
+    });
+  }
+
+  renderHullModCard(mod) {
+    const owned = this.ownsHullMod(mod.id);
+    const equipped = (mod.category === 'net' && this.equippedNet?.id === mod.id) ||
+                     (mod.category === 'core' && this.equippedCore?.id === mod.id);
+    const canAfford = this.game.stats.coins >= mod.price;
+
+    let statsHtml = '';
+    if (mod.category === 'net') {
+      const range = mod.stats.netRange;
+      const rate = mod.stats.catchRate;
+      statsHtml += `<span>🎯 范围: ×${range.toFixed(1)}</span>`;
+      statsHtml += `<span>🎣 捕获率: ${Math.round(rate * 100)}%</span>`;
+      if (mod.stats.rarityBoost) {
+        const boosts = Object.entries(mod.stats.rarityBoost).filter(([, v]) => v > 1.0);
+        if (boosts.length > 0) {
+          const nameMap = { common: '普通', uncommon: '优秀', rare: '稀有', epic: '史诗', legendary: '传说' };
+          const txt = boosts.map(([k, v]) => `${nameMap[k] || k}+${Math.round((v - 1) * 100)}%`).join(' ');
+          statsHtml += `<span style="color:#ffaa00;">💎 ${txt}</span>`;
+        }
+      }
+    } else if (mod.category === 'core') {
+      const regen = mod.stats.energyRegenRate;
+      const cost = mod.stats.energyCostMultiplier;
+      statsHtml += `<span>⚡ 恢复: ×${regen.toFixed(1)}</span>`;
+      statsHtml += `<span>💠 消耗: ${Math.round(cost * 100)}%</span>`;
+      if (mod.stats.maxEnergyBonus > 0) {
+        statsHtml += `<span style="color:#00ffff;">🔋 上限: +${mod.stats.maxEnergyBonus}</span>`;
+      }
+    }
+
+    let actionHtml = '';
+    if (equipped) {
+      actionHtml = `<button class="modal-btn accent full-width" disabled>✅ 已装备</button>`;
+    } else if (owned) {
+      actionHtml = `<button class="modal-btn primary full-width" data-mod-id="${mod.id}" data-hull-mod-action="equip">⚙️ 装备</button>`;
+    } else if (mod.price === 0) {
+      actionHtml = `<button class="modal-btn secondary full-width" disabled>初始装备</button>`;
+    } else {
+      actionHtml = `<button class="modal-btn accent full-width" data-mod-id="${mod.id}" data-hull-mod-action="purchase" ${canAfford ? '' : 'disabled'}>💰 购买 ${mod.price}💰</button>`;
+    }
+
+    return `
+      <div class="hull-mod-card ${mod.rarity.class} ${equipped ? 'equipped' : ''}">
+        <div class="hull-mod-header">
+          <span class="hull-mod-icon">${mod.icon}</span>
+          <div class="hull-mod-info">
+            <div class="hull-mod-name">${mod.name}</div>
+            <div class="hull-mod-rarity">${mod.rarity.name} · T${mod.tier}</div>
+          </div>
+        </div>
+        <div class="hull-mod-desc">${mod.desc}</div>
+        <div class="hull-mod-stats">
+          ${statsHtml}
+        </div>
+        <div class="hull-mod-action">
+          ${actionHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  renderHullShop() {
+    const el = document.getElementById('hull-shop');
+    if (!el) return;
+
+    const allMods = [...getHullNets().filter(m => m.price > 0), ...getHullCores().filter(m => m.price > 0)];
+    el.innerHTML = `
+      <p class="chamber-hint">在船坞商店购买更好的船体改装部件</p>
+      <div class="hull-mod-list">
+        ${allMods.map(mod => this.renderHullModCard(mod)).join('')}
+      </div>
+    `;
+
+    el.querySelectorAll('[data-hull-mod-action]').forEach(btn => {
+      const modId = btn.dataset.modId;
+      const action = btn.dataset.hullModAction;
+      if (action === 'purchase') {
+        btn.addEventListener('click', () => this.purchaseHullMod(modId));
+      } else if (action === 'equip') {
+        btn.addEventListener('click', () => this.equipHullMod(modId));
+      }
+    });
+  }
+
   loadData(data) {
     if (data.backpack) {
       this.backpack = data.backpack.map(savedItem => {
@@ -355,6 +703,18 @@ export class Inventory {
         this.creatureCatchTotal[item.id] = Math.max(this.creatureCatchTotal[item.id] || 0, item.count);
       });
     }
+
+    if (data.ownedHullMods) {
+      this.ownedHullMods = { ...data.ownedHullMods };
+    }
+    if (data.equippedNetId) {
+      const net = getHullModById(data.equippedNetId);
+      if (net && net.category === 'net') this.equippedNet = net;
+    }
+    if (data.equippedCoreId) {
+      const core = getHullModById(data.equippedCoreId);
+      if (core && core.category === 'core') this.equippedCore = core;
+    }
   }
 
   toJSON() {
@@ -367,7 +727,10 @@ export class Inventory {
       })),
       collection: Array.from(this.collection),
       rarityCatchStats: { ...this.rarityCatchStats },
-      creatureCatchTotal: { ...this.creatureCatchTotal }
+      creatureCatchTotal: { ...this.creatureCatchTotal },
+      ownedHullMods: { ...this.ownedHullMods },
+      equippedNetId: this.equippedNet?.id,
+      equippedCoreId: this.equippedCore?.id
     };
   }
 }

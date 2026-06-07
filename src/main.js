@@ -118,6 +118,12 @@ class Game {
     document.getElementById('btn-ruins').addEventListener('click', () => {
       if (this.ruinsDive) this.ruinsDive.openRuins();
     });
+    const hullBtn = document.getElementById('btn-hull-mod');
+    if (hullBtn) {
+      hullBtn.addEventListener('click', () => {
+        this.inventory.openHullMod();
+      });
+    }
   }
 
   async loadResources() {
@@ -152,7 +158,7 @@ class Game {
 
   initModules() {
     this.tideSystem = new TideSystem(this);
-    this.mapScene = new MapScene(this.app);
+    this.mapScene = new MapScene(this.app, this);
     this.battleSystem = new BattleSystem(this);
     this.inventory = new Inventory(this);
     this.taskSystem = new TaskSystem(this);
@@ -198,6 +204,10 @@ class Game {
       if (intelEffects.energyDiscount) {
         cost = Math.max(1, Math.ceil(cost * (1 - intelEffects.energyDiscount)));
       }
+    }
+
+    if (this.inventory && typeof this.inventory.getEnergyCostMultiplier === 'function') {
+      cost = Math.max(1, Math.ceil(cost * this.inventory.getEnergyCostMultiplier()));
     }
     
     return cost;
@@ -467,10 +477,18 @@ class Game {
     return success;
   }
 
+  getMaxEnergy() {
+    let maxEnergy = 100;
+    if (this.inventory && typeof this.inventory.getMaxEnergyBonus === 'function') {
+      maxEnergy += this.inventory.getMaxEnergyBonus();
+    }
+    return maxEnergy;
+  }
+
   updateStats(type, value) {
     switch (type) {
       case 'energy':
-        this.stats.energy = Math.max(0, Math.min(100, this.stats.energy + value));
+        this.stats.energy = Math.max(0, Math.min(this.getMaxEnergy(), this.stats.energy + value));
         break;
       case 'coins':
         this.stats.coins = Math.max(0, this.stats.coins + value);
@@ -486,7 +504,8 @@ class Game {
   }
 
   updateUI() {
-    document.getElementById('energy-value').textContent = Math.floor(this.stats.energy);
+    const maxEnergy = this.getMaxEnergy();
+    document.getElementById('energy-value').textContent = Math.floor(this.stats.energy) + '/' + maxEnergy;
     document.getElementById('coin-value').textContent = this.stats.coins;
     document.getElementById('catch-count').textContent = this.stats.catchCount;
     
@@ -570,9 +589,13 @@ class Game {
 
   startEnergyRegen() {
     setInterval(() => {
-      if (this.stats.energy < 100) {
+      if (this.stats.energy < this.getMaxEnergy()) {
         const regenBonus = getComboEnergyRegenBonus(this.stats.comboCount || 0);
-        const totalRegen = this.energyRegenRate * (1 + regenBonus);
+        let coreRegenMult = 1.0;
+        if (this.inventory && typeof this.inventory.getEnergyRegenRate === 'function') {
+          coreRegenMult = this.inventory.getEnergyRegenRate();
+        }
+        const totalRegen = this.energyRegenRate * (1 + regenBonus) * coreRegenMult;
         this.updateStats('energy', totalRegen);
       }
     }, this.energyRegenInterval);

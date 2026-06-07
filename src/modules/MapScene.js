@@ -1,8 +1,9 @@
 import * as PIXI from 'pixi.js';
 
 export class MapScene {
-  constructor(app) {
+  constructor(app, game) {
     this.app = app;
+    this.game = game;
     this.container = new PIXI.Container();
     this.bgLayers = [];
     this.floatingObjects = [];
@@ -586,7 +587,13 @@ export class MapScene {
     this.net.visible = true;
     this.net.x = this.app.screen.width * 0.5;
     this.net.y = this.app.screen.height * 0.45;
-    this.net.scale.set(0.5);
+
+    let netRangeMult = 1.0;
+    if (this.game && this.game.inventory && typeof this.game.inventory.getNetRange === 'function') {
+      netRangeMult = this.game.inventory.getNetRange();
+    }
+
+    this.net.scale.set(0.5 * netRangeMult);
     this.net.alpha = 0;
     
     const startY = this.app.screen.height * 0.45;
@@ -601,15 +608,15 @@ export class MapScene {
       if (progress < 0.4) {
         const p = progress / 0.4;
         this.net.y = startY + (endY - startY) * p;
-        this.net.scale.set(0.5 + 0.5 * p);
+        this.net.scale.set((0.5 + 0.5 * p) * netRangeMult);
         this.net.alpha = p;
       } else if (progress < 0.6) {
         const p = (progress - 0.4) / 0.2;
-        this.net.scale.set(1 + Math.sin(p * Math.PI * 4) * 0.05);
+        this.net.scale.set((1 + Math.sin(p * Math.PI * 4) * 0.05) * netRangeMult);
       } else {
         const p = (progress - 0.6) / 0.4;
         this.net.y = endY - (endY - startY) * p;
-        this.net.scale.set(1 - 0.3 * p);
+        this.net.scale.set((1 - 0.3 * p) * netRangeMult);
         this.net.alpha = 1 - p;
       }
       
