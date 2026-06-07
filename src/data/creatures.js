@@ -728,6 +728,94 @@ export const TASKS = [
     type: 'boss_defeat_all',
     target: 4,
     reward: { coins: 50000, energy: 1000 }
+  },
+  {
+    id: 'season_first_open',
+    name: '初识赛季',
+    desc: '点击底部「赛季」按钮，查看赛季目标。',
+    type: 'season_open',
+    target: 1,
+    reward: { coins: 50, energy: 10 }
+  },
+  {
+    id: 'season_score_100',
+    name: '赛季起航',
+    desc: '在本周赛季中累计获得 100 积分。',
+    type: 'season_score',
+    target: 100,
+    reward: { coins: 100, energy: 20 }
+  },
+  {
+    id: 'season_score_500',
+    name: '赛季猎手',
+    desc: '在本周赛季中累计获得 500 积分。',
+    type: 'season_score',
+    target: 500,
+    reward: { coins: 300, energy: 50 }
+  },
+  {
+    id: 'season_score_1500',
+    name: '赛季达人',
+    desc: '在本周赛季中累计获得 1500 积分。',
+    type: 'season_score',
+    target: 1500,
+    reward: { coins: 800, energy: 100 }
+  },
+  {
+    id: 'season_creature_10',
+    name: '赛季收集入门',
+    desc: '在本周赛季主题中累计收集 10 只目标生物。',
+    type: 'season_creature',
+    target: 10,
+    reward: { coins: 200, energy: 30 }
+  },
+  {
+    id: 'season_creature_30',
+    name: '赛季收集专家',
+    desc: '在本周赛季主题中累计收集 30 只目标生物。',
+    type: 'season_creature',
+    target: 30,
+    reward: { coins: 600, energy: 80 }
+  },
+  {
+    id: 'season_new_3',
+    name: '赛季图鉴补完',
+    desc: '在本周赛季中解锁 3 种全新图鉴生物。',
+    type: 'season_new_creature',
+    target: 3,
+    reward: { coins: 500, energy: 50 }
+  },
+  {
+    id: 'season_port_3',
+    name: '赛季港口新人',
+    desc: '在本周赛季中完成 3 个港口委托。',
+    type: 'season_port_commission',
+    target: 3,
+    reward: { coins: 200, energy: 30 }
+  },
+  {
+    id: 'season_port_10',
+    name: '赛季港口骨干',
+    desc: '在本周赛季中完成 10 个港口委托。',
+    type: 'season_port_commission',
+    target: 10,
+    reward: { coins: 1000, energy: 150 }
+  },
+  {
+    id: 'season_reward_claim',
+    name: '赛季首奖',
+    desc: '领取本赛季的第一份等级奖励。',
+    type: 'season_reward_claimed',
+    target: 1,
+    reward: { coins: 100, energy: 20 }
+  },
+  {
+    id: 'season_reward_3',
+    name: '赛季丰收',
+    desc: '在本赛季累计领取 3 份等级奖励。',
+    type: 'season_reward_claimed',
+    target: 3,
+    reward: { coins: 500, energy: 80 }
   }
 ];
 

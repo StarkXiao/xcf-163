@@ -90,7 +90,7 @@ export const COLLECTION_THEMES = [
 ];
 
 export const SEASON_REWARD_TIERS = [
-  { tier: 1, name: '入门', minScore: 0, reward: { coins: 100, energy: 20 } },
+  { tier: 1, name: '入门', minScore: 50, reward: { coins: 100, energy: 20 } },
   { tier: 2, name: '学徒', minScore: 500, reward: { coins: 300, energy: 50 } },
   { tier: 3, name: '熟练', minScore: 1500, reward: { coins: 800, energy: 100 } },
   { tier: 4, name: '精通', minScore: 3500, reward: { coins: 2000, energy: 200 } },
@@ -125,7 +125,7 @@ export function getThemeById(themeId) {
   return COLLECTION_THEMES.find(t => t.id === themeId);
 }
 
-export function getCreaturesForTheme(theme, collection = new Set()) {
+export function getCreaturesForTheme(theme, collection = new Set(), includeCollected = true) {
   let creatures = [...CREATURES];
   
   if (theme.category) {
@@ -140,7 +140,7 @@ export function getCreaturesForTheme(theme, collection = new Set()) {
     creatures = creatures.filter(c => c.rarity.weight <= minRarityWeight);
   }
   
-  if (theme.requireNew) {
+  if (theme.requireNew && !includeCollected) {
     creatures = creatures.filter(c => !collection.has(c.id));
   }
   

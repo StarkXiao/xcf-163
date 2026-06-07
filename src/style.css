@@ -5344,6 +5344,21 @@ html, body {
   letter-spacing: 0.5px;
 }
 
+.season-need-collect-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  background: linear-gradient(90deg, #aa44ff, #4488ff);
+  color: white;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.season-creature-card.need-collect {
+  border: 1px solid rgba(170, 68, 255, 0.4);
+  background: linear-gradient(135deg, rgba(170, 68, 255, 0.08), rgba(68, 136, 255, 0.05));
+}
+
 .season-creature-progress-bar {
   height: 6px;
   background: rgba(255, 255, 255, 0.1);

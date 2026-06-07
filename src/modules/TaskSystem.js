@@ -297,6 +297,41 @@ export class TaskSystem {
             progressValue = 1;
           }
           break;
+
+        case 'season_score':
+          if (task.type === 'season_score' && this.game.seasonSystem) {
+            shouldUpdate = true;
+            progressValue = this.game.seasonSystem.weeklyScore;
+          }
+          break;
+
+        case 'season_creature':
+          if (task.type === 'season_creature' && this.game.seasonSystem) {
+            shouldUpdate = true;
+            progressValue = this.game.seasonSystem.getTotalCreaturesCaught();
+          }
+          break;
+
+        case 'season_new_creature':
+          if (task.type === 'season_new_creature' && this.game.seasonSystem) {
+            shouldUpdate = true;
+            progressValue = this.game.seasonSystem.getNewCreaturesCount();
+          }
+          break;
+
+        case 'season_port_commission':
+          if (task.type === 'season_port_commission' && this.game.seasonSystem) {
+            shouldUpdate = true;
+            progressValue = this.game.seasonSystem.weeklyPortCommissions;
+          }
+          break;
+
+        case 'season_reward_claimed':
+          if (task.type === 'season_reward_claimed' && this.game.seasonSystem) {
+            shouldUpdate = true;
+            progressValue = this.game.seasonSystem.claimedRewards.size;
+          }
+          break;
       }
       
       if (shouldUpdate) {

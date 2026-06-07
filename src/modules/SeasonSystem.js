@@ -136,7 +136,7 @@ export class SeasonSystem {
     this.weeklyPortScore = 0;
     this.portRankClaimed = false;
 
-    const themeCreatures = getCreaturesForTheme(theme, this.game.inventory?.getCollection() || new Set());
+    const themeCreatures = getCreaturesForTheme(theme, this.game.inventory?.getCollection() || new Set(), true);
     themeCreatures.forEach(c => {
       this.collectionProgress[c.id] = {
         caught: 0,
@@ -160,6 +160,31 @@ export class SeasonSystem {
     const theme = getThemeById(this.currentSeason.themeId);
     const portRank = getPortRank(this.weeklyPortCommissions, this.weeklyPortRarityBonus);
 
+    SEASON_REWARD_TIERS.forEach(tier => {
+      const unlocked = finalScore >= tier.minScore;
+      if (unlocked && !this.claimedRewards.has(tier.tier)) {
+        this.claimedRewards.add(tier.tier);
+        if (tier.reward.coins) {
+          this.game.updateStats('coins', tier.reward.coins);
+        }
+        if (tier.reward.energy) {
+          this.game.updateStats('energy', tier.reward.energy);
+        }
+      }
+    });
+
+    const portRankUnlocked = this.weeklyPortCommissions >= portRank.minCommissions &&
+                            this.weeklyPortRarityBonus >= portRank.minRarityBonus;
+    if (portRankUnlocked && !this.portRankClaimed) {
+      this.portRankClaimed = true;
+      if (portRank.reward.coins) {
+        this.game.updateStats('coins', portRank.reward.coins);
+      }
+      if (portRank.reward.energy) {
+        this.game.updateStats('energy', portRank.reward.energy);
+      }
+    }
+
     const settlement = {
       id: this.currentSeason.id,
       weekNumber: this.currentSeason.weekNumber,
@@ -178,17 +203,20 @@ export class SeasonSystem {
       portCommissions: this.weeklyPortCommissions,
       portRank: portRank.rank,
       portRankName: portRank.name,
-      portScore: this.weeklyPortScore
+      portScore: this.weeklyPortScore,
+      claimedRewards: Array.from(this.claimedRewards),
+      portRankClaimed: this.portRankClaimed
     };
 
     SEASON_REWARD_TIERS.forEach(tier => {
-      if (this.claimedRewards.has(tier.tier)) {
+      const unlocked = finalScore >= tier.minScore;
+      if (unlocked) {
         settlement.totalCoinsEarned += tier.reward.coins;
         settlement.totalEnergyEarned += tier.reward.energy;
       }
     });
 
-    if (this.portRankClaimed) {
+    if (portRankUnlocked) {
       settlement.totalCoinsEarned += portRank.reward.coins;
       settlement.totalEnergyEarned += portRank.reward.energy;
     }
@@ -204,6 +232,7 @@ export class SeasonSystem {
       this.game.taskSystem.showHint(
         `📊 赛季结算：${settlement.themeIcon} ${settlement.themeName} · 得分 ${finalScore} · ${settlement.rewardTierName}`
       );
+      this.game.taskSystem.checkTasks('season_reward_claimed');
     }
 
     this.game.saveProgress();
@@ -253,6 +282,15 @@ export class SeasonSystem {
     }
 
     this.game.saveProgress();
+
+    if (this.game.taskSystem) {
+      this.game.taskSystem.checkTasks('season_score');
+      this.game.taskSystem.checkTasks('season_creature');
+      if (isNewToCollection) {
+        this.game.taskSystem.checkTasks('season_new_creature');
+      }
+    }
+
     return score;
   }
 
@@ -270,6 +308,12 @@ export class SeasonSystem {
     this.weeklyPortRarityBonus = (this.weeklyPortRarityBonus * (total - 1) + weight) / total;
 
     this.game.saveProgress();
+
+    if (this.game.taskSystem) {
+      this.game.taskSystem.checkTasks('season_score');
+      this.game.taskSystem.checkTasks('season_port_commission');
+    }
+
     return score;
   }
 
@@ -285,9 +329,10 @@ export class SeasonSystem {
     const theme = this.getCurrentTheme();
     if (!theme) return [];
     const collection = this.game.inventory?.getCollection() || new Set();
-    const themeCreatures = getCreaturesForTheme(theme, collection);
+    const themeCreatures = getCreaturesForTheme(theme, collection, true);
     return themeCreatures.map(c => ({
       creature: c,
+      collected: collection.has(c.id),
       progress: this.collectionProgress[c.id] || { caught: 0, isNew: false, bestTier: 1 }
     }));
   }
@@ -313,6 +358,7 @@ export class SeasonSystem {
       this.game.taskSystem.showHint(
         `🎁 领取奖励：${rewardTier.name} · 💰${rewardTier.reward.coins || 0} ⚡${rewardTier.reward.energy || 0}`
       );
+      this.game.taskSystem.checkTasks('season_reward_claimed');
     }
 
     this.game.saveProgress();
@@ -520,18 +566,21 @@ export class SeasonSystem {
       return;
     }
 
+    const isRequireNewTheme = theme?.requireNew;
+
     el.innerHTML = `
       <p class="season-hint">${theme?.desc || '收集本周主题生物获取更多积分！'}</p>
       <div class="season-creature-list">
-        ${progressList.map(({ creature, progress }) => {
+        ${progressList.map(({ creature, collected, progress }) => {
           const isNew = progress.isNew;
           const caught = progress.caught;
           const bestTier = progress.bestTier;
           const targetCount = 5;
           const progressPercent = Math.min(100, (caught / targetCount) * 100);
+          const needCollectTag = isRequireNewTheme && !collected;
           
           return `
-            <div class="season-creature-card ${creature.rarity.class}">
+            <div class="season-creature-card ${creature.rarity.class} ${needCollectTag ? 'need-collect' : ''}">
               <div class="season-creature-header">
                 <span class="season-creature-icon">${creature.icon}</span>
                 <div class="season-creature-info">
@@ -539,6 +588,7 @@ export class SeasonSystem {
                   <div class="season-creature-rarity">${creature.rarity.name}</div>
                 </div>
                 ${isNew ? '<span class="season-new-badge">NEW</span>' : ''}
+                ${needCollectTag ? '<span class="season-need-collect-badge">未收集</span>' : ''}
               </div>
               <div class="season-creature-progress">
                 <div class="season-creature-progress-bar">
@@ -694,14 +744,14 @@ export class SeasonSystem {
               <div class="season-history-score">${h.finalScore}分</div>
             </div>
             <div class="season-history-stats">
-              <span>${h.rewardTierName}</span>
+              <span>🏅 ${h.rewardTierName}</span>
               <span>🐟 ${h.creaturesCaught}</span>
               <span>✨ ${h.newCreatures}</span>
               <span>⚓ ${h.portCommissions}</span>
               <span>🏆 ${h.portRankName}</span>
             </div>
             <div class="season-history-earnings">
-              累计收益：💰${h.totalCoinsEarned} ⚡${h.totalEnergyEarned}
+              赛季总收益：💰${h.totalCoinsEarned} ⚡${h.totalEnergyEarned}
             </div>
           </div>
         `).join('')}
