@@ -137,6 +137,18 @@ export class Inventory {
       }
     }
 
+    if (this.game.memoryRecovery) {
+      const cumulative = this.getCumulativeCreatureCount(creature.id);
+      const memoryResult = this.game.memoryRecovery.onCreatureCaught(creature, cumulative);
+      if (memoryResult && memoryResult.fragment && this.game.taskSystem) {
+        if (memoryResult.fragment.isNew) {
+          this.game.taskSystem.showHint(
+            `📜 新的${memoryResult.fragment.memoryRarity.name}！「${memoryResult.fragment.content.substring(0, 25)}...」`
+          );
+        }
+      }
+    }
+
     this.game.saveProgress();
     return true;
   }

@@ -18,6 +18,7 @@ import { CodexLab } from './modules/CodexLab.js';
 import { SeasonSystem } from './modules/SeasonSystem.js';
 import { AuctionSystem } from './modules/AuctionSystem.js';
 import { PortRepairStation } from './modules/PortRepairStation.js';
+import { MemoryRecoverySystem } from './modules/MemoryRecoverySystem.js';
 import { COMBO_CONFIG, getComboEnergyDiscount, getComboEnergyRegenBonus } from './data/creatures.js';
 import { rollNightVoyageEvent } from './data/deepSeaExpedition.js';
 
@@ -42,6 +43,7 @@ class Game {
     this.seasonSystem = null;
     this.auctionSystem = null;
     this.repairStation = null;
+    this.memoryRecovery = null;
 
     this.stats = {
       energy: 100,
@@ -192,6 +194,7 @@ class Game {
     this.seasonSystem = new SeasonSystem(this);
     this.auctionSystem = new AuctionSystem(this);
     this.repairStation = new PortRepairStation(this);
+    this.memoryRecovery = new MemoryRecoverySystem(this);
     this.stallSystem = this.chamber.stallSystem;
     this.pricingSystem = this.chamber.pricingSystem;
     this.customerSystem = this.chamber.customerSystem;
@@ -675,6 +678,7 @@ class Game {
       seasonSystem: this.seasonSystem ? this.seasonSystem.toJSON() : null,
       auctionSystem: this.auctionSystem ? this.auctionSystem.toJSON() : null,
       repairStation: this.repairStation ? this.repairStation.toJSON() : null,
+      memoryRecovery: this.memoryRecovery ? this.memoryRecovery.toJSON() : null,
       timestamp: Date.now()
     };
     Storage.save(saveData);
@@ -732,6 +736,9 @@ class Game {
       }
       if (this.repairStation && data.repairStation) {
         this.repairStation.loadData(data.repairStation);
+      }
+      if (this.memoryRecovery && data.memoryRecovery) {
+        this.memoryRecovery.loadData(data.memoryRecovery);
       }
       if (this.tideSystem && data.tide) {
         this.tideSystem.init(data.tide);

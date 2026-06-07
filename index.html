@@ -129,6 +129,10 @@
           <span class="btn-icon">🔩</span>
           <span class="btn-text">维修站</span>
         </button>
+        <button class="action-btn" id="btn-memory">
+          <span class="btn-icon">📜</span>
+          <span class="btn-text">记忆</span>
+        </button>
       </div>
     </div>
 
@@ -685,6 +689,36 @@
 
         <div class="modal-footer">
           <button class="modal-btn secondary" id="btn-close-repair-station">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="memory-modal" class="modal hidden">
+      <div class="modal-content memory-content">
+        <h2 class="modal-title">📜 记忆回收 · 旧世界碎片</h2>
+        <div id="memory-stats"></div>
+
+        <div class="chamber-tabs memory-tabs">
+          <button class="memory-tab active" data-memory-tab="chapters">📚 章节</button>
+          <button class="memory-tab" data-memory-tab="fragments">📜 碎片</button>
+          <button class="memory-tab" data-memory-tab="codex">📖 档案</button>
+          <button class="memory-tab" data-memory-tab="log">📋 日志</button>
+        </div>
+
+        <div class="memory-layout">
+          <div class="memory-left">
+            <div class="memory-tab-content" data-memory-tab-content="chapters" id="memory-chapter-list"></div>
+            <div class="memory-tab-content hidden" data-memory-tab-content="fragments" id="memory-fragments"></div>
+            <div class="memory-tab-content hidden" data-memory-tab-content="codex" id="memory-codex"></div>
+            <div class="memory-tab-content hidden" data-memory-tab-content="log" id="memory-log"></div>
+          </div>
+          <div class="memory-right">
+            <div id="memory-chapter-detail"></div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-memory">关闭</button>
         </div>
       </div>
     </div>
