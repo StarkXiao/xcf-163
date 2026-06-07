@@ -56,6 +56,20 @@ export class DeepSeaExpedition {
     return 1.0;
   }
 
+  getRepairCatchEfficiencyPenalty() {
+    if (this.game?.repairStation?.getCatchEfficiencyPenalty) {
+      return this.game.repairStation.getCatchEfficiencyPenalty();
+    }
+    return 1.0;
+  }
+
+  getRepairRarityPenalty() {
+    if (this.game?.repairStation?.getRarityPenalty) {
+      return this.game.repairStation.getRarityPenalty();
+    }
+    return 1.0;
+  }
+
   bindStaticEvents() {
     const btn = document.getElementById('btn-expedition');
     if (btn) {
@@ -624,7 +638,7 @@ export class DeepSeaExpedition {
       this.discoverWreck();
     }
 
-    if (Math.random() < 0.4 * this.getHullCatchRate() && exp.cargo.length < this.getMaxCargo()) {
+    if (Math.random() < 0.4 * this.getHullCatchRate() * this.getRepairCatchEfficiencyPenalty() && exp.cargo.length < this.getMaxCargo()) {
       this.catchCreature();
     }
 
@@ -756,9 +770,16 @@ export class DeepSeaExpedition {
       Math.floor(Math.random() * (wreck.creatureCount[1] - wreck.creatureCount[0] + 1));
 
     const rarityBoost = this.getHullNetRarityBoost();
+    const repairRarityPenalty = this.getRepairRarityPenalty();
+    const finalRarityBoost = rarityBoost ? { ...rarityBoost } : {};
+    if (repairRarityPenalty < 1.0) {
+      ['rare', 'epic', 'legendary'].forEach(key => {
+        finalRarityBoost[key] = (finalRarityBoost[key] || 1.0) * repairRarityPenalty;
+      });
+    }
     const creaturesFound = [];
     for (let i = 0; i < creatureCount && exp.cargo.length < maxCargo; i++) {
-      const creature = generateCreatureForExpedition(exp.route, rarityBoost);
+      const creature = generateCreatureForExpedition(exp.route, finalRarityBoost);
       const tier = 1;
       const affixes = generateRandomAffixes(creature);
       const value = calculateCreatureValue(creature, tier, affixes);
@@ -787,7 +808,14 @@ export class DeepSeaExpedition {
     const exp = this.currentExpedition;
     if (!exp) return;
     const rarityBoost = this.getHullNetRarityBoost();
-    const creature = generateCreatureForExpedition(exp.route, rarityBoost);
+    const repairRarityPenalty = this.getRepairRarityPenalty();
+    const finalRarityBoost = rarityBoost ? { ...rarityBoost } : {};
+    if (repairRarityPenalty < 1.0) {
+      ['rare', 'epic', 'legendary'].forEach(key => {
+        finalRarityBoost[key] = (finalRarityBoost[key] || 1.0) * repairRarityPenalty;
+      });
+    }
+    const creature = generateCreatureForExpedition(exp.route, finalRarityBoost);
     const tier = 1;
     const affixes = generateRandomAffixes(creature);
     const value = calculateCreatureValue(creature, tier, affixes);
@@ -870,6 +898,16 @@ export class DeepSeaExpedition {
     Storage.saveExpedition(exp.id, historyData);
 
     this.showSettlementModal(summary, success);
+
+    if (this.game.repairStation && typeof this.game.repairStation.applyCatchWear === 'function') {
+      const totalCatches = (exp.wrecksFound || 0) + (exp.creaturesCaught || 0);
+      const days = exp.currentDay || 1;
+      this.game.repairStation.applyCatchWear(
+        days * 3,
+        Math.floor(totalCatches * 1.5),
+        days * 2
+      );
+    }
 
     this.currentExpedition = null;
     this.game.saveProgress();

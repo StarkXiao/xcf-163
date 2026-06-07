@@ -17,6 +17,7 @@ import { RuinsDive } from './modules/RuinsDive.js';
 import { CodexLab } from './modules/CodexLab.js';
 import { SeasonSystem } from './modules/SeasonSystem.js';
 import { AuctionSystem } from './modules/AuctionSystem.js';
+import { PortRepairStation } from './modules/PortRepairStation.js';
 import { COMBO_CONFIG, getComboEnergyDiscount, getComboEnergyRegenBonus } from './data/creatures.js';
 import { rollNightVoyageEvent } from './data/deepSeaExpedition.js';
 
@@ -40,6 +41,7 @@ class Game {
     this.codexLab = null;
     this.seasonSystem = null;
     this.auctionSystem = null;
+    this.repairStation = null;
 
     this.stats = {
       energy: 100,
@@ -134,6 +136,12 @@ class Game {
         if (this.auctionSystem) this.auctionSystem.open();
       });
     }
+    const repairBtn = document.getElementById('btn-repair-station');
+    if (repairBtn) {
+      repairBtn.addEventListener('click', () => {
+        if (this.repairStation) this.repairStation.open();
+      });
+    }
   }
 
   async loadResources() {
@@ -183,6 +191,7 @@ class Game {
     this.codexLab = new CodexLab(this);
     this.seasonSystem = new SeasonSystem(this);
     this.auctionSystem = new AuctionSystem(this);
+    this.repairStation = new PortRepairStation(this);
     this.stallSystem = this.chamber.stallSystem;
     this.pricingSystem = this.chamber.pricingSystem;
     this.customerSystem = this.chamber.customerSystem;
@@ -229,6 +238,10 @@ class Game {
 
     if (this.inventory && typeof this.inventory.getEnergyCostMultiplier === 'function') {
       cost = Math.max(1, Math.ceil(cost * this.inventory.getEnergyCostMultiplier()));
+    }
+
+    if (this.repairStation && typeof this.repairStation.getEnergyCostPenalty === 'function') {
+      cost = Math.max(1, Math.ceil(cost * this.repairStation.getEnergyCostPenalty()));
     }
     
     return cost;
@@ -616,7 +629,11 @@ class Game {
         if (this.inventory && typeof this.inventory.getEnergyRegenRate === 'function') {
           coreRegenMult = this.inventory.getEnergyRegenRate();
         }
-        const totalRegen = this.energyRegenRate * (1 + regenBonus) * coreRegenMult;
+        let batteryRegenMult = 1.0;
+        if (this.repairStation && typeof this.repairStation.getEnergyRegenPenalty === 'function') {
+          batteryRegenMult = this.repairStation.getEnergyRegenPenalty();
+        }
+        const totalRegen = this.energyRegenRate * (1 + regenBonus) * coreRegenMult * batteryRegenMult;
         this.updateStats('energy', totalRegen);
       }
     }, this.energyRegenInterval);
@@ -657,6 +674,7 @@ class Game {
       codexLab: this.codexLab ? this.codexLab.toJSON() : null,
       seasonSystem: this.seasonSystem ? this.seasonSystem.toJSON() : null,
       auctionSystem: this.auctionSystem ? this.auctionSystem.toJSON() : null,
+      repairStation: this.repairStation ? this.repairStation.toJSON() : null,
       timestamp: Date.now()
     };
     Storage.save(saveData);
@@ -711,6 +729,9 @@ class Game {
       }
       if (this.auctionSystem && data.auctionSystem) {
         this.auctionSystem.loadData(data.auctionSystem);
+      }
+      if (this.repairStation && data.repairStation) {
+        this.repairStation.loadData(data.repairStation);
       }
       if (this.tideSystem && data.tide) {
         this.tideSystem.init(data.tide);

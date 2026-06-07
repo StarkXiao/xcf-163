@@ -207,6 +207,13 @@ export class BattleSystem {
           }
         }
 
+        if (this.game.repairStation && typeof this.game.repairStation.getRarityPenalty === 'function') {
+          const rarityPenalty = this.game.repairStation.getRarityPenalty();
+          if (rarity !== RARITY.COMMON && rarityPenalty < 1.0) {
+            weight = weight * rarityPenalty;
+          }
+        }
+
         adjustedWeights[name] = weight;
         totalWeight += weight;
       }
@@ -300,6 +307,9 @@ export class BattleSystem {
       const inventory = this.game.inventory;
       if (inventory && typeof inventory.getCatchRate === 'function') {
         encounterRate = Math.min(1.0, encounterRate * inventory.getCatchRate());
+      }
+      if (this.game.repairStation && typeof this.game.repairStation.getCatchEfficiencyPenalty === 'function') {
+        encounterRate = Math.min(1.0, encounterRate * this.game.repairStation.getCatchEfficiencyPenalty());
       }
       let finalEncounterRate = (intelEffects && intelEffects.noEmptyCatch) ? 1.0 : encounterRate;
       if (this.hasActiveNightEvent()) {
@@ -586,6 +596,10 @@ export class BattleSystem {
     this.game.checkTasks('unique_collected');
     this.game.checkTasks('night_voyage_catch');
 
+    if (this.game.repairStation && typeof this.game.repairStation.applyCatchWear === 'function') {
+      this.game.repairStation.applyCatchWear(1, 2, 1);
+    }
+
     this.endBattle();
   }
 
@@ -622,6 +636,10 @@ export class BattleSystem {
       if (parts.length > 0) {
         this.game.taskSystem.showHint(parts.join(' · '));
       }
+    }
+
+    if (this.game.repairStation && typeof this.game.repairStation.applyCatchWear === 'function') {
+      this.game.repairStation.applyCatchWear(0, 1, 1);
     }
 
     this.endBattle();

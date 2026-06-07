@@ -125,6 +125,10 @@
           <span class="btn-icon">🔨</span>
           <span class="btn-text">拍卖</span>
         </button>
+        <button class="action-btn" id="btn-repair-station">
+          <span class="btn-icon">🔩</span>
+          <span class="btn-text">维修站</span>
+        </button>
       </div>
     </div>
 
@@ -658,6 +662,29 @@
 
         <div class="modal-footer">
           <button class="modal-btn secondary" id="btn-close-auction">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="repair-station-modal" class="modal hidden">
+      <div class="modal-content repair-station-content">
+        <h2 class="modal-title">🔩 港口维修站</h2>
+        <div class="chamber-tabs repair-tabs">
+          <button class="repair-tab active" data-tab="overview">📊 总览</button>
+          <button class="repair-tab" data-tab="status">🔧 维修</button>
+          <button class="repair-tab" data-tab="materials">📦 材料</button>
+          <button class="repair-tab" data-tab="upgrades">⚙️ 升级</button>
+          <button class="repair-tab" data-tab="shop">🛒 商店</button>
+        </div>
+
+        <div class="repair-tab-content" data-tab="overview" id="repair-overview"></div>
+        <div class="repair-tab-content hidden" data-tab="status" id="repair-status-detail"></div>
+        <div class="repair-tab-content hidden" data-tab="materials" id="repair-materials"></div>
+        <div class="repair-tab-content hidden" data-tab="upgrades" id="repair-upgrades"></div>
+        <div class="repair-tab-content hidden" data-tab="shop" id="repair-shop"></div>
+
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-repair-station">关闭</button>
         </div>
       </div>
     </div>
