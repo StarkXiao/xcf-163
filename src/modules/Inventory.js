@@ -35,6 +35,7 @@ export class Inventory {
     document.getElementById('btn-close-detail').addEventListener('click', () => this.closeDetail());
     this.sellBtn.addEventListener('click', () => this.sellSelectedItem());
     document.getElementById('btn-reinforce-item').addEventListener('click', () => this.openReinforceFromDetail());
+    document.getElementById('btn-codex-lab').addEventListener('click', () => this.openCodexLabFromDetail());
   }
 
   addToBackpack(creature) {
@@ -71,6 +72,10 @@ export class Inventory {
 
     this.collection.add(creature.id);
     this.game.checkTasks('collect_creature', creature);
+
+    if (this.game.codexLab) {
+      this.game.codexLab.checkAndGrantUnlocks(creature.id);
+    }
 
     if (this.game.storySystem) {
       this.game.storySystem.onGameEvent('unique_collected');
@@ -221,6 +226,7 @@ export class Inventory {
     }
     
     const reinforceBtn = document.getElementById('btn-reinforce-item');
+    const codexLabBtn = document.getElementById('btn-codex-lab');
     if (source === 'backpack') {
       const backpackItem = index >= 0 ? this.backpack[index] : this.backpack.find(i => i.id === item.id);
       const count = backpackItem ? backpackItem.count : 0;
@@ -228,10 +234,12 @@ export class Inventory {
       this.sellBtn.style.display = '';
       this.sellBtn.textContent = `出售 (${Math.floor(actualValue)}金)`;
       if (reinforceBtn) reinforceBtn.style.display = '';
+      if (codexLabBtn) codexLabBtn.style.display = 'none';
     } else {
       this.detailCount.textContent = '已收集';
       this.sellBtn.style.display = 'none';
       if (reinforceBtn) reinforceBtn.style.display = 'none';
+      if (codexLabBtn) codexLabBtn.style.display = '';
     }
     
     this.detailModal.classList.remove('hidden');
@@ -249,6 +257,15 @@ export class Inventory {
     if (invIndex < 0) return;
     this.closeDetail();
     this.game.reinforceSystem.openReinforce(this.backpack[invIndex], invIndex);
+  }
+
+  openCodexLabFromDetail() {
+    if (!this.selectedItem) return;
+    const { item } = this.selectedItem;
+    this.closeDetail();
+    if (this.game.codexLab) {
+      this.game.codexLab.openLab(item.id);
+    }
   }
 
   sellSelectedItem() {

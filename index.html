@@ -205,6 +205,7 @@
           </div>
         </div>
         <div class="modal-footer">
+          <button class="modal-btn accent hidden" id="btn-codex-lab">🔬 研究室</button>
           <button class="modal-btn accent" id="btn-reinforce-item">⚙️ 强化</button>
           <button class="modal-btn primary" id="btn-sell-item">出售</button>
           <button class="modal-btn secondary" id="btn-close-detail">关闭</button>
@@ -510,6 +511,35 @@
       <div class="modal-content ruins-battle-content">
         <h2 class="modal-title">⚔️ 遗迹战斗</h2>
         <div id="ruins-battle-content"></div>
+      </div>
+    </div>
+
+    <div id="codex-lab-modal" class="modal hidden">
+      <div class="modal-content codex-lab-content">
+        <h2 class="modal-title">🔬 图鉴研究室</h2>
+        <div class="codex-lab-layout">
+          <div class="codex-lab-left">
+            <div id="codex-creature-selector"></div>
+          </div>
+          <div class="codex-lab-right">
+            <div class="chamber-tabs codex-tabs">
+              <button class="chamber-tab codex-tab active" data-codex-tab="overview">📊 概览</button>
+              <button class="chamber-tab codex-tab" data-codex-tab="archive">📄 档案</button>
+              <button class="chamber-tab codex-tab" data-codex-tab="voices">🔊 语音</button>
+              <button class="chamber-tab codex-tab" data-codex-tab="worldlines">🌌 世界线</button>
+              <button class="chamber-tab codex-tab" data-codex-tab="log">📜 日志</button>
+            </div>
+
+            <div class="chamber-tab-content codex-tab-content" data-codex-tab-content="overview" id="codex-overview"></div>
+            <div class="chamber-tab-content codex-tab-content hidden" data-codex-tab-content="archive" id="codex-archive"></div>
+            <div class="chamber-tab-content codex-tab-content hidden" data-codex-tab-content="voices" id="codex-voices"></div>
+            <div class="chamber-tab-content codex-tab-content hidden" data-codex-tab-content="worldlines" id="codex-worldlines"></div>
+            <div class="chamber-tab-content codex-tab-content hidden" data-codex-tab-content="log" id="codex-lab-log"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-codex-lab">关闭</button>
+        </div>
       </div>
     </div>
   </div>

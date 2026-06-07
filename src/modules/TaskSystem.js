@@ -214,6 +214,42 @@ export class TaskSystem {
             progressValue = this.game.stats.totalComboHits || 0;
           }
           break;
+
+        case 'codex_lab_open':
+          if (task.type === 'codex_lab_open') {
+            shouldUpdate = true;
+            progressValue = 1;
+          }
+          break;
+
+        case 'archive_unlock_stage':
+        case 'archive_stage_reached':
+          if (task.type === type && typeof data === 'number') {
+            shouldUpdate = true;
+            progressValue = Math.max(task.progress, data);
+          }
+          break;
+
+        case 'voice_fragments_unlocked':
+          if (task.type === 'voice_fragments_unlocked') {
+            shouldUpdate = true;
+            progressValue = this.game.codexLab ? this.game.codexLab.stats.totalVoicesUnlocked : 0;
+          }
+          break;
+
+        case 'worldline_unlocked':
+          if (task.type === 'worldline_unlocked') {
+            shouldUpdate = true;
+            progressValue = this.game.codexLab ? this.game.codexLab.stats.totalWorldLinesUnlocked : 0;
+          }
+          break;
+
+        case 'all_creatures_max_stage':
+          if (task.type === 'all_creatures_max_stage' && typeof data === 'number') {
+            shouldUpdate = true;
+            progressValue = data;
+          }
+          break;
       }
       
       if (shouldUpdate) {
