@@ -15,6 +15,7 @@ import { PortCommission } from './modules/PortCommission.js';
 import { StorySystem } from './modules/StorySystem.js';
 import { RuinsDive } from './modules/RuinsDive.js';
 import { CodexLab } from './modules/CodexLab.js';
+import { SeasonSystem } from './modules/SeasonSystem.js';
 import { COMBO_CONFIG, getComboEnergyDiscount, getComboEnergyRegenBonus } from './data/creatures.js';
 import { rollNightVoyageEvent } from './data/deepSeaExpedition.js';
 
@@ -36,6 +37,7 @@ class Game {
     this.storySystem = null;
     this.ruinsDive = null;
     this.codexLab = null;
+    this.seasonSystem = null;
 
     this.stats = {
       energy: 100,
@@ -171,6 +173,7 @@ class Game {
     this.storySystem = new StorySystem(this);
     this.ruinsDive = new RuinsDive(this);
     this.codexLab = new CodexLab(this);
+    this.seasonSystem = new SeasonSystem(this);
     this.stallSystem = this.chamber.stallSystem;
     this.pricingSystem = this.chamber.pricingSystem;
     this.customerSystem = this.chamber.customerSystem;
@@ -634,6 +637,7 @@ class Game {
       story: this.storySystem ? this.storySystem.toJSON() : null,
       ruinsDive: this.ruinsDive ? this.ruinsDive.toJSON() : null,
       codexLab: this.codexLab ? this.codexLab.toJSON() : null,
+      seasonSystem: this.seasonSystem ? this.seasonSystem.toJSON() : null,
       timestamp: Date.now()
     };
     Storage.save(saveData);
@@ -682,6 +686,9 @@ class Game {
       }
       if (this.codexLab && data.codexLab) {
         this.codexLab.loadData(data.codexLab);
+      }
+      if (this.seasonSystem && data.seasonSystem) {
+        this.seasonSystem.loadData(data.seasonSystem);
       }
       if (this.tideSystem && data.tide) {
         this.tideSystem.init(data.tide);

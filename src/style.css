@@ -5144,3 +5144,505 @@ html, body {
     grid-template-columns: 1fr;
   }
 }
+
+.season-content {
+  max-width: 720px;
+}
+
+.season-theme-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.08), rgba(170, 68, 255, 0.08));
+  border: 2px solid #00ffff;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.season-theme-icon {
+  font-size: 64px;
+  filter: drop-shadow(0 0 12px rgba(0, 255, 255, 0.5));
+}
+
+.season-theme-info {
+  flex: 1;
+}
+
+.season-theme-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #00ffff;
+  margin-bottom: 4px;
+}
+
+.season-theme-desc {
+  font-size: 13px;
+  color: #aaa;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.season-theme-timer {
+  font-size: 13px;
+  color: #ffd54f;
+  font-weight: 600;
+}
+
+.season-score-section {
+  text-align: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.season-score-display {
+  margin-bottom: 16px;
+}
+
+.season-score-label {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+.season-score-value {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.season-score-tier {
+  font-size: 14px;
+  color: #aaa;
+  font-weight: 600;
+}
+
+.season-progress-bar {
+  height: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.season-progress-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.season-progress-text {
+  font-size: 12px;
+  color: #888;
+}
+
+.season-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.season-stat-card {
+  background: rgba(0, 255, 255, 0.06);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 14px 8px;
+  text-align: center;
+}
+
+.season-stat-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.season-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #00ffff;
+  margin-bottom: 2px;
+}
+
+.season-stat-label {
+  font-size: 11px;
+  color: #888;
+}
+
+.season-action-bar {
+  display: flex;
+  gap: 10px;
+}
+
+.season-hint {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 14px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+  line-height: 1.5;
+}
+
+.season-creature-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.season-creature-card {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.season-creature-card.rarity-common { border-color: rgba(170, 170, 170, 0.3); }
+.season-creature-card.rarity-uncommon { border-color: rgba(68, 255, 68, 0.3); }
+.season-creature-card.rarity-rare { border-color: rgba(68, 136, 255, 0.3); }
+.season-creature-card.rarity-epic { border-color: rgba(170, 68, 255, 0.3); }
+.season-creature-card.rarity-legendary { border-color: rgba(255, 170, 0, 0.4); }
+
+.season-creature-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.season-creature-icon {
+  font-size: 32px;
+}
+
+.season-creature-info {
+  flex: 1;
+}
+
+.season-creature-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.season-creature-rarity {
+  font-size: 11px;
+  color: #888;
+}
+
+.season-new-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  background: linear-gradient(90deg, #ff4488, #ff8844);
+  color: white;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.season-creature-progress-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.season-creature-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00ffff, #44ff88);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.season-creature-progress-text {
+  font-size: 11px;
+  color: #888;
+}
+
+.season-reward-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.season-reward-card {
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+  opacity: 0.6;
+}
+
+.season-reward-card.available {
+  opacity: 1;
+  border-color: rgba(0, 255, 255, 0.4);
+  background: rgba(0, 255, 255, 0.05);
+}
+
+.season-reward-card.claimed {
+  opacity: 0.8;
+  border-color: rgba(68, 255, 68, 0.4);
+  background: rgba(68, 255, 68, 0.05);
+}
+
+.season-reward-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.season-reward-tier {
+  font-size: 11px;
+  font-weight: 700;
+  color: #00ffff;
+  padding: 2px 8px;
+  background: rgba(0, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.season-reward-name {
+  flex: 1;
+  margin-left: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.season-reward-status {
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+}
+
+.season-reward-card.available .season-reward-status {
+  color: #00ffff;
+}
+
+.season-reward-card.claimed .season-reward-status {
+  color: #44ff44;
+}
+
+.season-reward-progress-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.season-reward-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #aa44ff, #00ffff);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.season-reward-progress-text {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 10px;
+}
+
+.season-reward-items {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.season-reward-item {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffd54f;
+}
+
+.port-rank-current {
+  padding: 18px;
+  background: linear-gradient(135deg, rgba(255, 170, 0, 0.1), rgba(255, 68, 68, 0.1));
+  border: 2px solid rgba(255, 170, 0, 0.4);
+  border-radius: 12px;
+  margin-bottom: 18px;
+}
+
+.port-rank-current-title {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 10px;
+}
+
+.port-rank-current-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.port-rank-current-icon {
+  font-size: 40px;
+  filter: drop-shadow(0 0 8px rgba(255, 170, 0, 0.6));
+}
+
+.port-rank-current-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffaa00;
+}
+
+.port-rank-current-sub {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.port-rank-current-reward {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffd54f;
+  margin-bottom: 12px;
+}
+
+.port-rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.port-rank-list-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #aaa;
+  margin-bottom: 6px;
+}
+
+.port-rank-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  opacity: 0.5;
+}
+
+.port-rank-card.achieved {
+  opacity: 0.85;
+}
+
+.port-rank-card.current {
+  opacity: 1;
+  border-color: rgba(255, 170, 0, 0.5);
+  background: rgba(255, 170, 0, 0.08);
+}
+
+.port-rank-card-rank {
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffaa00;
+  min-width: 48px;
+}
+
+.port-rank-card-info {
+  flex: 1;
+}
+
+.port-rank-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.port-rank-card-req {
+  font-size: 11px;
+  color: #888;
+}
+
+.port-rank-card-reward {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffd54f;
+}
+
+.season-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.season-history-card {
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.season-history-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.season-history-icon {
+  font-size: 28px;
+}
+
+.season-history-info {
+  flex: 1;
+}
+
+.season-history-theme {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.season-history-time {
+  font-size: 11px;
+  color: #888;
+}
+
+.season-history-score {
+  font-size: 20px;
+  font-weight: 700;
+  color: #00ffff;
+}
+
+.season-history-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 8px;
+}
+
+.season-history-earnings {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffd54f;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 780px) {
+  .season-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .season-creature-list {
+    grid-template-columns: 1fr;
+  }
+  .season-action-bar {
+    flex-direction: column;
+  }
+}

@@ -117,6 +117,10 @@
           <span class="btn-icon">🛠️</span>
           <span class="btn-text">船体</span>
         </button>
+        <button class="action-btn" id="btn-season">
+          <span class="btn-icon">🏆</span>
+          <span class="btn-text">赛季</span>
+        </button>
       </div>
     </div>
 
@@ -601,6 +605,29 @@
 
         <div class="modal-footer">
           <button class="modal-btn secondary" id="btn-close-hull-mod">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="season-modal" class="modal hidden">
+      <div class="modal-content season-content">
+        <h2 class="modal-title">🏆 赛季目标 · 周更挑战</h2>
+        <div class="chamber-tabs season-tabs">
+          <button class="season-tab active" data-tab="overview">📊 总览</button>
+          <button class="season-tab" data-tab="theme">🎯 收集主题</button>
+          <button class="season-tab" data-tab="rewards">🎁 奖励</button>
+          <button class="season-tab" data-tab="port">⚓ 港口排名</button>
+          <button class="season-tab" data-tab="history">📜 历史记录</button>
+        </div>
+
+        <div class="season-tab-content" data-tab="overview" id="season-overview"></div>
+        <div class="season-tab-content hidden" data-tab="theme" id="season-theme-progress"></div>
+        <div class="season-tab-content hidden" data-tab="rewards" id="season-rewards"></div>
+        <div class="season-tab-content hidden" data-tab="port" id="season-port-ranking"></div>
+        <div class="season-tab-content hidden" data-tab="history" id="season-history"></div>
+
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-season">关闭</button>
         </div>
       </div>
     </div>

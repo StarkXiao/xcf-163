@@ -130,6 +130,13 @@ export class Inventory {
       this.game.storySystem.onGameEvent('collect_rarity', creature);
     }
 
+    if (this.game.seasonSystem) {
+      const score = this.game.seasonSystem.recordCreatureCatch(creature, isNewToCollection, creature.tier || 1);
+      if (score > 5 && this.game.taskSystem) {
+        this.game.taskSystem.showHint(`🎯 赛季积分 +${score}！`);
+      }
+    }
+
     this.game.saveProgress();
     return true;
   }

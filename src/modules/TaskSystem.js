@@ -290,6 +290,13 @@ export class TaskSystem {
             }
           }
           break;
+
+        case 'season_open':
+          if (task.type === 'season_open') {
+            shouldUpdate = true;
+            progressValue = 1;
+          }
+          break;
       }
       
       if (shouldUpdate) {

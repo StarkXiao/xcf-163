@@ -330,6 +330,10 @@ export class PortCommission {
     this.game.checkTasks('port_commission_complete');
     this.game.checkTasks('port_commission_rarity', commission.rarity);
 
+    if (this.game.seasonSystem) {
+      this.game.seasonSystem.recordPortCommissionComplete(commission);
+    }
+
     const allRewards = [...lastPhaseRewards];
     if (bonusCoins > 0) allRewards.push(`额外${bonusCoins}💰`);
 

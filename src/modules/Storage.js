@@ -5,6 +5,8 @@ const EXPEDITION_KEY_PREFIX = 'cyber_harbor_expedition_';
 const EXPEDITION_META_KEY = 'cyber_harbor_expedition_meta';
 const RUINS_KEY_PREFIX = 'cyber_harbor_ruins_';
 const RUINS_META_KEY = 'cyber_harbor_ruins_meta';
+const SEASON_KEY_PREFIX = 'cyber_harbor_season_';
+const SEASON_META_KEY = 'cyber_harbor_season_meta';
 
 export class Storage {
   static save(data) {
@@ -351,5 +353,115 @@ export class Storage {
 
   static generateRuinsDiveId() {
     return `ruins_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+  }
+
+  static saveSeasonSettlement(settlementId, data) {
+    try {
+      const json = JSON.stringify(data);
+      localStorage.setItem(SEASON_KEY_PREFIX + settlementId, json);
+      const meta = this.getSeasonMeta();
+      if (!meta.history.includes(settlementId)) {
+        meta.history.unshift(settlementId);
+        meta.history = meta.history.slice(0, 24);
+      }
+      meta.lastSettlementId = settlementId;
+      meta.updatedAt = Date.now();
+      localStorage.setItem(SEASON_META_KEY, JSON.stringify(meta));
+      return true;
+    } catch (e) {
+      console.error('赛季结算保存失败:', e);
+      return false;
+    }
+  }
+
+  static loadSeasonSettlement(settlementId) {
+    try {
+      const json = localStorage.getItem(SEASON_KEY_PREFIX + settlementId);
+      if (!json) return null;
+      return JSON.parse(json);
+    } catch (e) {
+      console.error('赛季结算读取失败:', e);
+      return null;
+    }
+  }
+
+  static deleteSeasonSettlement(settlementId) {
+    try {
+      localStorage.removeItem(SEASON_KEY_PREFIX + settlementId);
+      const meta = this.getSeasonMeta();
+      meta.history = meta.history.filter(id => id !== settlementId);
+      if (meta.lastSettlementId === settlementId) {
+        meta.lastSettlementId = meta.history[0] || null;
+      }
+      localStorage.setItem(SEASON_META_KEY, JSON.stringify(meta));
+      return true;
+    } catch (e) {
+      console.error('赛季结算删除失败:', e);
+      return false;
+    }
+  }
+
+  static listSeasonSettlements() {
+    const meta = this.getSeasonMeta();
+    const settlements = [];
+    meta.history.forEach(id => {
+      try {
+        const json = localStorage.getItem(SEASON_KEY_PREFIX + id);
+        if (json) {
+          const data = JSON.parse(json);
+          settlements.push({
+            id,
+            weekNumber: data.weekNumber,
+            themeId: data.themeId,
+            themeName: data.themeName,
+            themeIcon: data.themeIcon,
+            startedAt: data.startedAt,
+            endedAt: data.endedAt,
+            finalScore: data.finalScore,
+            rewardTier: data.rewardTier,
+            rewardTierName: data.rewardTierName,
+            totalCoinsEarned: data.totalCoinsEarned,
+            totalEnergyEarned: data.totalEnergyEarned,
+            creaturesCaught: data.creaturesCaught,
+            newCreatures: data.newCreatures,
+            portCommissions: data.portCommissions,
+            portRank: data.portRank,
+            portRankName: data.portRankName
+          });
+        }
+      } catch (e) {
+      }
+    });
+    return settlements;
+  }
+
+  static getSeasonMeta() {
+    try {
+      const json = localStorage.getItem(SEASON_META_KEY);
+      if (!json) {
+        return { history: [], lastSettlementId: null, updatedAt: null };
+      }
+      return JSON.parse(json);
+    } catch (e) {
+      return { history: [], lastSettlementId: null, updatedAt: null };
+    }
+  }
+
+  static clearAllSeasonSettlements() {
+    try {
+      const meta = this.getSeasonMeta();
+      meta.history.forEach(id => {
+        localStorage.removeItem(SEASON_KEY_PREFIX + id);
+      });
+      localStorage.removeItem(SEASON_META_KEY);
+      return true;
+    } catch (e) {
+      console.error('清除赛季记录失败:', e);
+      return false;
+    }
+  }
+
+  static generateSeasonId() {
+    return `season_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
   }
 }
