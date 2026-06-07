@@ -5674,3 +5674,819 @@ html, body {
     flex-direction: column;
   }
 }
+
+/* ========== 渔港拍卖会样式 ========== */
+.auction-content {
+  max-width: 900px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.auction-market-status {
+  margin-bottom: 16px;
+}
+
+.market-status-card {
+  padding: 14px 18px;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(30, 30, 60, 0.4));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+.market-status-card.boom {
+  border-color: rgba(255, 100, 100, 0.5);
+  background: linear-gradient(135deg, rgba(60, 0, 0, 0.4), rgba(80, 20, 20, 0.3));
+}
+
+.market-status-card.slump {
+  border-color: rgba(100, 150, 255, 0.3);
+  background: linear-gradient(135deg, rgba(0, 20, 60, 0.4), rgba(20, 30, 80, 0.3));
+}
+
+.market-status-card.rarity_craze {
+  border-color: rgba(255, 200, 50, 0.5);
+  background: linear-gradient(135deg, rgba(60, 40, 0, 0.4), rgba(80, 60, 20, 0.3));
+}
+
+.market-status-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.market-status-icon {
+  font-size: 36px;
+}
+
+.market-status-header > div {
+  flex: 1;
+}
+
+.market-status-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.market-status-desc {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.market-status-refresh {
+  font-size: 12px;
+  color: #888;
+  padding: 4px 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+}
+
+.auction-tabs {
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.auction-hint {
+  font-size: 12px;
+  color: #888;
+  margin: 0 0 12px 0;
+  padding-left: 4px;
+}
+
+.auction-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 14px;
+  max-height: 55vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.auction-card {
+  background: rgba(0, 0, 0, 0.35);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.2s;
+}
+
+.auction-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.auction-card.rarity-rare { border-color: rgba(100, 180, 255, 0.4); }
+.auction-card.rarity-epic { border-color: rgba(200, 100, 255, 0.45); }
+.auction-card.rarity-legendary { border-color: rgba(255, 180, 50, 0.5); }
+
+.auction-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.auction-seller {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #aaa;
+}
+
+.auction-duration {
+  padding: 2px 8px;
+  background: rgba(0, 255, 255, 0.15);
+  color: #00ffff;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.auction-card-body {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.auction-item-display {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.auction-tier-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ff6600;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+.auction-tier-badge.large {
+  font-size: 14px;
+  padding: 3px 10px;
+  top: -6px;
+  right: -6px;
+}
+
+.auction-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.auction-item-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.auction-item-rarity {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.auction-item-desc {
+  font-size: 11px;
+  color: #999;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.auction-card-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auction-price-info {
+  text-align: center;
+}
+
+.auction-price-label {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 2px;
+}
+
+.auction-price-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffd54f;
+}
+
+.auction-price-sub {
+  font-size: 11px;
+  color: #666;
+}
+
+.auction-rivals {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+}
+
+/* ========== 寄售样式 ========== */
+.consignment-actions {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 8px;
+}
+
+.consignment-item-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.consignment-item {
+  position: relative;
+  padding: 10px 8px 8px;
+  border-radius: 8px;
+  background: rgba(20, 20, 40, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+}
+
+.consignment-item:hover {
+  transform: scale(1.04);
+  border-color: rgba(0, 255, 255, 0.5);
+}
+
+.consignment-item .slot-icon {
+  font-size: 32px;
+}
+
+.consignment-item .slot-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+}
+
+.consignment-item .slot-tier {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ff6600;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+.consignment-item .slot-count {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+.consignment-item.rarity-rare { border-color: rgba(100, 180, 255, 0.4); }
+.consignment-item.rarity-epic { border-color: rgba(200, 100, 255, 0.45); }
+.consignment-item.rarity-legendary { border-color: rgba(255, 180, 50, 0.5); }
+
+.consignment-setup {
+  display: flex;
+  gap: 20px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.creature-display {
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.consignment-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.consignment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.consignment-card {
+  display: flex;
+  gap: 14px;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  align-items: center;
+}
+
+.consignment-card.rarity-rare { border-left: 4px solid rgba(100, 180, 255, 0.7); }
+.consignment-card.rarity-epic { border-left: 4px solid rgba(200, 100, 255, 0.75); }
+.consignment-card.rarity-legendary { border-left: 4px solid rgba(255, 180, 50, 0.8); }
+
+.consignment-card.settled {
+  opacity: 0.7;
+}
+
+.consignment-card-left {
+  flex-shrink: 0;
+}
+
+.consignment-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.consignment-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.consignment-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.consignment-status {
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.consignment-price {
+  font-size: 11px;
+  color: #888;
+}
+
+.consignment-card-action {
+  flex-shrink: 0;
+}
+
+/* ========== 竞拍中样式 ========== */
+.bidding-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px 18px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 10px;
+}
+
+.bidding-timer {
+  font-size: 24px;
+  font-weight: 700;
+  color: #00ffff;
+  font-variant-numeric: tabular-nums;
+}
+
+.bidding-timer.urgent {
+  color: #ff4444;
+  animation: pulse-red 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-red {
+  from { text-shadow: 0 0 4px rgba(255, 68, 68, 0.5); }
+  to { text-shadow: 0 0 16px rgba(255, 68, 68, 0.9); }
+}
+
+.bidding-status {
+  font-size: 15px;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 6px;
+}
+
+.bidding-status.leading {
+  background: rgba(0, 255, 136, 0.15);
+  color: #00ff88;
+}
+
+.bidding-status.losing {
+  background: rgba(255, 100, 100, 0.15);
+  color: #ff8888;
+}
+
+.bidding-item-section {
+  display: flex;
+  gap: 18px;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  margin-bottom: 14px;
+  align-items: stretch;
+}
+
+.bidding-item-section.rarity-rare { border-color: rgba(100, 180, 255, 0.4); }
+.bidding-item-section.rarity-epic { border-color: rgba(200, 100, 255, 0.45); }
+.bidding-item-section.rarity-legendary { border-color: rgba(255, 180, 50, 0.5); }
+
+.bidding-item-display {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.bidding-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.bidding-item-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.bidding-item-rarity {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  align-self: flex-start;
+}
+
+.bidding-item-desc {
+  font-size: 13px;
+  color: #bbb;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.bidding-quote {
+  font-size: 12px;
+  color: #888;
+  font-style: italic;
+  padding-left: 10px;
+  border-left: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.bidding-current-section {
+  text-align: center;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(60, 40, 0, 0.4), rgba(80, 50, 10, 0.3));
+  border: 1px solid rgba(255, 200, 80, 0.3);
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+
+.bidding-current-label {
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 4px;
+}
+
+.bidding-current-price {
+  font-size: 36px;
+  font-weight: 700;
+  color: #ffd54f;
+  margin-bottom: 4px;
+  text-shadow: 0 0 12px rgba(255, 213, 79, 0.4);
+}
+
+.bidding-current-bidder {
+  font-size: 13px;
+  color: #ccc;
+}
+
+.bidding-rivals {
+  margin-bottom: 14px;
+}
+
+.bidding-rivals-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ccc;
+  margin-bottom: 8px;
+}
+
+.bidding-rivals-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rival-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(30, 40, 60, 0.7);
+  border: 1px solid rgba(0, 255, 255, 0.25);
+  border-radius: 20px;
+  font-size: 12px;
+  color: #fff;
+}
+
+.rival-chip.inactive {
+  opacity: 0.4;
+  border-color: rgba(255, 255, 255, 0.1);
+  text-decoration: line-through;
+}
+
+.bidding-input-section {
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+
+.bidding-quick-bids {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.bidding-quick-bids .modal-btn {
+  flex: 1;
+}
+
+.bidding-manual-input {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.bidding-manual-input input {
+  font-size: 16px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: #fff;
+  outline: none;
+}
+
+.bidding-manual-input input:focus {
+  border-color: rgba(0, 255, 255, 0.5);
+}
+
+.bidding-history {
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+}
+
+.bidding-history-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ccc;
+  margin-bottom: 10px;
+}
+
+.bidding-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.bidding-history-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+.bidding-history-bidder {
+  color: #ccc;
+}
+
+.bidding-history-amount {
+  color: #ffd54f;
+  font-weight: 600;
+}
+
+/* ========== 收藏展示样式 ========== */
+.auction-collection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  max-height: 55vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.collection-card {
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.collection-card:hover {
+  transform: translateY(-2px);
+}
+
+.collection-card.rarity-rare { border-color: rgba(100, 180, 255, 0.4); }
+.collection-card.rarity-epic { border-color: rgba(200, 100, 255, 0.45); }
+.collection-card.rarity-legendary { border-color: rgba(255, 180, 50, 0.5); }
+
+.collection-card-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 10px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.collection-tier-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: #ff6600;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.collection-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 3px;
+}
+
+.collection-card-rarity {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-bottom: 8px;
+}
+
+.rarity-common { color: #bbbbbb; background: rgba(150, 150, 150, 0.15); }
+.rarity-uncommon { color: #66ff66; background: rgba(80, 220, 80, 0.15); }
+.rarity-rare { color: #66bbff; background: rgba(80, 150, 255, 0.15); }
+.rarity-epic { color: #cc88ff; background: rgba(180, 100, 255, 0.2); }
+.rarity-legendary { color: #ffcc44; background: rgba(255, 200, 80, 0.2); }
+
+.collection-card-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.collection-card-stats span {
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.collection-card-prices {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  color: #aaa;
+}
+
+/* ========== 统计样式 ========== */
+.auction-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.auction-stat-card {
+  padding: 16px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  text-align: center;
+}
+
+.auction-stat-card.highlight {
+  background: linear-gradient(135deg, rgba(255, 200, 80, 0.1), rgba(255, 150, 50, 0.05));
+  border-color: rgba(255, 200, 80, 0.3);
+}
+
+.auction-stat-icon {
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+.auction-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.auction-stat-label {
+  font-size: 11px;
+  color: #888;
+}
+
+@media (max-width: 780px) {
+  .auction-list {
+    grid-template-columns: 1fr;
+  }
+  .bidding-item-section {
+    flex-direction: column;
+  }
+  .bidding-item-display {
+    width: 100%;
+    height: 100px;
+  }
+  .auction-collection-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .auction-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .consignment-setup {
+    flex-direction: column;
+  }
+}

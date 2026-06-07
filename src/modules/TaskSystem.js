@@ -332,6 +332,55 @@ export class TaskSystem {
             progressValue = this.game.seasonSystem.claimedRewards.size;
           }
           break;
+
+        case 'auction_open':
+          if (task.type === 'auction_open') {
+            shouldUpdate = true;
+            progressValue = 1;
+          }
+          break;
+
+        case 'auction_bid':
+          if (task.type === 'auction_bid') {
+            shouldUpdate = true;
+            progressValue = this.game.auctionSystem ? this.game.auctionSystem.stats.totalAuctionsParticipated : task.progress + 1;
+          }
+          break;
+
+        case 'auction_win':
+          if (task.type === 'auction_win') {
+            shouldUpdate = true;
+            progressValue = this.game.auctionSystem ? this.game.auctionSystem.stats.totalAuctionsWon : task.progress + 1;
+          }
+          break;
+
+        case 'auction_consign':
+          if (task.type === 'auction_consign') {
+            shouldUpdate = true;
+            progressValue = this.game.auctionSystem ? this.game.auctionSystem.stats.totalConsignments : task.progress + 1;
+          }
+          break;
+
+        case 'auction_sale':
+          if (task.type === 'auction_sale') {
+            shouldUpdate = true;
+            progressValue = this.game.auctionSystem ? this.game.auctionSystem.stats.totalConsignmentsSold : task.progress + 1;
+          }
+          break;
+
+        case 'auction_earnings':
+          if (task.type === 'auction_earnings' && this.game.auctionSystem) {
+            shouldUpdate = true;
+            progressValue = this.game.auctionSystem.stats.totalCoinsEarned + this.game.auctionSystem.stats.totalCoinsSpent;
+          }
+          break;
+
+        case 'auction_collection':
+          if (task.type === 'auction_collection' && this.game.auctionSystem) {
+            shouldUpdate = true;
+            progressValue = this.game.auctionSystem.collection.size;
+          }
+          break;
       }
       
       if (shouldUpdate) {

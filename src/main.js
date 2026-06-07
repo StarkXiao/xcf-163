@@ -16,6 +16,7 @@ import { StorySystem } from './modules/StorySystem.js';
 import { RuinsDive } from './modules/RuinsDive.js';
 import { CodexLab } from './modules/CodexLab.js';
 import { SeasonSystem } from './modules/SeasonSystem.js';
+import { AuctionSystem } from './modules/AuctionSystem.js';
 import { COMBO_CONFIG, getComboEnergyDiscount, getComboEnergyRegenBonus } from './data/creatures.js';
 import { rollNightVoyageEvent } from './data/deepSeaExpedition.js';
 
@@ -38,6 +39,7 @@ class Game {
     this.ruinsDive = null;
     this.codexLab = null;
     this.seasonSystem = null;
+    this.auctionSystem = null;
 
     this.stats = {
       energy: 100,
@@ -126,6 +128,12 @@ class Game {
         this.inventory.openHullMod();
       });
     }
+    const auctionBtn = document.getElementById('btn-auction');
+    if (auctionBtn) {
+      auctionBtn.addEventListener('click', () => {
+        if (this.auctionSystem) this.auctionSystem.open();
+      });
+    }
   }
 
   async loadResources() {
@@ -174,17 +182,27 @@ class Game {
     this.ruinsDive = new RuinsDive(this);
     this.codexLab = new CodexLab(this);
     this.seasonSystem = new SeasonSystem(this);
+    this.auctionSystem = new AuctionSystem(this);
     this.stallSystem = this.chamber.stallSystem;
     this.pricingSystem = this.chamber.pricingSystem;
     this.customerSystem = this.chamber.customerSystem;
     this.orderSystem = this.chamber.orderSystem;
     this.startChamberTick();
+    this.startAuctionTick();
   }
 
   startChamberTick() {
     setInterval(() => {
       if (this.chamber) {
         this.chamber.tick();
+      }
+    }, 1000);
+  }
+
+  startAuctionTick() {
+    setInterval(() => {
+      if (this.auctionSystem) {
+        this.auctionSystem.tickConsignments();
       }
     }, 1000);
   }
@@ -638,6 +656,7 @@ class Game {
       ruinsDive: this.ruinsDive ? this.ruinsDive.toJSON() : null,
       codexLab: this.codexLab ? this.codexLab.toJSON() : null,
       seasonSystem: this.seasonSystem ? this.seasonSystem.toJSON() : null,
+      auctionSystem: this.auctionSystem ? this.auctionSystem.toJSON() : null,
       timestamp: Date.now()
     };
     Storage.save(saveData);
@@ -689,6 +708,9 @@ class Game {
       }
       if (this.seasonSystem && data.seasonSystem) {
         this.seasonSystem.loadData(data.seasonSystem);
+      }
+      if (this.auctionSystem && data.auctionSystem) {
+        this.auctionSystem.loadData(data.auctionSystem);
       }
       if (this.tideSystem && data.tide) {
         this.tideSystem.init(data.tide);

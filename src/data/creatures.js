@@ -816,6 +816,79 @@ export const TASKS = [
     type: 'season_reward_claimed',
     target: 3,
     reward: { coins: 500, energy: 80 }
+  },
+  {
+    id: 'tut_auction_open',
+    name: '初识拍卖',
+    desc: '点击底部「拍卖」按钮，进入渔港拍卖会。',
+    type: 'auction_open',
+    target: 1,
+    reward: { coins: 100, energy: 20 },
+    isTutorial: true
+  },
+  {
+    id: 'auction_first_bid',
+    name: '初次举牌',
+    desc: '在拍卖会中参与第一次竞拍。',
+    type: 'auction_bid',
+    target: 1,
+    reward: { coins: 150 }
+  },
+  {
+    id: 'auction_first_win',
+    name: '首次落槌',
+    desc: '在拍卖会中成功拍得一件拍品。',
+    type: 'auction_win',
+    target: 1,
+    reward: { coins: 300, energy: 30 }
+  },
+  {
+    id: 'auction_win_3',
+    name: '举牌老手',
+    desc: '在拍卖会中累计拍得 3 件拍品。',
+    type: 'auction_win',
+    target: 3,
+    reward: { coins: 800, energy: 50 }
+  },
+  {
+    id: 'auction_first_consign',
+    name: '首次寄售',
+    desc: '将背包中的稀有残骸上架寄售。',
+    type: 'auction_consign',
+    target: 1,
+    reward: { coins: 150 }
+  },
+  {
+    id: 'auction_first_sale',
+    name: '首笔成交',
+    desc: '寄售的残骸被他人成功拍下。',
+    type: 'auction_sale',
+    target: 1,
+    reward: { coins: 300, energy: 30 }
+  },
+  {
+    id: 'auction_sale_5',
+    name: '金牌卖家',
+    desc: '累计成功售出 5 件寄售残骸。',
+    type: 'auction_sale',
+    target: 5,
+    reward: { coins: 1500, energy: 100 }
+  },
+  {
+    id: 'auction_earn_2000',
+    name: '日进斗金',
+    desc: '通过拍卖累计交易达到 2000 金币。',
+    type: 'auction_earnings',
+    target: 2000,
+    reward: { coins: 500 }
+  },
+  {
+    id: 'auction_collection_5',
+    name: '拍卖鉴赏家',
+    desc: '通过拍卖渠道收藏 5 种不同的稀有残骸。',
+    type: 'auction_collection',
+    target: 5,
+    reward: { coins: 1000, energy: 50 }
   }
 ];
 

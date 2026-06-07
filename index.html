@@ -121,6 +121,10 @@
           <span class="btn-icon">🏆</span>
           <span class="btn-text">赛季</span>
         </button>
+        <button class="action-btn" id="btn-auction">
+          <span class="btn-icon">🔨</span>
+          <span class="btn-text">拍卖</span>
+        </button>
       </div>
     </div>
 
@@ -628,6 +632,32 @@
 
         <div class="modal-footer">
           <button class="modal-btn secondary" id="btn-close-season">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="auction-modal" class="modal hidden">
+      <div class="modal-content auction-content">
+        <h2 class="modal-title">🔨 渔港拍卖会</h2>
+
+        <div id="auction-market-status" class="auction-market-status"></div>
+
+        <div class="chamber-tabs auction-tabs">
+          <button class="auction-tab active" data-tab="hall">🏛️ 拍卖大厅</button>
+          <button class="auction-tab" data-tab="consign">📤 我的寄售</button>
+          <button class="auction-tab" data-tab="bidding">🎯 竞拍中</button>
+          <button class="auction-tab" data-tab="collection">🏆 拍卖收藏</button>
+          <button class="auction-tab" data-tab="stats">📊 统计</button>
+        </div>
+
+        <div class="auction-tab-content" data-tab="hall" id="auction-hall"></div>
+        <div class="auction-tab-content hidden" data-tab="consign" id="auction-consignments"></div>
+        <div class="auction-tab-content hidden" data-tab="bidding" id="auction-bidding"></div>
+        <div class="auction-tab-content hidden" data-tab="collection" id="auction-collection"></div>
+        <div class="auction-tab-content hidden" data-tab="stats" id="auction-stats"></div>
+
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-auction">关闭</button>
         </div>
       </div>
     </div>

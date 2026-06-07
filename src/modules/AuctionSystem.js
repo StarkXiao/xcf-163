@@ -417,6 +417,11 @@ export class AuctionSystem {
 
     Storage.saveAuctionRecord(record.id, record);
     this.game.checkTasks('auction_bid');
+    if (won) {
+      this.game.checkTasks('auction_win');
+      this.game.checkTasks('auction_collection');
+      this.game.checkTasks('auction_earnings');
+    }
 
     this.hallAuctions = this.hallAuctions.filter(a => a.id !== auction.id);
     this.activeBidding = null;
@@ -686,6 +691,10 @@ export class AuctionSystem {
 
     Storage.saveAuctionRecord(record.id, record);
     this.game.checkTasks('auction_sale');
+    if (sold) {
+      this.game.checkTasks('auction_collection');
+      this.game.checkTasks('auction_earnings');
+    }
   }
 
   addToCollection(creature, tier, purchasePrice = null, salePrice = null) {
