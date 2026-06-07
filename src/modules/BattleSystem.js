@@ -204,7 +204,17 @@ export class BattleSystem {
       const availableCreatures = CREATURES.filter(c => c.rarity === selectedRarity);
       return availableCreatures[Math.floor(Math.random() * availableCreatures.length)];
     }
-    return getRandomCreature(tideSystem, comboCount, intelEffects);
+    let hullRarityBoost = null;
+    if (inventory && typeof inventory.getNetRarityBoost === 'function') {
+      hullRarityBoost = {
+        common: inventory.getNetRarityBoost('common'),
+        uncommon: inventory.getNetRarityBoost('uncommon'),
+        rare: inventory.getNetRarityBoost('rare'),
+        epic: inventory.getNetRarityBoost('epic'),
+        legendary: inventory.getNetRarityBoost('legendary')
+      };
+    }
+    return getRandomCreature(tideSystem, comboCount, intelEffects, hullRarityBoost);
   }
 
   bindEvents() {

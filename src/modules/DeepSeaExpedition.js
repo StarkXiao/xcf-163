@@ -39,6 +39,23 @@ export class DeepSeaExpedition {
     this.bindStaticEvents();
   }
 
+  getHullNetRarityBoost() {
+    if (this.game?.inventory?.getEquippedNetStats) {
+      const netStats = this.game.inventory.getEquippedNetStats();
+      if (netStats?.rarityBoost) {
+        return netStats.rarityBoost;
+      }
+    }
+    return null;
+  }
+
+  getHullCatchRate() {
+    if (this.game?.inventory?.getCatchRate) {
+      return this.game.inventory.getCatchRate();
+    }
+    return 1.0;
+  }
+
   bindStaticEvents() {
     const btn = document.getElementById('btn-expedition');
     if (btn) {
@@ -595,7 +612,7 @@ export class DeepSeaExpedition {
       this.discoverWreck();
     }
 
-    if (Math.random() < 0.4 * (this.game?.inventory?.getCatchRate?.() || 1.0) && exp.cargo.length < this.getMaxCargo()) {
+    if (Math.random() < 0.4 * this.getHullCatchRate() && exp.cargo.length < this.getMaxCargo()) {
       this.catchCreature();
     }
 
@@ -726,9 +743,10 @@ export class DeepSeaExpedition {
     const creatureCount = wreck.creatureCount[0] +
       Math.floor(Math.random() * (wreck.creatureCount[1] - wreck.creatureCount[0] + 1));
 
+    const rarityBoost = this.getHullNetRarityBoost();
     const creaturesFound = [];
     for (let i = 0; i < creatureCount && exp.cargo.length < maxCargo; i++) {
-      const creature = generateCreatureForExpedition(exp.route);
+      const creature = generateCreatureForExpedition(exp.route, rarityBoost);
       const tier = 1;
       const affixes = generateRandomAffixes(creature);
       const value = calculateCreatureValue(creature, tier, affixes);
@@ -756,13 +774,7 @@ export class DeepSeaExpedition {
   catchCreature() {
     const exp = this.currentExpedition;
     if (!exp) return;
-    let rarityBoost = null;
-    if (this.game?.inventory?.getEquippedNetStats) {
-      const netStats = this.game.inventory.getEquippedNetStats();
-      if (netStats?.rarityBoost) {
-        rarityBoost = netStats.rarityBoost;
-      }
-    }
+    const rarityBoost = this.getHullNetRarityBoost();
     const creature = generateCreatureForExpedition(exp.route, rarityBoost);
     const tier = 1;
     const affixes = generateRandomAffixes(creature);
@@ -921,6 +933,9 @@ export class DeepSeaExpedition {
     const content = document.getElementById('expedition-settlement-content');
     if (!content) return;
 
+    const equippedNet = this.game?.inventory?.equippedNet;
+    const equippedCore = this.game?.inventory?.equippedCore;
+
     content.innerHTML = `
       <div class="settlement-header ${success ? 'success' : 'fail'}">
         <div style="font-size:48px;">${success ? '🎉' : '💀'}</div>
@@ -947,6 +962,14 @@ export class DeepSeaExpedition {
           <span>捕获生物</span>
           <span>${exp.creaturesCaught || 0} 只</span>
         </div>
+        ${equippedNet || equippedCore ? `
+        <div class="stat-row">
+          <span>当前装备</span>
+          <span>${equippedNet ? equippedNet.icon : ''} ${equippedNet ? equippedNet.name : ''}
+           /
+           ${equippedCore ? equippedCore.icon : ''} ${equippedCore ? equippedCore.name : ''}</span>
+        </div>
+        ` : ''}
       </div>
       <div class="settlement-rewards">
         <div class="chamber-stat-label">收益明细</div>

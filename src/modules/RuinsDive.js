@@ -43,6 +43,16 @@ export class RuinsDive {
     this.bindStaticEvents();
   }
 
+  getHullNetRarityBoost() {
+    if (this.game?.inventory?.getEquippedNetStats) {
+      const netStats = this.game.inventory.getEquippedNetStats();
+      if (netStats?.rarityBoost) {
+        return netStats.rarityBoost;
+      }
+    }
+    return null;
+  }
+
   bindStaticEvents() {
     const btn = document.getElementById('btn-ruins');
     if (btn) {
@@ -651,7 +661,8 @@ export class RuinsDive {
       this.game.taskSystem.showHint(`能量电池不足！建议携带至少 ${Math.ceil(requiredEnergy / 2)} 个`);
     }
 
-    const map = generateRuinsMap(tier);
+    const hullRarityBoost = this.getHullNetRarityBoost();
+    const map = generateRuinsMap(tier, hullRarityBoost);
     const maxHull = this.getMaxHull();
 
     this.currentDive = {
@@ -921,7 +932,8 @@ export class RuinsDive {
       if (rewards.creatureDrop && Math.random() < rewards.creatureDrop.chance && dive.cargo.length < this.getMaxCargo()) {
         const tier = Object.values(RUINS_TIERS).find(t => t.id === dive.tier);
         const boost = rewards.creatureDrop.rarityBoost || 0;
-        const creature = generateCreatureForRuins(tier, boost);
+        const hullBoost = this.getHullNetRarityBoost();
+        const creature = generateCreatureForRuins(tier, boost, hullBoost);
         const affixes = generateRandomAffixes(creature);
         const value = calculateCreatureValue(creature, 1, affixes);
         dive.cargo.push({
@@ -1121,7 +1133,8 @@ export class RuinsDive {
 
       if (Math.random() < enemy.creatureDropChance && dive.cargo.length < this.getMaxCargo()) {
         const tier = Object.values(RUINS_TIERS).find(t => t.id === dive.tier);
-        const creature = generateCreatureForRuins(tier, enemy.rarityBoost || 0);
+        const hullBoost = this.getHullNetRarityBoost();
+        const creature = generateCreatureForRuins(tier, enemy.rarityBoost || 0, hullBoost);
         const affixes = generateRandomAffixes(creature);
         const value = calculateCreatureValue(creature, 1, affixes);
         dive.cargo.push({
@@ -1317,6 +1330,8 @@ export class RuinsDive {
     }
 
     const dive = this.currentDive || {};
+    const equippedNet = this.game?.inventory?.equippedNet;
+    const equippedCore = this.game?.inventory?.equippedCore;
 
     content.innerHTML = `
       <div class="settlement-header ${success ? 'success' : 'fail'}">
@@ -1348,6 +1363,14 @@ export class RuinsDive {
           <span>发现宝藏</span>
           <span>${dive.treasuresFound || 0} 处</span>
         </div>
+        ${equippedNet || equippedCore ? `
+        <div class="stat-row">
+          <span>当前装备</span>
+          <span>${equippedNet ? equippedNet.icon : ''} ${equippedNet ? equippedNet.name : ''}
+           /
+           ${equippedCore ? equippedCore.icon : ''} ${equippedCore ? equippedCore.name : ''}</span>
+        </div>
+        ` : ''}
       </div>
       <div class="settlement-rewards">
         <div class="chamber-stat-label">收益明细</div>

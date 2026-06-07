@@ -226,7 +226,7 @@ export function getRandomEnemy(difficulty) {
   return weightedRandom(pool, e => Math.max(1, 6 - e.difficulty));
 }
 
-export function generateRuinsMap(tier) {
+export function generateRuinsMap(tier, hullRarityBoost = null) {
   const size = 7 + tier.difficulty;
   const grid = [];
 
@@ -282,7 +282,7 @@ export function generateRuinsMap(tier) {
       const py = Math.floor(Math.random() * size);
       if (grid[py][px].type === CELL_TYPES.EMPTY) {
         grid[py][px].type = type;
-        grid[py][px].content = generateCellContent(type, tier);
+        grid[py][px].content = generateCellContent(type, tier, hullRarityBoost);
         placed++;
       }
       attempts++;
@@ -364,11 +364,11 @@ function clearPath(grid, size, sx, sy, ex, ey) {
   }
 }
 
-function generateCellContent(type, tier) {
+function generateCellContent(type, tier, hullRarityBoost = null) {
   switch (type.id) {
     case 'wreck':
       return {
-        creature: generateCreatureForRuins(tier),
+        creature: generateCreatureForRuins(tier, 0, hullRarityBoost),
         coins: Math.floor(20 + Math.random() * 50 * tier.difficulty),
         looted: false
       };
@@ -387,7 +387,7 @@ function generateCellContent(type, tier) {
     case 'treasure':
       return {
         coins: Math.floor(200 + Math.random() * 400 * tier.difficulty),
-        creature: generateCreatureForRuins(tier, 0.3),
+        creature: generateCreatureForRuins(tier, 0.3, hullRarityBoost),
         opened: false
       };
     case 'supply':
@@ -401,7 +401,7 @@ function generateCellContent(type, tier) {
   }
 }
 
-export function generateCreatureForRuins(tier, extraRarityBoost = 0) {
+export function generateCreatureForRuins(tier, extraRarityBoost = 0, hullRarityBoost = null) {
   const tierWeights = {
     tier1: { common: 55, uncommon: 30, rare: 12, epic: 3, legendary: 0 },
     tier2: { common: 35, uncommon: 35, rare: 20, epic: 8, legendary: 2 },
@@ -414,6 +414,14 @@ export function generateCreatureForRuins(tier, extraRarityBoost = 0) {
     weights.rare *= (1 + extraRarityBoost);
     weights.epic *= (1 + extraRarityBoost);
     weights.legendary *= (1 + extraRarityBoost * 2);
+  }
+
+  if (hullRarityBoost) {
+    for (const key of Object.keys(weights)) {
+      if (hullRarityBoost[key]) {
+        weights[key] = weights[key] * hullRarityBoost[key];
+      }
+    }
   }
 
   const total = Object.values(weights).reduce((a, b) => a + b, 0);

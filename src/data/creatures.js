@@ -672,7 +672,7 @@ export const COMBO_CONFIG = {
   comboMilestones: [3, 5, 8, 10, 15, 20, 30, 50]
 };
 
-export function getRandomCreature(tideSystem = null, comboCount = 0, intelEffects = null) {
+export function getRandomCreature(tideSystem = null, comboCount = 0, intelEffects = null, hullRarityBoost = null) {
   const rarityEntries = Object.entries(RARITY);
   
   let totalWeight = 0;
@@ -707,6 +707,10 @@ export function getRandomCreature(tideSystem = null, comboCount = 0, intelEffect
           weight = weight * intelEffects.legendaryBoostInStorm;
         }
       }
+    }
+
+    if (hullRarityBoost && hullRarityBoost[key]) {
+      weight = weight * hullRarityBoost[key];
     }
     
     adjustedWeights[name] = weight;
