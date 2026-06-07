@@ -133,6 +133,10 @@
           <span class="btn-icon">📜</span>
           <span class="btn-text">记忆</span>
         </button>
+        <button class="action-btn" id="btn-guild">
+          <span class="btn-icon">🏰</span>
+          <span class="btn-text">公会</span>
+        </button>
       </div>
     </div>
 
@@ -496,6 +500,8 @@
 
     <div id="night-voyage-indicator" class="hidden"></div>
 
+    <div id="guild-event-indicator" class="hidden guild-event-indicator"></div>
+
     <div id="night-voyage-modal" class="hidden">
       <div id="night-voyage-content"></div>
     </div>
@@ -719,6 +725,31 @@
 
         <div class="modal-footer">
           <button class="modal-btn secondary" id="btn-close-memory">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="guild-modal" class="modal hidden">
+      <div class="modal-content guild-content">
+        <h2 class="modal-title">🏰 赛博渔港公会 · 协作系统</h2>
+        <div class="chamber-tabs guild-tabs">
+          <button class="guild-tab active" data-tab="overview">📊 总览</button>
+          <button class="guild-tab" data-tab="goals">🎯 共享目标</button>
+          <button class="guild-tab" data-tab="commissions">📋 专属委托</button>
+          <button class="guild-tab" data-tab="teammates">👥 公会成员</button>
+          <button class="guild-tab" data-tab="events">⚡ 协作事件</button>
+          <button class="guild-tab" data-tab="history">📜 历史记录</button>
+        </div>
+
+        <div class="guild-tab-content" data-tab="overview" id="guild-overview"></div>
+        <div class="guild-tab-content hidden" data-tab="goals" id="guild-goals"></div>
+        <div class="guild-tab-content hidden" data-tab="commissions" id="guild-commissions"></div>
+        <div class="guild-tab-content hidden" data-tab="teammates" id="guild-teammates"></div>
+        <div class="guild-tab-content hidden" data-tab="events" id="guild-events"></div>
+        <div class="guild-tab-content hidden" data-tab="history" id="guild-history"></div>
+
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="btn-close-guild">关闭</button>
         </div>
       </div>
     </div>

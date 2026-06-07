@@ -9,6 +9,8 @@ const SEASON_KEY_PREFIX = 'cyber_harbor_season_';
 const SEASON_META_KEY = 'cyber_harbor_season_meta';
 const AUCTION_KEY_PREFIX = 'cyber_harbor_auction_';
 const AUCTION_META_KEY = 'cyber_harbor_auction_meta';
+const GUILD_KEY_PREFIX = 'cyber_harbor_guild_';
+const GUILD_META_KEY = 'cyber_harbor_guild_meta';
 
 export class Storage {
   static save(data) {
@@ -569,5 +571,106 @@ export class Storage {
 
   static generateAuctionRecordId() {
     return `auction_rec_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+  }
+
+  static saveGuildSettlement(settlementId, data) {
+    try {
+      const json = JSON.stringify(data);
+      localStorage.setItem(GUILD_KEY_PREFIX + settlementId, json);
+      const meta = this.getGuildMeta();
+      if (!meta.history.includes(settlementId)) {
+        meta.history.unshift(settlementId);
+        meta.history = meta.history.slice(0, 24);
+      }
+      meta.lastSettlementId = settlementId;
+      meta.updatedAt = Date.now();
+      localStorage.setItem(GUILD_META_KEY, JSON.stringify(meta));
+      return true;
+    } catch (e) {
+      console.error('公会结算保存失败:', e);
+      return false;
+    }
+  }
+
+  static loadGuildSettlement(settlementId) {
+    try {
+      const json = localStorage.getItem(GUILD_KEY_PREFIX + settlementId);
+      if (!json) return null;
+      return JSON.parse(json);
+    } catch (e) {
+      console.error('公会结算读取失败:', e);
+      return null;
+    }
+  }
+
+  static deleteGuildSettlement(settlementId) {
+    try {
+      localStorage.removeItem(GUILD_KEY_PREFIX + settlementId);
+      const meta = this.getGuildMeta();
+      meta.history = meta.history.filter(id => id !== settlementId);
+      if (meta.lastSettlementId === settlementId) {
+        meta.lastSettlementId = meta.history[0] || null;
+      }
+      localStorage.setItem(GUILD_META_KEY, JSON.stringify(meta));
+      return true;
+    } catch (e) {
+      console.error('公会结算删除失败:', e);
+      return false;
+    }
+  }
+
+  static listGuildSettlements() {
+    const meta = this.getGuildMeta();
+    const settlements = [];
+    meta.history.forEach(id => {
+      try {
+        const json = localStorage.getItem(GUILD_KEY_PREFIX + id);
+        if (json) {
+          const data = JSON.parse(json);
+          settlements.push({
+            id,
+            weekNumber: data.weekNumber,
+            level: data.level,
+            completedGoals: data.completedGoals || 0,
+            commissionsCompleted: data.commissionsCompleted || 0,
+            coinsEarned: data.coinsEarned || 0,
+            energyEarned: data.energyEarned || 0,
+            endedAt: data.endedAt
+          });
+        }
+      } catch (e) {
+      }
+    });
+    return settlements;
+  }
+
+  static getGuildMeta() {
+    try {
+      const json = localStorage.getItem(GUILD_META_KEY);
+      if (!json) {
+        return { history: [], lastSettlementId: null, updatedAt: null };
+      }
+      return JSON.parse(json);
+    } catch (e) {
+      return { history: [], lastSettlementId: null, updatedAt: null };
+    }
+  }
+
+  static clearAllGuildSettlements() {
+    try {
+      const meta = this.getGuildMeta();
+      meta.history.forEach(id => {
+        localStorage.removeItem(GUILD_KEY_PREFIX + id);
+      });
+      localStorage.removeItem(GUILD_META_KEY);
+      return true;
+    } catch (e) {
+      console.error('清除公会记录失败:', e);
+      return false;
+    }
+  }
+
+  static generateGuildId() {
+    return `guild_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
   }
 }

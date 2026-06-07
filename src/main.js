@@ -19,8 +19,10 @@ import { SeasonSystem } from './modules/SeasonSystem.js';
 import { AuctionSystem } from './modules/AuctionSystem.js';
 import { PortRepairStation } from './modules/PortRepairStation.js';
 import { MemoryRecoverySystem } from './modules/MemoryRecoverySystem.js';
+import { GuildSystem } from './modules/GuildSystem.js';
 import { COMBO_CONFIG, getComboEnergyDiscount, getComboEnergyRegenBonus } from './data/creatures.js';
 import { rollNightVoyageEvent } from './data/deepSeaExpedition.js';
+import { GUILD_GOAL_TYPES } from './data/guildSystem.js';
 
 class Game {
   constructor() {
@@ -44,6 +46,7 @@ class Game {
     this.auctionSystem = null;
     this.repairStation = null;
     this.memoryRecovery = null;
+    this.guildSystem = null;
 
     this.stats = {
       energy: 100,
@@ -195,6 +198,7 @@ class Game {
     this.auctionSystem = new AuctionSystem(this);
     this.repairStation = new PortRepairStation(this);
     this.memoryRecovery = new MemoryRecoverySystem(this);
+    this.guildSystem = new GuildSystem(this);
     this.stallSystem = this.chamber.stallSystem;
     this.pricingSystem = this.chamber.pricingSystem;
     this.customerSystem = this.chamber.customerSystem;
@@ -528,10 +532,16 @@ class Game {
         this.stats.energy = Math.max(0, Math.min(this.getMaxEnergy(), this.stats.energy + value));
         break;
       case 'coins':
+        if (value > 0 && this.guildSystem) {
+          this.guildSystem.recordPlayerAction(GUILD_GOAL_TYPES.COINS_EARNED, value);
+        }
         this.stats.coins = Math.max(0, this.stats.coins + value);
         if (this.storySystem) this.storySystem.onGameEvent('coins');
         break;
       case 'catchCount':
+        if (this.guildSystem) {
+          this.guildSystem.recordPlayerAction(GUILD_GOAL_TYPES.CATCH_COUNT, value);
+        }
         this.stats.catchCount += value;
         if (this.storySystem) this.storySystem.onGameEvent('catch_count');
         break;
@@ -679,6 +689,7 @@ class Game {
       auctionSystem: this.auctionSystem ? this.auctionSystem.toJSON() : null,
       repairStation: this.repairStation ? this.repairStation.toJSON() : null,
       memoryRecovery: this.memoryRecovery ? this.memoryRecovery.toJSON() : null,
+      guildSystem: this.guildSystem ? this.guildSystem.toJSON() : null,
       timestamp: Date.now()
     };
     Storage.save(saveData);
@@ -739,6 +750,9 @@ class Game {
       }
       if (this.memoryRecovery && data.memoryRecovery) {
         this.memoryRecovery.loadData(data.memoryRecovery);
+      }
+      if (this.guildSystem && data.guildSystem) {
+        this.guildSystem.loadData(data.guildSystem);
       }
       if (this.tideSystem && data.tide) {
         this.tideSystem.init(data.tide);
