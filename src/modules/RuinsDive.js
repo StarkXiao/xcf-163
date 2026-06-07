@@ -1268,6 +1268,9 @@ export class RuinsDive {
     this.battleModal.classList.add('hidden');
     this.game.saveProgress();
     this.game.checkTasks('ruins_complete');
+    if (success && this.game.guildSystem) {
+      this.game.guildSystem.recordPlayerAction('ruins_dive', 1);
+    }
     this.renderAll();
   }
 

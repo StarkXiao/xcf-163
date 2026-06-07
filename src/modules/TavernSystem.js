@@ -889,6 +889,9 @@ export class TavernSystem {
         if (quest.progress >= targetCount && !quest.completed) {
           quest.completed = true;
           this.game.taskSystem.showHint(`🎉 支线完成：${quest.name}！可在酒馆领取奖励。`);
+          if (this.game.guildSystem) {
+            this.game.guildSystem.recordPlayerAction('tavern_quests', 1);
+          }
         }
       }
     });

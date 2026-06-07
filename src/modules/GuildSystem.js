@@ -41,6 +41,7 @@ export class GuildSystem {
     this.activeEvent = null;
     this.eventEndAt = 0;
     this.eventTimer = null;
+    this.triggeredEventsThisWeek = new Set();
 
     this.playerContribution = {};
     this.teammateContribution = {};
@@ -210,6 +211,7 @@ export class GuildSystem {
 
     this.activeEvent = null;
     this.eventEndAt = 0;
+    this.triggeredEventsThisWeek = new Set();
 
     if (this.game.taskSystem) {
       this.game.taskSystem.showHint(`🏰 新的公会周开始！本周 ${weeklyGoals.length} 个共享目标等待完成！`);
@@ -374,18 +376,21 @@ export class GuildSystem {
 
     if (Math.random() < 0.05) {
       const randomEvent = GUILD_COLLABORATION_EVENTS.find(e => e.trigger.type === 'random');
-      if (randomEvent && Math.random() < (randomEvent.trigger.chance || 0.1)) {
+      if (randomEvent && !this.triggeredEventsThisWeek.has(randomEvent.id) && Math.random() < (randomEvent.trigger.chance || 0.1)) {
         this.triggerCollaborationEvent(randomEvent);
       }
     }
 
     this.activeGoals.forEach(goalId => {
+      const goal = getGuildGoalById(goalId);
+      if (!goal) return;
       const progress = this.goalsProgress[goalId];
       if (!progress) return;
 
       GUILD_COLLABORATION_EVENTS.forEach(event => {
         if (event.trigger.type === 'random') return;
-        if (event.trigger.type !== goalId) return;
+        if (event.trigger.type !== goal.type) return;
+        if (this.triggeredEventsThisWeek.has(event.id)) return;
         if (progress.currentValue >= event.trigger.threshold) {
           this.triggerCollaborationEvent(event);
         }
@@ -395,9 +400,11 @@ export class GuildSystem {
 
   triggerCollaborationEvent(event) {
     if (this.activeEvent && Date.now() < this.eventEndAt) return;
+    if (this.triggeredEventsThisWeek.has(event.id)) return;
 
     this.activeEvent = event;
     this.eventEndAt = Date.now() + event.durationMs;
+    this.triggeredEventsThisWeek.add(event.id);
 
     if (this.game.taskSystem) {
       this.game.taskSystem.showHint(`${event.icon} ${event.name}！${event.desc}`);
@@ -445,6 +452,12 @@ export class GuildSystem {
         }
       });
     });
+
+    this.tryTriggerRandomEvent();
+
+    if (this.modal && !this.modal.classList.contains('hidden')) {
+      this.renderAll();
+    }
 
     this.game.saveProgress();
   }
@@ -1133,6 +1146,9 @@ export class GuildSystem {
       this.activeEvent = data.activeEvent;
       this.eventEndAt = data.eventEndAt || 0;
     }
+    if (data.triggeredEventsThisWeek) {
+      this.triggeredEventsThisWeek = new Set(data.triggeredEventsThisWeek);
+    }
 
     this.checkWeeklyRefresh();
   }
@@ -1153,7 +1169,8 @@ export class GuildSystem {
       playerContribution: { ...this.playerContribution },
       teammateContribution: { ...this.teammateContribution },
       activeEvent: this.activeEvent,
-      eventEndAt: this.eventEndAt
+      eventEndAt: this.eventEndAt,
+      triggeredEventsThisWeek: Array.from(this.triggeredEventsThisWeek)
     };
   }
 }

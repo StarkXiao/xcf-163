@@ -310,6 +310,9 @@ export class ReinforceSystem {
     this.game.saveProgress();
     this.game.checkTasks('upgrade_success');
     this.game.checkTasks('upgrade_tier', newTier);
+    if (this.game.guildSystem) {
+      this.game.guildSystem.recordPlayerAction('reinforce_success', 1);
+    }
     this.game.taskSystem.showHint(`升阶成功！当前品阶 Lv.${newTier}`);
     this.renderReinforceDetail();
     this.game.inventory.renderBackpack();

@@ -334,6 +334,10 @@ export class PortCommission {
       this.game.seasonSystem.recordPortCommissionComplete(commission);
     }
 
+    if (this.game.guildSystem) {
+      this.game.guildSystem.recordPlayerAction('port_commissions', 1);
+    }
+
     const allRewards = [...lastPhaseRewards];
     if (bonusCoins > 0) allRewards.push(`额外${bonusCoins}💰`);
 

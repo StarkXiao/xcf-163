@@ -596,6 +596,16 @@ export class BattleSystem {
     this.game.checkTasks('unique_collected');
     this.game.checkTasks('night_voyage_catch');
 
+    if (this.game.guildSystem) {
+      const rarity = this.currentCreature.rarity;
+      if (rarity === RARITY.COMMON || rarity === RARITY.UNCOMMON) {
+        this.game.guildSystem.recordPlayerAction('common_creatures', 1);
+      }
+      if (rarity === RARITY.RARE || rarity === RARITY.EPIC || rarity === RARITY.LEGENDARY) {
+        this.game.guildSystem.recordPlayerAction('rare_creatures', 1);
+      }
+    }
+
     if (this.game.repairStation && typeof this.game.repairStation.applyCatchWear === 'function') {
       this.game.repairStation.applyCatchWear(1, 2, 1);
     }

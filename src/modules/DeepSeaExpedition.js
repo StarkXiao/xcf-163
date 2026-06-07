@@ -915,6 +915,9 @@ export class DeepSeaExpedition {
     if (this.game.storySystem) {
       this.game.storySystem.onGameEvent('expedition_complete');
     }
+    if (success && this.game.guildSystem) {
+      this.game.guildSystem.recordPlayerAction('expedition_complete', 1);
+    }
     this.renderAll();
   }
 
