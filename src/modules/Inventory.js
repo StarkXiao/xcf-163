@@ -6,6 +6,7 @@ export class Inventory {
     this.backpack = [];
     this.collection = new Set();
     this.rarityCatchStats = {};
+    this.creatureCatchTotal = {};
     this.maxSlots = 20;
     this.selectedItem = null;
     
@@ -71,6 +72,7 @@ export class Inventory {
     }
 
     this.collection.add(creature.id);
+    this.creatureCatchTotal[creature.id] = (this.creatureCatchTotal[creature.id] || 0) + 1;
     this.game.checkTasks('collect_creature', creature);
 
     if (this.game.codexLab) {
@@ -310,6 +312,10 @@ export class Inventory {
       .reduce((sum, item) => sum + item.count, 0);
   }
 
+  getCumulativeCreatureCount(creatureId) {
+    return this.creatureCatchTotal[creatureId] || 0;
+  }
+
   hexToRgb(hex) {
     const r = (hex >> 16) & 255;
     const g = (hex >> 8) & 255;
@@ -340,6 +346,15 @@ export class Inventory {
     if (data.rarityCatchStats) {
       this.rarityCatchStats = { ...data.rarityCatchStats };
     }
+
+    if (data.creatureCatchTotal) {
+      this.creatureCatchTotal = { ...data.creatureCatchTotal };
+    } else {
+      this.creatureCatchTotal = {};
+      this.backpack.forEach(item => {
+        this.creatureCatchTotal[item.id] = Math.max(this.creatureCatchTotal[item.id] || 0, item.count);
+      });
+    }
   }
 
   toJSON() {
@@ -351,7 +366,8 @@ export class Inventory {
         affixes: item.affixes || []
       })),
       collection: Array.from(this.collection),
-      rarityCatchStats: { ...this.rarityCatchStats }
+      rarityCatchStats: { ...this.rarityCatchStats },
+      creatureCatchTotal: { ...this.creatureCatchTotal }
     };
   }
 }

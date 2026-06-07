@@ -4,6 +4,7 @@ export class CodexLab {
   constructor(game) {
     this.game = game;
 
+    this.unlockedStages = {};
     this.unlockedVoiceFragments = new Set();
     this.unlockedWorldLineFragments = new Set();
     this.researchLog = [];
@@ -17,7 +18,7 @@ export class CodexLab {
 
     this.modal = document.getElementById('codex-lab-modal');
     this.currentCreatureId = null;
-    this.currentTab = 'archive';
+    this.currentTab = 'overview';
 
     this.bindStaticEvents();
   }
@@ -66,14 +67,15 @@ export class CodexLab {
   }
 
   getCollectedCount(creatureId) {
-    return this.game.inventory.getCreatureCount(creatureId);
+    return this.game.inventory.getCumulativeCreatureCount(creatureId);
   }
 
   getHighestStage(creatureId) {
-    const collected = this.getCollectedCount(creatureId);
-    const stages = getUnlockedArchiveStages(creatureId, collected);
-    if (stages.length === 0) return 0;
-    return Math.max(...stages.map(s => s.stage));
+    return this.unlockedStages[creatureId] || 0;
+  }
+
+  isStageUnlocked(creatureId, stage) {
+    return this.getHighestStage(creatureId) >= stage;
   }
 
   checkAndGrantUnlocks(creatureId) {
@@ -81,10 +83,25 @@ export class CodexLab {
     const archive = CREATURE_ARCHIVES[creatureId];
     if (!archive) return;
 
-    const unlockedStages = getUnlockedArchiveStages(creatureId, collected);
-    let newUnlocks = [];
+    const previouslyHighest = this.getHighestStage(creatureId);
+    const newlyUnlockedStages = getUnlockedArchiveStages(creatureId, collected)
+      .filter(s => s.stage > previouslyHighest);
 
-    unlockedStages.forEach(stage => {
+    if (newlyUnlockedStages.length === 0) return [];
+
+    const newHighest = Math.max(previouslyHighest, ...newlyUnlockedStages.map(s => s.stage));
+    this.unlockedStages[creatureId] = newHighest;
+
+    let newUnlocks = [];
+    let totalArchiveCount = 0;
+    Object.values(this.unlockedStages).forEach(stage => {
+      totalArchiveCount += stage;
+    });
+    this.stats.totalArchivesUnlocked = totalArchiveCount;
+
+    newlyUnlockedStages.forEach(stage => {
+      newUnlocks.push({ type: 'archive', id: `${creatureId}_s${stage.stage}`, title: stage.title, text: stage.content });
+
       const voices = getUnlockedVoiceFragments(creatureId, stage.stage);
       voices.forEach(v => {
         if (!this.unlockedVoiceFragments.has(v.id)) {
@@ -108,13 +125,13 @@ export class CodexLab {
       }
     });
 
-    this.stats.totalArchivesUnlocked = unlockedStages.length;
     this.updateResearchStats();
 
     if (newUnlocks.length > 0) {
       newUnlocks.forEach(unlock => {
-        this.addLog('success', `🔓 解锁新${unlock.type === 'voice' ? '语音' : '世界线碎片'}：${unlock.title}`);
-        this.game.taskSystem.showHint(`🔓 解锁新${unlock.type === 'voice' ? '语音片段' : '世界线碎片'}！`);
+        const label = unlock.type === 'archive' ? '档案阶段' : unlock.type === 'voice' ? '语音' : '世界线碎片';
+        this.addLog('success', `🔓 解锁新${label}：${unlock.title}`);
+        this.game.taskSystem.showHint(`🔓 解锁新${label}！`);
       });
 
       this.game.checkTasks('archive_unlock_stage', this.stats.maxStageReached);
@@ -329,14 +346,14 @@ export class CodexLab {
       <h3 class="codex-section-title">📄 ${creature.name} 研究档案</h3>
       <div class="codex-archive-list">
         ${archive.archiveStages.map(stage => {
-          const unlocked = count >= stage.unlockCount;
+          const unlocked = this.isStageUnlocked(this.currentCreatureId, stage.stage);
           return `
             <div class="codex-archive-stage ${unlocked ? 'unlocked' : 'locked'}">
               <div class="codex-stage-header">
                 <span class="codex-stage-number">阶段 ${stage.stage}</span>
                 <span class="codex-stage-title">${unlocked ? stage.title : '???'}</span>
                 <span class="codex-stage-status ${unlocked ? 'unlocked' : ''}">
-                  ${unlocked ? '✅ 已解锁' : `🔒 收集 ${stage.unlockCount} 个解锁`}
+                  ${unlocked ? '✅ 已解锁' : `🔒 累计收集 ${stage.unlockCount} 个解锁 (当前 ${count})`}
                 </span>
               </div>
               <div class="codex-stage-content">
@@ -371,7 +388,7 @@ export class CodexLab {
       <h3 class="codex-section-title">🔊 ${creature.name} 语音片段</h3>
       <div class="codex-voice-list">
         ${archive.voiceFragments.map(voice => {
-          const unlocked = voice.unlockStage <= highestStage;
+          const unlocked = this.isStageUnlocked(this.currentCreatureId, voice.unlockStage);
           return `
             <div class="codex-voice-item ${unlocked ? 'unlocked' : 'locked'}">
               <div class="codex-voice-header">
@@ -425,7 +442,7 @@ export class CodexLab {
       <h3 class="codex-section-title">🌌 ${creature.name} 世界线碎片</h3>
       <div class="codex-worldline-list">
         ${archive.worldLineFragments.map(wl => {
-          const unlocked = wl.unlockStage <= highestStage;
+          const unlocked = this.isStageUnlocked(this.currentCreatureId, wl.unlockStage);
           return `
             <div class="codex-worldline-item ${unlocked ? 'unlocked' : 'locked'}">
               <div class="codex-worldline-header">
@@ -492,6 +509,7 @@ export class CodexLab {
 
   toJSON() {
     return {
+      unlockedStages: { ...this.unlockedStages },
       unlockedVoiceFragments: Array.from(this.unlockedVoiceFragments),
       unlockedWorldLineFragments: Array.from(this.unlockedWorldLineFragments),
       researchLog: this.researchLog,
@@ -501,6 +519,9 @@ export class CodexLab {
 
   loadData(data) {
     if (!data) return;
+    if (data.unlockedStages) {
+      this.unlockedStages = { ...data.unlockedStages };
+    }
     if (data.unlockedVoiceFragments) {
       this.unlockedVoiceFragments = new Set(data.unlockedVoiceFragments);
     }
@@ -512,6 +533,58 @@ export class CodexLab {
     }
     if (data.stats) {
       this.stats = { ...this.stats, ...data.stats };
+    }
+
+    this.retroactiveUnlockRepair();
+
+    if (!data.stats) {
+      let total = 0;
+      Object.values(this.unlockedStages).forEach(s => total += s);
+      this.stats.totalArchivesUnlocked = total;
+      this.stats.totalVoicesUnlocked = this.unlockedVoiceFragments.size;
+      this.stats.totalWorldLinesUnlocked = this.unlockedWorldLineFragments.size;
+    }
+  }
+
+  retroactiveUnlockRepair() {
+    let anythingChanged = false;
+    CREATURES.forEach(c => {
+      const cumulative = this.game.inventory.getCumulativeCreatureCount(c.id);
+      if (cumulative <= 0) return;
+      const stages = getUnlockedArchiveStages(c.id, cumulative);
+      const highestFromCatch = stages.length > 0 ? Math.max(...stages.map(s => s.stage)) : 0;
+      const current = this.getHighestStage(c.id);
+      if (highestFromCatch > current) {
+        this.unlockedStages[c.id] = highestFromCatch;
+        stages.forEach(stage => {
+          const voices = getUnlockedVoiceFragments(c.id, stage.stage);
+          voices.forEach(v => {
+            if (!this.unlockedVoiceFragments.has(v.id)) {
+              this.unlockedVoiceFragments.add(v.id);
+              this.stats.totalVoicesUnlocked++;
+            }
+          });
+          const wls = getUnlockedWorldLineFragments(c.id, stage.stage);
+          wls.forEach(w => {
+            if (!this.unlockedWorldLineFragments.has(w.id)) {
+              this.unlockedWorldLineFragments.add(w.id);
+              this.stats.totalWorldLinesUnlocked++;
+            }
+          });
+          if (stage.stage > this.stats.maxStageReached) {
+            this.stats.maxStageReached = stage.stage;
+          }
+        });
+        anythingChanged = true;
+      }
+    });
+
+    if (anythingChanged) {
+      let totalArchives = 0;
+      Object.values(this.unlockedStages).forEach(s => totalArchives += s);
+      this.stats.totalArchivesUnlocked = totalArchives;
+      this.updateResearchStats();
+      this.addLog('info', '🔧 已根据累计捕获记录修复研究解锁状态');
     }
   }
 }
