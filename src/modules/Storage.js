@@ -7,6 +7,8 @@ const RUINS_KEY_PREFIX = 'cyber_harbor_ruins_';
 const RUINS_META_KEY = 'cyber_harbor_ruins_meta';
 const SEASON_KEY_PREFIX = 'cyber_harbor_season_';
 const SEASON_META_KEY = 'cyber_harbor_season_meta';
+const AUCTION_KEY_PREFIX = 'cyber_harbor_auction_';
+const AUCTION_META_KEY = 'cyber_harbor_auction_meta';
 
 export class Storage {
   static save(data) {
@@ -463,5 +465,109 @@ export class Storage {
 
   static generateSeasonId() {
     return `season_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+  }
+
+  static saveAuctionRecord(recordId, data) {
+    try {
+      const json = JSON.stringify(data);
+      localStorage.setItem(AUCTION_KEY_PREFIX + recordId, json);
+      const meta = this.getAuctionMeta();
+      if (!meta.history.includes(recordId)) {
+        meta.history.unshift(recordId);
+        meta.history = meta.history.slice(0, 50);
+      }
+      meta.lastRecordId = recordId;
+      meta.updatedAt = Date.now();
+      localStorage.setItem(AUCTION_META_KEY, JSON.stringify(meta));
+      return true;
+    } catch (e) {
+      console.error('拍卖记录保存失败:', e);
+      return false;
+    }
+  }
+
+  static loadAuctionRecord(recordId) {
+    try {
+      const json = localStorage.getItem(AUCTION_KEY_PREFIX + recordId);
+      if (!json) return null;
+      return JSON.parse(json);
+    } catch (e) {
+      console.error('拍卖记录读取失败:', e);
+      return null;
+    }
+  }
+
+  static deleteAuctionRecord(recordId) {
+    try {
+      localStorage.removeItem(AUCTION_KEY_PREFIX + recordId);
+      const meta = this.getAuctionMeta();
+      meta.history = meta.history.filter(id => id !== recordId);
+      if (meta.lastRecordId === recordId) {
+        meta.lastRecordId = meta.history[0] || null;
+      }
+      localStorage.setItem(AUCTION_META_KEY, JSON.stringify(meta));
+      return true;
+    } catch (e) {
+      console.error('拍卖记录删除失败:', e);
+      return false;
+    }
+  }
+
+  static listAuctionRecords() {
+    const meta = this.getAuctionMeta();
+    const records = [];
+    meta.history.forEach(id => {
+      try {
+        const json = localStorage.getItem(AUCTION_KEY_PREFIX + id);
+        if (json) {
+          const data = JSON.parse(json);
+          records.push({
+            id,
+            type: data.type,
+            creatureId: data.creatureId,
+            creatureName: data.creatureName,
+            creatureIcon: data.creatureIcon,
+            creatureRarity: data.creatureRarity,
+            finalPrice: data.finalPrice,
+            won: data.won,
+            sold: data.sold,
+            createdAt: data.createdAt,
+            settledAt: data.settledAt || null
+          });
+        }
+      } catch (e) {
+      }
+    });
+    return records;
+  }
+
+  static getAuctionMeta() {
+    try {
+      const json = localStorage.getItem(AUCTION_META_KEY);
+      if (!json) {
+        return { history: [], lastRecordId: null, updatedAt: null };
+      }
+      return JSON.parse(json);
+    } catch (e) {
+      return { history: [], lastRecordId: null, updatedAt: null };
+    }
+  }
+
+  static clearAllAuctionRecords() {
+    try {
+      const meta = this.getAuctionMeta();
+      meta.history.forEach(id => {
+        localStorage.removeItem(AUCTION_KEY_PREFIX + id);
+      });
+      localStorage.removeItem(AUCTION_META_KEY);
+      return true;
+    } catch (e) {
+      console.error('清除拍卖记录失败:', e);
+      return false;
+    }
+  }
+
+  static generateAuctionRecordId() {
+    return `auction_rec_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
   }
 }
