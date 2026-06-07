@@ -703,16 +703,18 @@ export function rollBossWreck(game) {
   const eligible = checkBossSpawnConditions(game);
   if (eligible.length === 0) return null;
 
-  const totalChance = eligible.reduce((sum, b) => sum + b.spawnConditions.triggerChance, 0);
-  let random = Math.random() * totalChance;
-
+  const triggered = [];
   for (const boss of eligible) {
-    random -= boss.spawnConditions.triggerChance;
-    if (random <= 0) {
-      return JSON.parse(JSON.stringify(boss));
+    if (Math.random() < boss.spawnConditions.triggerChance) {
+      triggered.push(boss);
     }
   }
-  return null;
+
+  if (triggered.length === 0) return null;
+
+  triggered.sort((a, b) => a.spawnConditions.triggerChance - b.spawnConditions.triggerChance);
+
+  return JSON.parse(JSON.stringify(triggered[0]));
 }
 
 export function generateBossDrops(boss, rarityBoost = null) {

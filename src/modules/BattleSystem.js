@@ -730,6 +730,12 @@ export class BattleSystem {
 
     this.game.checkTasks('boss_defeat', boss);
     this.game.checkTasks('boss_defeat_count');
+    this.game.checkTasks('boss_defeat_specific', boss);
+    this.game.checkTasks('boss_defeat_all');
+    if (this.game.tavernSystem) {
+      this.game.tavernSystem.checkQuests('boss_defeat', boss);
+      this.game.tavernSystem.checkQuests('boss_defeat_specific', boss);
+    }
     if (this.game.storySystem) {
       this.game.storySystem.onGameEvent('boss_defeat', boss);
     }
