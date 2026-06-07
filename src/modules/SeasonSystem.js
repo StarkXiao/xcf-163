@@ -10,6 +10,8 @@ import {
   getRewardTier,
   getNextRewardTier,
   getPortRank,
+  isPortRankUnlocked,
+  isAnyPortRankUnlocked,
   pickWeeklyTheme,
   getWeekNumber,
   getCreaturesForTheme
@@ -173,8 +175,7 @@ export class SeasonSystem {
       }
     });
 
-    const portRankUnlocked = this.weeklyPortCommissions >= portRank.minCommissions &&
-                            this.weeklyPortRarityBonus >= portRank.minRarityBonus;
+    const portRankUnlocked = isPortRankUnlocked(portRank, this.weeklyPortCommissions, this.weeklyPortRarityBonus);
     if (portRankUnlocked && !this.portRankClaimed) {
       this.portRankClaimed = true;
       if (portRank.reward.coins) {
@@ -201,8 +202,8 @@ export class SeasonSystem {
       creaturesCaught: this.getTotalCreaturesCaught(),
       newCreatures: this.getNewCreaturesCount(),
       portCommissions: this.weeklyPortCommissions,
-      portRank: portRank.rank,
-      portRankName: portRank.name,
+      portRank: isAnyPortRankUnlocked(this.weeklyPortCommissions) ? portRank.rank : 0,
+      portRankName: isAnyPortRankUnlocked(this.weeklyPortCommissions) ? portRank.name : '未达成',
       portScore: this.weeklyPortScore,
       claimedRewards: Array.from(this.claimedRewards),
       portRankClaimed: this.portRankClaimed
@@ -372,7 +373,7 @@ export class SeasonSystem {
     const rank = getPortRank(this.weeklyPortCommissions, this.weeklyPortRarityBonus);
     if (!rank) return false;
 
-    if (this.weeklyPortCommissions < rank.minCommissions) return false;
+    if (!isPortRankUnlocked(rank, this.weeklyPortCommissions, this.weeklyPortRarityBonus)) return false;
 
     this.portRankClaimed = true;
 
@@ -405,7 +406,8 @@ export class SeasonSystem {
     });
 
     const rank = getPortRank(this.weeklyPortCommissions, this.weeklyPortRarityBonus);
-    if (!this.portRankClaimed && this.weeklyPortCommissions >= rank.minCommissions) {
+    const portUnlocked = isPortRankUnlocked(rank, this.weeklyPortCommissions, this.weeklyPortRarityBonus);
+    if (!this.portRankClaimed && portUnlocked) {
       this.claimPortRankReward();
       claimed++;
     }
@@ -477,6 +479,7 @@ export class SeasonSystem {
     const currentTier = getRewardTier(this.weeklyScore);
     const nextTier = getNextRewardTier(this.weeklyScore);
     const portRank = getPortRank(this.weeklyPortCommissions, this.weeklyPortRarityBonus);
+    const portUnlocked = isAnyPortRankUnlocked(this.weeklyPortCommissions);
 
     const progressPercent = nextTier
       ? Math.min(100, (this.weeklyScore / nextTier.minScore) * 100)
@@ -528,7 +531,7 @@ export class SeasonSystem {
         </div>
         <div class="season-stat-card">
           <div class="season-stat-icon">🏆</div>
-          <div class="season-stat-value">${portRank.name}</div>
+          <div class="season-stat-value">${portUnlocked ? portRank.name : '未解锁'}</div>
           <div class="season-stat-label">港口排名</div>
         </div>
       </div>
@@ -662,39 +665,41 @@ export class SeasonSystem {
     if (!el) return;
 
     const currentRank = getPortRank(this.weeklyPortCommissions, this.weeklyPortRarityBonus);
+    const hasAnyUnlocked = isAnyPortRankUnlocked(this.weeklyPortCommissions);
+    const currentUnlocked = isPortRankUnlocked(currentRank, this.weeklyPortCommissions, this.weeklyPortRarityBonus);
 
     el.innerHTML = `
       <p class="season-hint">完成港口委托获取排名积分，品质越高排名越高</p>
       
-      <div class="port-rank-current">
+      <div class="port-rank-current ${hasAnyUnlocked ? '' : 'locked'}">
         <div class="port-rank-current-title">当前排名</div>
         <div class="port-rank-current-info">
           <span class="port-rank-current-icon">🏆</span>
           <div>
-            <div class="port-rank-current-name">${currentRank.name}</div>
+            <div class="port-rank-current-name">${hasAnyUnlocked ? currentRank.name : '尚未获得排名'}</div>
             <div class="port-rank-current-sub">
               委托 ${this.weeklyPortCommissions} · 品质加成 ${this.weeklyPortRarityBonus.toFixed(2)}×
             </div>
           </div>
         </div>
         <div class="port-rank-current-reward">
-          奖励：💰${currentRank.reward.coins} ⚡${currentRank.reward.energy}
+          ${hasAnyUnlocked ? `奖励：💰${currentRank.reward.coins} ⚡${currentRank.reward.energy}` : '至少完成 1 个港口委托解锁排名奖励'}
         </div>
         ${this.portRankClaimed 
           ? '<button class="modal-btn secondary full-width" disabled>✓ 已领取</button>'
-          : this.weeklyPortCommissions >= currentRank.minCommissions
+          : currentUnlocked
             ? `<button class="modal-btn primary full-width" data-port-rank-claim>🎁 领取排名奖励</button>`
-            : `<button class="modal-btn secondary full-width" disabled>需完成 ${currentRank.minCommissions} 个委托</button>`
+            : `<button class="modal-btn secondary full-width" disabled>${hasAnyUnlocked ? `需完成 ${currentRank.minCommissions} 个委托，品质加成 ≥${currentRank.minRarityBonus}×` : '需完成 1 个港口委托'}</button>`
         }
       </div>
 
       <div class="port-rank-list">
         <div class="port-rank-list-title">排名等级</div>
         ${PORT_RANKING_TIERS.map(rank => {
-          const achieved = this.weeklyPortCommissions >= rank.minCommissions && 
-                         this.weeklyPortRarityBonus >= rank.minRarityBonus;
+          const achieved = isPortRankUnlocked(rank, this.weeklyPortCommissions, this.weeklyPortRarityBonus);
+          const isCurrent = hasAnyUnlocked && currentRank.rank === rank.rank;
           return `
-            <div class="port-rank-card ${achieved ? 'achieved' : ''} ${currentRank.rank === rank.rank ? 'current' : ''}">
+            <div class="port-rank-card ${achieved ? 'achieved' : ''} ${isCurrent ? 'current' : ''}">
               <div class="port-rank-card-rank">No.${rank.rank}</div>
               <div class="port-rank-card-info">
                 <div class="port-rank-card-name">${rank.name}</div>

@@ -103,8 +103,10 @@ export const PORT_RANKING_TIERS = [
   { rank: 2, name: '精英回收者', minCommissions: 10, minRarityBonus: 1.2, reward: { coins: 1000, energy: 100 } },
   { rank: 3, name: '熟练打捞员', minCommissions: 6, minRarityBonus: 1.0, reward: { coins: 500, energy: 50 } },
   { rank: 4, name: '新手船员', minCommissions: 3, minRarityBonus: 0, reward: { coins: 200, energy: 20 } },
-  { rank: 5, name: '港口过客', minCommissions: 0, minRarityBonus: 0, reward: { coins: 50, energy: 10 } }
+  { rank: 5, name: '港口过客', minCommissions: 1, minRarityBonus: 0, reward: { coins: 50, energy: 10 } }
 ];
+
+export const PORT_MINIMUM_COMMISSIONS = 1;
 
 export const SCORE_CONFIG = {
   rarityMultiplier: {
@@ -233,6 +235,16 @@ export function getPortRank(commissionsCompleted, rarityBonus) {
     }
   }
   return PORT_RANKING_TIERS[PORT_RANKING_TIERS.length - 1];
+}
+
+export function isPortRankUnlocked(portRank, commissionsCompleted, rarityBonus) {
+  if (!portRank) return false;
+  if (commissionsCompleted < PORT_MINIMUM_COMMISSIONS) return false;
+  return commissionsCompleted >= portRank.minCommissions && rarityBonus >= portRank.minRarityBonus;
+}
+
+export function isAnyPortRankUnlocked(commissionsCompleted) {
+  return commissionsCompleted >= PORT_MINIMUM_COMMISSIONS;
 }
 
 export function pickWeeklyTheme(excludeId = null) {
